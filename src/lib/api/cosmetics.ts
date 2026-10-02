@@ -82,6 +82,20 @@ export async function getCapeDataUrl(capeId: string): Promise<string> {
 export async function apiInfo(): Promise<CosmeticsApiInfo> {
   return invoke<CosmeticsApiInfo>("cosmetics_api_info");
 }
+export interface RemoteCosmetics {
+  uuid: string;
+  name: string;
+  activeCape: { id: string; name: string; url: string; sha1: string; version: number; kind: string } | null;
+  hat: string;
+  effect: string;
+  visibility: string;
+  cosmeticsVersion: number;
+  updatedAt: number;
+}
+/** Cosmetics eines anderen Spielers aus der Chaos-Cosmetics-API (null = keine API / unbekannt). */
+export async function getRemoteCosmetics(uuid: string): Promise<RemoteCosmetics | null> {
+  return invoke<RemoteCosmetics | null>("get_remote_cosmetics", { uuid });
+}
 export async function syncCosmetics(accountUuid: string): Promise<{ synced: boolean; message: string; remoteCapeId: string }> {
   return invoke("sync_cosmetics", { accountUuid });
 }

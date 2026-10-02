@@ -326,12 +326,37 @@ pub fn export_for_instance(
         }
     }
 
-    // 3. Cache (von der API geladene Capes) bereitstellen
+    // 3. Cache (von der API geladene Capes/Hüte/Effekte) bereitstellen und als Spieler eintragen
     let cache_dest = dir.join("cache");
     fs::create_dir_all(&cache_dest).ok();
     if let Ok(entries) = fs::read_dir(cache_dir()) {
         for e in entries.flatten() {
             let _ = fs::copy(e.path(), cache_dest.join(e.file_name()));
+            let name = e.file_name().to_string_lossy().to_string();
+            if let Some(uuid) = name.strip_suffix(".json") {
+                if players.contains_key(uuid) {
+                    continue;
+                }
+                if let Ok(txt) = fs::read_to_string(e.path()) {
+                    if let Ok(v) = serde_json::from_str::<serde_json::Value>(&txt) {
+                        let mut entry = serde_json::Map::new();
+                        if cache_dir().join(format!("{uuid}.png")).exists() {
+                            entry.insert("cape".into(), serde_json::json!(format!("cache/{uuid}.png")));
+                            if let Some(s) = v.get("sha1").and_then(|s| s.as_str()) {
+                                entry.insert("sha1".into(), serde_json::json!(s));
+                            }
+                        }
+                        for k in ["hat", "effect"] {
+                            if let Some(s) = v.get(k).and_then(|s| s.as_str()).filter(|s| !s.is_empty()) {
+                                entry.insert(k.into(), serde_json::json!(sanitize_id(s)));
+                            }
+                        }
+                        if !entry.is_empty() {
+                            players.insert(uuid.to_string(), serde_json::Value::Object(entry));
+                        }
+                    }
+                }
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 /* Chaos Launcher - Seitenleiste (Navigation + Logo + Account + Version) */
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import {useEffect, useRef, useState } from "react";
+import {NavLink, useLocation, useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Avatar from "@/components/Avatar";
 import { useAccountStore, useStatusStore } from "@/stores/useStore";
@@ -156,7 +156,37 @@ export default function Sidebar() {
   const update = useStatusStore((s) => s.update);
   const running = useStatusStore((s) => s.running);
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [flyoutTop, setFlyoutTop] = useState(120);
+  const extrasBtn = useRef<HTMLButtonElement>(null);
+  const flyoutRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const extrasActive = EXTRAS.some((e) => location.pathname.startsWith(e.to));
+
+  // Flyout schließen bei Navigation, Klick außerhalb oder ESC
+  useEffect(() => {
+    setExtrasOpen(false);
+  }, [location.pathname]);
+  useEffect(() => {
+    if (!extrasOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (flyoutRef.current?.contains(t) || extrasBtn.current?.contains(t)) return;
+      setExtrasOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setExtrasOpen(false);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [extrasOpen]);
+  const toggleExtras = () => {
+    const r = extrasBtn.current?.getBoundingClientRect();
+    if (r) setFlyoutTop(Math.max(8, Math.min(r.top, window.innerHeight - 320)));
+    setExtrasOpen((v) => !v);
+  };
 
   return (
     <aside className="chaos-sidebar">
@@ -175,7 +205,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
-        <button className={"chaos-sidebar-item chaos-sidebar-extras" + (extrasOpen ? " open" : "")} onClick={() => setExtrasOpen((v) => !v)} title={t("nav.extras")}>
+        <button ref={extrasBtn} className={"chaos-sidebar-item chaos-sidebar-extras" + (extrasOpen ? " open" : "") + (extrasActive ? " active" : "")} onClick={toggleExtras} title={t("nav.extras")} aria-expanded={extrasOpen}>
           <span className="chaos-sidebar-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
               <circle cx="5" cy="12" r="2" />
@@ -185,17 +215,18 @@ export default function Sidebar() {
           </span>
           <span className="chaos-sidebar-label">{t("nav.extras")}</span>
         </button>
-        {extrasOpen && (
-          <div className="chaos-sidebar-extras-list">
-            {EXTRAS.map((item) => (
-              <NavLink key={item.to} to={item.to} className={({ isActive }) => "chaos-sidebar-item small" + (isActive ? " active" : "")} title={t(item.key)}>
-                <span className="chaos-sidebar-icon">{item.icon}</span>
-                <span className="chaos-sidebar-label">{t(item.key)}</span>
-              </NavLink>
-            ))}
-          </div>
-        )}
       </nav>
+      {extrasOpen && (
+        <div ref={flyoutRef} className="chaos-sidebar-flyout" style={{ top: flyoutTop }} role="menu">
+          <div className="chaos-sidebar-flyout-head">{t("nav.extras")}</div>
+          {EXTRAS.map((item) => (
+            <NavLink key={item.to} to={item.to} className={({ isActive }) => "chaos-sidebar-flyout-item" + (isActive ? " active" : "")} role="menuitem">
+              <span className="chaos-sidebar-icon">{item.icon}</span>
+              <span>{t(item.key)}</span>
+            </NavLink>
+          ))}
+        </div>
+      )}
 
       <div className="chaos-sidebar-footer">
         <NavLink to="/accounts" className={({ isActive }) => "chaos-sidebar-account" + (isActive ? " active" : "")} title={account ? account.username : t("nav.notLoggedIn")}>

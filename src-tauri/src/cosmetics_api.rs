@@ -51,6 +51,10 @@ pub struct RemoteCosmetics {
     #[serde(default)]
     pub active_cape: Option<RemoteCape>,
     #[serde(default)]
+    pub hat: String,
+    #[serde(default)]
+    pub effect: String,
+    #[serde(default)]
     pub visibility: String,
     #[serde(default)]
     pub cosmetics_version: u32,
@@ -81,10 +85,20 @@ fn base(url: &str) -> Result<String, String> {
     if u.is_empty() {
         return Err("Keine Cosmetics-API konfiguriert.".to_string());
     }
-    if !u.starts_with("https://") {
-        return Err("Die Cosmetics-API muss über HTTPS erreichbar sein.".to_string());
+    if !u.starts_with("https://") && !is_local_http(u) {
+        return Err("Die Cosmetics-API muss über HTTPS erreichbar sein (HTTP nur für localhost/LAN).".to_string());
     }
     Ok(u.to_string())
+}
+
+/// HTTP ist nur für lokale Tests erlaubt (localhost, private Netze).
+fn is_local_http(u: &str) -> bool {
+    let Some(rest) = u.strip_prefix("http://") else { return false };
+    let host = rest.split(['/', ':']).next().unwrap_or("");
+    host == "localhost" || host == "127.0.0.1" || host.starts_with("192.168.") || host.starts_with("10.") || {
+        let mut it = host.split('.');
+        it.next() == Some("172") && it.next().and_then(|s| s.parse::<u8>().ok()).map(|n| (16..=31).contains(&n)).unwrap_or(false)
+    }
 }
 
 /// Prüft, ob die API erreichbar ist.
@@ -223,14 +237,14 @@ pub async fn upload_cape(api_url: &str, token: &str, name: &str, png: Vec<u8>) -
     resp.json::<RemoteCape>().await.map_err(|e| format!("Cape-Upload JSON: {e}"))
 }
 
-/// Setzt das aktive Cape und die Sichtbarkeit in der API.
-pub async fn set_active(api_url: &str, token: &str, uuid: &str, cape_id: Option<&str>, visibility: &str) -> Result<(), String> {
+/// Setzt Cape, Hut, Effekt und Sichtbarkeit in der API.
+pub async fn set_active(api_url: &str, token: &str, uuid: &str, cape_id: Option<&str>, hat: &str, effect: &str, visibility: &str) -> Result<(), String> {
     let b = base(api_url)?;
     let client = http_client()?;
     let resp = client
         .put(format!("{b}/v1/cosmetics/{}", uuid.replace('-', "")))
         .bearer_auth(token)
-        .json(&serde_json::json!({ "activeCape": cape_id, "visibility": visibility }))
+        .json(&serde_json::json!({ "activeCape": cape_id, "hat": hat, "effect": effect, "visibility": visibility }))
         .send()
         .await
         .map_err(|e| format!("Cosmetics setzen: {e}"))?;
@@ -247,14 +261,20 @@ pub async fn cache_player_cape(api_url: &str, uuid: &str) -> Result<Option<std::
         Some(r) => r,
         None => return Ok(None),
     };
-    let cape = match remote.active_cape {
-        Some(c) if !c.url.is_empty() => c,
-        _ => return Ok(None),
-    };
     let dir = crate::cosmetics::cache_dir();
     let uuid_plain = uuid.replace('-', "").to_lowercase();
     let dest = dir.join(format!("{uuid_plain}.png"));
     let meta_path = dir.join(format!("{uuid_plain}.json"));
+    // Hut/Effekt immer in die Meta-Datei (auch ohne Cape), damit der Export sie kennt
+    let _ = std::fs::create_dir_all(&dir);
+    let cape = match remote.active_cape {
+        Some(c) if !c.url.is_empty() => c,
+        _ => {
+            let _ = std::fs::remove_file(&dest);
+            let _ = std::fs::write(&meta_path, serde_json::json!({ "hat": remote.hat, "effect": remote.effect, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string());
+            return Ok(None);
+        }
+    };
     if dest.exists() {
         if let Ok(meta) = std::fs::read_to_string(&meta_path) {
             if let Ok(v) = serde_json::from_str::<serde_json::Value>(&meta) {
@@ -280,7 +300,7 @@ pub async fn cache_player_cape(api_url: &str, uuid: &str) -> Result<Option<std::
     std::fs::write(&dest, &bytes).map_err(|e| format!("Cape-Cache: {e}"))?;
     let _ = std::fs::write(
         &meta_path,
-        serde_json::json!({ "sha1": cape.sha1, "id": cape.id, "cachedAt": crate::system::now_millis() }).to_string(),
+        serde_json::json!({ "sha1": cape.sha1, "id": cape.id, "hat": remote.hat, "effect": remote.effect, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string(),
     );
     Ok(Some(dest))
 }

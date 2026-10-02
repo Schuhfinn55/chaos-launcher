@@ -7,6 +7,7 @@
  * Fehler landen als LaunchError im Dialog.
  * ============================================================ */
 
+import { syncCosmetics } from "@/lib/api/cosmetics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listen, toLaunchError } from "@/lib/bridge";
 import { cancelLaunch, isInstanceRunning, launchInstance, preflightCheck, stopInstance } from "@/lib/api/launcher";
@@ -138,6 +139,11 @@ export function useLauncher(instanceId: string | null | undefined) {
         return false;
       }
       setState((s) => ({ ...s, message: pre.needsDownload ? "Lade fehlende Dateien …" : "Starte Minecraft …" }));
+      // Cosmetics (Cape, Hut, Effekt) vor dem Start veröffentlichen, damit andere sie sehen
+      const acc = useAccountStore.getState().active;
+      if (acc && settings?.cosmeticsApiUrl?.trim()) {
+        await Promise.race([syncCosmetics(acc.uuid), new Promise((r) => setTimeout(r, 8000))]).catch(() => {});
+      }
       await launchInstance(id);
       setState((s) => ({
         ...s,

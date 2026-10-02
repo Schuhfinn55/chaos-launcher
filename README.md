@@ -22,7 +22,7 @@ Der **Minecraft-Client-Launcher für ChaoscraftSMP** – gebaut mit **Tauri 2 (R
 | **News** | Eingebaute News + externe JSON-Quelle (konfigurierbar), Kategorien, Detailansicht |
 | **Einstellungen** | Allgemein (Sprache, Startverhalten, Animationen, Benachrichtigungen), Darstellung (Dark/Light, Akzentfarbe, Transparenz, UI-Skalierung, Hintergründe), Minecraft (Standardversion/-profil, RAM mit System-RAM-Anzeige, JVM, Java-Erkennung & -Download, Vollbild, Auflösung), Cosmetics, **Chaos Client** (Menütaste, Client-Update mit SHA-256-Prüfung, Sync mit dem Ingame-Menü, Open-Source-Lizenzen), Launcher (Auto-Update, Kanal, Download-Limit, Cache, Reparatur, Logs), Discord Rich Presence, Chaoscraft (Server-Adresse, News-URL) |
 | **Fehlerbehandlung** | Strukturierte Fehler mit Grund, Aktionen (Reparieren, Java installieren, Anmelden, Logs, Profil zurücksetzen) und ausklappbaren Details. ErrorBoundary im UI. Crash-Analyse |
-| **Extras (aus dem Onyx Launcher erhalten)** | Client-Module (Ingame-Menü), Welten (Backup/Löschen), Freunde, Musik, Kino |
+| **Extras** | Ausklapp-Menü in der Seitenleiste: Client-Module, Freunde (mit Cape/Hut/Effekt der Freunde aus der Cosmetics-API), Welten (Backup/Löschen), Musik, Kino |
 
 ## 🚀 Entwicklung
 
@@ -82,20 +82,22 @@ src-tauri/src/
 └─ commands/                   accounts, instances, mods, cosmetics, media, worlds, servers_news, system, launching
 ```
 
-## 🔌 Chaos-Cosmetics-API (Schnittstelle)
+## 🔌 Chaos-Cosmetics-API
 
-Optional; Basis-URL in den Einstellungen. Ohne API funktionieren Capes lokal (eigener PC, alle Accounts).
+Über die API sehen sich Chaos-Spieler gegenseitig **Capes, Hüte und Effekte**. Ein fertiger Server liegt in [`chaos-cosmetics-api/`](chaos-cosmetics-api/README.md) (Node.js ≥ 18, keine Abhängigkeiten, `node server.js`). Basis-URL in *Einstellungen → Cosmetics* eintragen; danach synchronisiert der Launcher automatisch beim Ändern und vor jedem Spielstart, der Chaos Client fragt die API für sichtbare Spieler ab (mit Cache). Ohne API funktionieren Cosmetics lokal (eigener PC, alle Accounts).
 
 | Endpunkt | Zweck |
 |---|---|
 | `GET /v1/version` | `{ apiVersion, cosmeticsVersion }` |
 | `POST /v1/auth/challenge` `{uuid,name}` → `{serverId}` | Start des Mojang-Join-Handshakes |
 | `POST /v1/auth/verify` `{uuid,name,serverId}` → `{token,expiresAt}` | API prüft `hasJoined` bei Mojang |
-| `GET /v1/cosmetics/{uuid}` | `{ uuid, name, activeCape:{id,url,sha1,version,kind}, visibility, cosmeticsVersion }` |
-| `PUT /v1/cosmetics/{uuid}` (Bearer) `{activeCape, visibility}` | Aktives Cape setzen |
+| `GET /v1/cosmetics/{uuid}` | `{ uuid, name, activeCape:{id,name,url,sha1,version,kind}, hat, effect, visibility, cosmeticsVersion }` |
+| `POST /v1/cosmetics/bulk` `{uuids}` | mehrere Spieler auf einmal |
+| `PUT /v1/cosmetics/{uuid}` (Bearer) `{activeCape, hat, effect, visibility}` | Eigene Cosmetics setzen |
 | `POST /v1/capes` (Bearer, multipart `file`, `name`) → `RemoteCape` | Cape hochladen |
+| `GET /v1/capes/{id}/texture` | PNG |
 
-Der Microsoft-/Minecraft-Token wird ausschließlich an `sessionserver.mojang.com` gesendet.
+Der Microsoft-/Minecraft-Token wird ausschließlich an `sessionserver.mojang.com` gesendet. HTTPS ist Pflicht (HTTP nur für localhost/LAN-Tests).
 
 ## 🗂 Daten
 

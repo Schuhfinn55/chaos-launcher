@@ -239,6 +239,9 @@ const mocks: Record<string, MockHandler> = {
   async clear_cache() {
     return 0;
   },
+  async get_remote_cosmetics() {
+    return null;
+  },
   async curseforge_status() {
     return { configured: false, ok: false, http: 0, message: "Mock: kein CurseForge-Key." };
   },

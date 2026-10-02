@@ -9,13 +9,17 @@
  *   - Details: Freund-seit, letzter Server, zuletzt gespielt
  * ============================================================ */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFriendStore } from "@/stores/useStore";
 import { PageHeader, EmptyState } from "@/components/PageHeader";
 import { uid, formatDate } from "@/lib/utils";
 import { fetchUuid, avatarUrl } from "@/lib/mojang";
 import { invoke } from "@/lib/bridge";
 import type { Friend } from "@/types";
+import { getRemoteCosmetics, type RemoteCosmetics } from "@/lib/api/cosmetics";
+import { hatById } from "@/lib/builtinHats";
+import { effectById } from "@/lib/builtinEffects";
+import { useSettingsStore } from "@/stores/useStore";
 import "./FriendsPage.css";
 
 const STATUS_META: Record<Friend["status"], { label: string; color: string; order: number }> = {
@@ -23,6 +27,29 @@ const STATUS_META: Record<Friend["status"], { label: string; color: string; orde
   away: { label: "Abwesend", color: "var(--onyx-warning)", order: 1 },
   offline: { label: "Offline", color: "var(--onyx-text-faint)", order: 2 },
 };
+
+function FriendCosmetics({ uuid }: { uuid?: string }) {
+  const apiUrl = useSettingsStore((s) => s.settings?.cosmeticsApiUrl?.trim() ?? "");
+  const [data, setData] = useState<RemoteCosmetics | null | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    if (!uuid || !apiUrl) { setData(null); return; }
+    getRemoteCosmetics(uuid).then((r) => alive && setData(r)).catch(() => alive && setData(null));
+    return () => { alive = false; };
+  }, [uuid, apiUrl]);
+  if (!apiUrl) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics anderer: Chaos-Cosmetics-API in den Einstellungen eintragen.</span>;
+  if (data === undefined) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics werden geladen …</span>;
+  if (!data) return <span className="chaos-faint" style={{ fontSize: 11 }}>Nutzt keinen Chaos Launcher (oder Cosmetics verborgen).</span>;
+  const hat = hatById(data.hat), effect = effectById(data.effect);
+  return (
+    <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
+      <span className="chaos-badge chaos-badge-accent">Chaos-Spieler</span>
+      <span className="chaos-badge">{data.activeCape ? `🧥 ${data.activeCape.name || "Cape"}` : "🧥 kein Cape"}</span>
+      <span className="chaos-badge">{hat ? `${hat.icon} ${hat.name}` : "🎩 kein Hut"}</span>
+      <span className="chaos-badge">{effect ? `${effect.icon} ${effect.name}` : "✨ kein Effekt"}</span>
+    </div>
+  );
+}
 
 export default function FriendsPage() {
   const friends = useFriendStore((s) => s.friends);
@@ -193,6 +220,7 @@ export default function FriendsPage() {
                           </span>
                         </div>
                         {f.note && <span className="onyx-friend-note">{f.note}</span>}
+                        <FriendCosmetics uuid={f.uuid} />
                         <div className="onyx-friend-meta">
                           <span>freund seit {formatDate(f.addedAt)}</span>
                           {f.lastPlayed && (

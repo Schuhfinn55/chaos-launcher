@@ -136,12 +136,12 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     let mut state = cosmetics::load()?;
     let active = cosmetics::active_cape(&state, &accountUuid);
     let token = cosmetics_api::authenticate(&settings.cosmetics_api_url, &account).await?;
-    let visibility = state
+    let (visibility, hat, effect) = state
         .profiles
         .iter()
         .find(|p| p.account_uuid == accountUuid)
-        .map(|p| p.visibility.clone())
-        .unwrap_or_else(|| "everyone".to_string());
+        .map(|p| (p.visibility.clone(), p.hat_id.clone(), p.effect_id.clone()))
+        .unwrap_or_else(|| ("everyone".to_string(), String::new(), String::new()));
 
     let mut remote_id = String::new();
     if let Some(cape) = active {
@@ -158,11 +158,25 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
             cosmetics_api::RemoteCape { id: cape.remote_id.clone(), url: cape.remote_url.clone(), ..Default::default() }
         };
         remote_id = remote.id.clone();
-        cosmetics_api::set_active(&settings.cosmetics_api_url, &token, &accountUuid, Some(&remote.id), &visibility).await?;
+        cosmetics_api::set_active(&settings.cosmetics_api_url, &token, &accountUuid, Some(&remote.id), &hat, &effect, &visibility).await?;
     } else {
-        cosmetics_api::set_active(&settings.cosmetics_api_url, &token, &accountUuid, None, &visibility).await?;
+        cosmetics_api::set_active(&settings.cosmetics_api_url, &token, &accountUuid, None, &hat, &effect, &visibility).await?;
     }
-    Ok(SyncResult { synced: true, message: "Cosmetics synchronisiert.".to_string(), remote_cape_id: remote_id })
+    Ok(SyncResult { synced: true, message: "Cape, Hut und Effekt synchronisiert – andere Chaos-Spieler sehen sie jetzt.".to_string(), remote_cape_id: remote_id })
+}
+
+/// Cosmetics eines anderen Spielers aus der API (für Freunde-/Spieleransichten).
+#[tauri::command]
+pub async fn get_remote_cosmetics(uuid: String) -> Result<Option<cosmetics_api::RemoteCosmetics>, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    if settings.cosmetics_api_url.trim().is_empty() {
+        return Ok(None);
+    }
+    let r = cosmetics_api::fetch_player(&settings.cosmetics_api_url, &uuid).await?;
+    if r.is_some() {
+        let _ = cosmetics_api::cache_player_cape(&settings.cosmetics_api_url, &uuid).await;
+    }
+    Ok(r)
 }
 
 /// Lädt Capes anderer Spieler (z.B. Freunde) in den Cache.
