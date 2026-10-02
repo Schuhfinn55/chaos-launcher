@@ -1,0 +1,19 @@
+.chaos-srv-hero { position: relative; padding: 26px 28px; display: flex; gap: 20px; overflow: hidden; }
+.chaos-srv-hero-glow { position: absolute; inset: -40% auto auto -10%; width: 60%; height: 120%; background: radial-gradient(ellipse, rgba(var(--chaos-accent-rgb), 0.25), transparent 70%); pointer-events: none; }
+.chaos-srv-hero-main { position: relative; display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
+.chaos-srv-hero h2 { font-size: 26px; font-weight: 900; }
+.chaos-srv-state { font-size: 12px; font-weight: 900; letter-spacing: 2px; padding: 3px 10px; border-radius: 999px; }
+.chaos-srv-state.on { color: var(--chaos-success); background: rgba(74, 222, 128, 0.12); }
+.chaos-srv-state.off { color: var(--chaos-danger); background: rgba(248, 113, 113, 0.12); }
+.chaos-srv-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .chaos-srv-grid { grid-template-columns: repeat(2, 1fr); } }
+.chaos-srv-grid > div { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--chaos-bg-0); border: 1px solid var(--chaos-border); border-radius: var(--chaos-radius-sm); min-width: 0; }
+.chaos-srv-grid span { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--chaos-text-faint); }
+.chaos-srv-grid strong { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chaos-srv-favicon { width: 96px; height: 96px; border-radius: 16px; image-rendering: pixelated; border: 1px solid var(--chaos-border-light); align-self: center; position: relative; }
+
+.chaos-srv-add { display: grid; grid-template-columns: 200px 1fr auto; gap: 10px; padding: 14px; margin-bottom: 14px; }
+.chaos-srv-list { display: flex; flex-direction: column; gap: 10px; }
+.chaos-srv-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
+.chaos-srv-item strong { font-size: 14px; }
+.chaos-srv-item-stats { display: flex; gap: 14px; font-size: 12px; color: var(--chaos-text-dim); font-family: var(--chaos-font-mono); }

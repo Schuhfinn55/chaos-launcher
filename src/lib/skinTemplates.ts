@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Skin/Cape-Vorlagen
+ * Chaos Launcher - Skin/Cape-Vorlagen
  *
  * Lädt Standard-Vorlagen (Steve-Skin, Cape), damit der Nutzer
  * im Editor etwas zum Bearbeiten hat.

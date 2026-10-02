@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Globaler Musik-Store
+ * Chaos Launcher - Globaler Musik-Store
  *
  * Hält den Musik-Zustand global, damit die Musik weiterläuft,
  * wenn man den Tab wechselt. Der Player wird in App.tsx gerendert

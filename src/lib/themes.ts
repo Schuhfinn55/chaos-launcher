@@ -1,40 +1,51 @@
 /* ============================================================
- * Onyx Launcher - Theme-System
- *
- * 5 vorgefertigte Theme-Hintergründe + eigene Hochlademöglichkeit.
- * Jedes Theme definiert Hintergrund-Farben/Verlauf und Akzent.
+ * Chaos Launcher - Theme-System (Hintergründe)
+ * Chaos-Rot ist Standard. Weitere Hintergründe und Live-Themes
+ * bleiben wählbar; die Akzentfarbe wird separat in den
+ * Einstellungen gesetzt.
  * ============================================================ */
 
 export interface Theme {
   id: string;
   name: string;
-  /** CSS background-Wert (Verlauf oder Farbe). */
   background: string;
-  /** Akzentfarbe (Hex). */
   accent: string;
-  /** Vorschaubild (kleiner Data-URL-String oder CSS-Verlauf). */
   preview: string;
-  /** Bei eigenen Themes: optionales Hintergrundbild als Data-URL. */
   customImage?: string;
-  /** Ob es ein vorgefertigtes Theme ist (nicht löschbar). */
   builtin: boolean;
-  /** Ob der Hintergrund animiert ist (Live-Hintergrund). */
   animated?: boolean;
-  /** CSS-Klassenname für die Animation (wird auf ein Overlay angewendet). */
   animationClass?: string;
 }
 
-/** Die vorgefertigten Themes (inkl. Live-Hintergründe). */
 export const BUILTIN_THEMES: Theme[] = [
   {
-    id: "onyx",
-    name: "Onyx Cyan",
+    id: "chaos",
+    name: "Chaos Rot",
     background: `
-      radial-gradient(1200px 800px at 80% -10%, rgba(34, 211, 238, 0.08), transparent 60%),
-      radial-gradient(900px 700px at -10% 110%, rgba(8, 145, 178, 0.07), transparent 55%),
-      #06141a`,
-    accent: "#22d3ee",
-    preview: "linear-gradient(135deg, #06141a, #0b2530, #22d3ee)",
+      radial-gradient(1100px 700px at 85% -10%, rgba(225, 29, 46, 0.10), transparent 60%),
+      radial-gradient(900px 700px at -10% 110%, rgba(143, 27, 34, 0.12), transparent 55%),
+      #09090b`,
+    accent: "#e11d2e",
+    preview: "linear-gradient(135deg, #09090b, #3a0d12, #e11d2e)",
+    builtin: true,
+  },
+  {
+    id: "onyx",
+    name: "Pures Schwarz",
+    background: `radial-gradient(900px 600px at 50% -20%, rgba(255, 255, 255, 0.04), transparent 60%), #050506`,
+    accent: "#e11d2e",
+    preview: "linear-gradient(135deg, #050506, #111114, #2a2a30)",
+    builtin: true,
+  },
+  {
+    id: "crimson",
+    name: "Crimson Night",
+    background: `
+      radial-gradient(1200px 800px at 80% -10%, rgba(225, 29, 46, 0.22), transparent 60%),
+      radial-gradient(900px 700px at -10% 110%, rgba(91, 16, 21, 0.35), transparent 55%),
+      #120508`,
+    accent: "#ff3b4e",
+    preview: "linear-gradient(135deg, #120508, #5b1015, #ff3b4e)",
     builtin: true,
   },
   {
@@ -49,28 +60,6 @@ export const BUILTIN_THEMES: Theme[] = [
     builtin: true,
   },
   {
-    id: "sunset",
-    name: "Sunset",
-    background: `
-      radial-gradient(1200px 800px at 80% -10%, rgba(251, 146, 60, 0.10), transparent 60%),
-      radial-gradient(900px 700px at -10% 110%, rgba(220, 38, 38, 0.08), transparent 55%),
-      #1a0e0a`,
-    accent: "#fb923c",
-    preview: "linear-gradient(135deg, #1a0e0a, #451a03, #fb923c)",
-    builtin: true,
-  },
-  {
-    id: "forest",
-    name: "Forest",
-    background: `
-      radial-gradient(1200px 800px at 80% -10%, rgba(74, 222, 128, 0.09), transparent 60%),
-      radial-gradient(900px 700px at -10% 110%, rgba(22, 101, 52, 0.08), transparent 55%),
-      #08130c`,
-    accent: "#4ade80",
-    preview: "linear-gradient(135deg, #08130c, #14532d, #4ade80)",
-    builtin: true,
-  },
-  {
     id: "midnight",
     name: "Midnight",
     background: `
@@ -81,13 +70,23 @@ export const BUILTIN_THEMES: Theme[] = [
     preview: "linear-gradient(135deg, #080b14, #1e3a8a, #60a5fa)",
     builtin: true,
   },
-  // ---------- Live-Hintergründe (animiert) ----------
+  // ---------- Live-Hintergründe ----------
+  {
+    id: "live-ember",
+    name: "🔥 Ember (Live)",
+    background: "#08070a",
+    accent: "#e11d2e",
+    preview: "linear-gradient(135deg, #08070a, #5b1015, #e11d2e, #ff5c6c)",
+    builtin: true,
+    animated: true,
+    animationClass: "chaos-anim-ember",
+  },
   {
     id: "live-aurora",
     name: "🌊 Aurora (Live)",
-    background: "#04101a",
-    accent: "#22d3ee",
-    preview: "linear-gradient(135deg, #04101a, #065f7a, #22d3ee, #7dd3fc)",
+    background: "#08070a",
+    accent: "#e11d2e",
+    preview: "linear-gradient(135deg, #08070a, #8f1b22, #e11d2e, #ff5c6c)",
     builtin: true,
     animated: true,
     animationClass: "onyx-anim-aurora",
@@ -95,26 +94,16 @@ export const BUILTIN_THEMES: Theme[] = [
   {
     id: "live-particles",
     name: "✨ Particles (Live)",
-    background: "#04101a",
+    background: "#08070a",
     accent: "#a78bfa",
-    preview: "linear-gradient(135deg, #04101a, #312e81, #a78bfa, #c4b5fd)",
+    preview: "linear-gradient(135deg, #08070a, #312e81, #a78bfa, #c4b5fd)",
     builtin: true,
     animated: true,
     animationClass: "onyx-anim-particles",
   },
   {
-    id: "live-waves",
-    name: "🌀 Waves (Live)",
-    background: "#04101a",
-    accent: "#4ade80",
-    preview: "linear-gradient(135deg, #04101a, #14532d, #4ade80, #86efac)",
-    builtin: true,
-    animated: true,
-    animationClass: "onyx-anim-waves",
-  },
-  {
     id: "live-matrix",
-    name: "(Matrix Rain (Live)",
+    name: "🟢 Matrix Rain (Live)",
     background: "#000000",
     accent: "#4ade80",
     preview: "linear-gradient(135deg, #000000, #052e16, #4ade80)",

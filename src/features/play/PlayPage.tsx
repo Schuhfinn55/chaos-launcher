@@ -1,336 +1,184 @@
 /* ============================================================
- * Onyx Launcher - "Spielen"-Seite
+ * Chaos Launcher - Spielen
  *
- * Zentrale Anlaufstelle: zeigt das aktive Profil groß an und
- * bietet den Start-Button. Beim Start wird der Download-
- * Fortschritt live angezeigt (Version, Libraries, Assets,
- * client.jar), damit man sieht, was passiert.
+ * Profilauswahl + großer Start-Button + Vorprüfung, Status,
+ * Reparatur, Crash-Analyse und Logs.
  * ============================================================ */
 
 import { useEffect, useState } from "react";
-import { useInstanceStore, useAccountStore } from "@/stores/useStore";
 import { useNavigate } from "react-router-dom";
-import { EmptyState } from "@/components/PageHeader";
+import LaunchPanel from "@/components/LaunchPanel";
 import CrashAnalyzer from "@/components/CrashAnalyzer";
-import { invoke } from "@/lib/bridge";
+import { Empty, PageHead } from "@/components/ui";
+import { useInstanceStore, useStatusStore } from "@/stores/useStore";
+import { checkInstance, getLaunchLog, getMinecraftLog, openPath, repairInstance, formatBytes } from "@/lib/api/launcher";
+import { toast } from "@/stores/toastStore";
+import { useT } from "@/lib/i18n/useT";
+import { formatPlaytime } from "@/lib/utils";
 import "./PlayPage.css";
 
-/** Eine Fortschrittsmeldung vom Rust-Backend. */
-interface Progress {
-  phase: string;
-  message: string;
-  current: number;
-  total: number;
-}
-
-/** Anzeige-Label pro Phase. */
-const PHASE_LABELS: Record<string, string> = {
-  init: "Vorbereitung",
-  version: "Version",
-  libraries: "Bibliotheken",
-  assets: "Spieldateien",
-  client: "Hauptdatei",
-  launching: "Starte Minecraft",
-};
-
-/** Schätzt die Phase anhand der ID für den %-Balken. */
-function phaseOrder(phase: string): number {
-  return ["init", "version", "libraries", "assets", "client", "launching"].indexOf(phase);
-}
-
 export default function PlayPage() {
+  const { t } = useT();
+  const navigate = useNavigate();
   const instances = useInstanceStore((s) => s.instances);
   const activeId = useInstanceStore((s) => s.activeId);
   const setActive = useInstanceStore((s) => s.setActive);
-  const account = useAccountStore((s) => s.active);
-  const navigate = useNavigate();
-
-  const [launching, setLaunching] = useState(false);
-  const [launchMsg, setLaunchMsg] = useState<string | null>(null);
-  const [launchLog, setLaunchLog] = useState<string | null>(null);
-  const [progress, setProgress] = useState<Progress | null>(null);
-  const [phaseHistory, setPhaseHistory] = useState<string>("");
-  const [running, setRunning] = useState(false);
-  const [stopping, setStopping] = useState(false);
-
+  const statusMap = useStatusStore((s) => s.instanceStatus);
+  const setStatus = useStatusStore((s) => s.setInstanceStatus);
   const active = instances.find((i) => i.id === activeId) ?? instances[0] ?? null;
+  const status = active ? statusMap[active.id] : undefined;
+  const [log, setLog] = useState<string | null>(null);
+  const [logKind, setLogKind] = useState<"launch" | "minecraft">("launch");
+  const [repairing, setRepairing] = useState(false);
 
-  // Prüfe periodisch, ob Minecraft läuft
   useEffect(() => {
-    const check = async () => {
-      if (!active) return setRunning(false);
-      try {
-        const r = await invoke<boolean>("is_instance_running", { instanceId: active.id });
-        setRunning(r);
-      } catch {
-        /* Dev-Modus */
-      }
-    };
-    check();
-    const interval = setInterval(check, 2000);
-    return () => clearInterval(interval);
-  }, [active?.id]);
-
-  const handleStop = async () => {
     if (!active) return;
-    setStopping(true);
+    checkInstance(active.id).then(setStatus).catch(() => {});
+  }, [active?.id, active, setStatus]);
+
+  const loadLog = async (kind: "launch" | "minecraft") => {
+    setLogKind(kind);
     try {
-      await invoke("stop_instance", { instanceId: active.id });
-      setRunning(false);
-      setLaunchMsg("Minecraft wurde beendet.");
+      setLog(kind === "launch" ? await getLaunchLog(150) : active ? await getMinecraftLog(active.id, 250) : "");
     } catch (e) {
-      setLaunchMsg("Stoppen fehlgeschlagen: " + String(e));
-    } finally {
-      setStopping(false);
+      setLog(String(e));
     }
   };
 
-  /** Stoppt Minecraft ODER bricht einen laufenden Download ab. */
-  const handleStopOrCancel = async () => {
+  const repair = async () => {
     if (!active) return;
-    if (launching) {
-      // Download läuft → Backend abbrechen + UI zurücksetzen
-      setStopping(true);
-      try {
-        await invoke("cancel_launch");
-      } catch {
-        /* egal */
-      }
-      setLaunching(false);
-      setProgress(null);
-      setPhaseHistory("");
-      setLaunchMsg("Download abgebrochen.");
-    } else {
-      await handleStop();
-    }
-    setStopping(false);
-  };
-
-  // Auf Fortschritts-Events aus dem Rust-Backend lauschen
-  useEffect(() => {
-    let unlisten: (() => void) | null = null;
-    (async () => {
-      try {
-        const { listen } = await import("@tauri-apps/api/event");
-        unlisten = await listen<Progress>("launch://progress", (event) => {
-          const p = event.payload;
-          setProgress(p);
-          // Fortschritts-Historie für die Live-Log-Anzeige
-          const label = PHASE_LABELS[p.phase] ?? p.phase;
-          setPhaseHistory((prev) => prev + `[${label}] ${p.message}\n`);
-        });
-      } catch {
-        // Im reinen Browser-Dev-Modus gibt es keine Events - egal
-      }
-    })();
-    return () => {
-      if (unlisten) unlisten();
-    };
-  }, []);
-
-  const handleLaunch = async () => {
-    if (!active) return;
-    if (!account) {
-      setLaunchMsg("Bitte zuerst unter 'Accounts' einloggen.");
-      return;
-    }
-    setLaunching(true);
-    setLaunchMsg("Starte Minecraft …");
-    setLaunchLog(null);
-    setProgress(null);
-    setPhaseHistory("");
+    setRepairing(true);
     try {
-      await invoke("launch_instance", { instanceId: active.id });
-      setRunning(true);
-      setLaunchMsg("Minecraft wurde gestartet. Viel Spaß! 🎮");
-      setProgress({
-        phase: "done",
-        message: "Fertig!",
-        current: 1,
-        total: 1,
-      });
+      const rep = await repairInstance(active.id);
+      toast.success("Reparatur abgeschlossen", `${rep.removedFiles} entfernt, ${rep.verifiedFiles} geprüft.`);
+      setStatus(await checkInstance(active.id));
     } catch (e) {
-      setLaunchMsg("Start fehlgeschlagen: " + String(e));
+      toast.error("Reparatur fehlgeschlagen", String(e));
     } finally {
-      setLaunching(false);
-      // Immer das Launch-Log abholen (für Diagnose bei Crashs)
-      try {
-        const log = await invoke<string>("get_launch_log");
-        setLaunchLog(log);
-      } catch {
-        /* Log optional */
-      }
+      setRepairing(false);
     }
   };
-
-  // Fortschritts-Prozentsatz schätzen (0–100)
-  const pct = (() => {
-    if (!progress) return 0;
-    if (progress.phase === "done") return 100;
-    const order = phaseOrder(progress.phase);
-    if (order < 0) return 0;
-    // 5 echte Phasen + Start, grobe Gewichtung
-    const baseWeight = order * 18; // init=0, version=18, lib=36, assets=54, client=72, launch=90
-    if (progress.total > 0) {
-      const within = Math.min(progress.current / progress.total, 1) * 16;
-      return Math.min(baseWeight + within, 99);
-    }
-    return Math.min(baseWeight, 99);
-  })();
 
   return (
-    <div className="onyx-content onyx-play">
-      <div className="onyx-play-hero">
-        <div
-          className="onyx-play-card"
-          style={{ background: `linear-gradient(135deg, ${active?.iconColor ?? "#065f7a"}33, transparent)` }}
-        >
-          <h1 className="onyx-logo-text" style={{ fontSize: 42 }}>
-            {active ? active.name : "Onyx Launcher"}
-          </h1>
-          <p className="onyx-play-subtitle">
-            {active ? (
-              <>
-                Minecraft <strong>{active.mcVersion}</strong> ·{" "}
-                <span style={{ textTransform: "capitalize" }}>{active.loader}</span>
-                {active.loaderVersion ? " " + active.loaderVersion : ""} ·{" "}
-                {active.mods.length} Mods
-              </>
-            ) : (
-              "Erstelle ein Profil, um zu starten."
-            )}
-          </p>
-        </div>
+    <div className="onyx-content chaos-play">
+      <PageHead title={t("nav.play")} subtitle="Wähle ein Profil und starte Minecraft. Vor dem Start werden Account, Java, Mods und Dateien geprüft." />
 
-        <div className="onyx-play-buttons">
-          <button
-            className={"onyx-play-launch" + (launching ? " launching" : "")}
-            onClick={handleLaunch}
-            disabled={!active || launching || running}
-          >
-            {launching ? (
-              <>
-                <div className="onyx-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
-                Lädt …
-              </>
-            ) : (
-              <>
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                Spielen
-              </>
-            )}
-          </button>
-
-          {(launching || running || stopping) && (
-            <button
-              className="onyx-play-stop"
-              onClick={handleStopOrCancel}
-              disabled={stopping}
-            >
-              {stopping ? (
-                <>
-                  <div className="onyx-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                  Stoppe …
-                </>
-              ) : launching ? (
-                <>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                    <rect x="6" y="6" width="12" height="12" rx="1.5" />
-                  </svg>
-                  Abbrechen
-                </>
-              ) : (
-                <>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                    <rect x="6" y="6" width="12" height="12" rx="1.5" />
-                  </svg>
-                  Stoppen
-                </>
-              )}
+      {instances.length === 0 ? (
+        <Empty
+          icon="🎮"
+          title="Keine Profile vorhanden"
+          hint="Erstelle dein erstes Profil mit Minecraft-Version und Modloader."
+          action={
+            <button className="chaos-btn chaos-btn-primary" onClick={() => navigate("/profiles")}>
+              {t("home.createProfile")}
             </button>
-          )}
-        </div>
-
-        {/* Crash-Analyse Button (sichtbar wenn nicht laufend) */}
-        {active && !launching && !running && (
-          <CrashAnalyzer instanceId={active.id} instanceName={active.name} />
-        )}
-
-        {launchMsg && <p className="onyx-play-msg">{launchMsg}</p>}
-
-        {/* Live-Download-Fortschritt */}
-        {launching && progress && (
-          <div className="onyx-progress-box">
-            <div className="onyx-progress-header">
-              <span className="onyx-progress-phase">
-                {PHASE_LABELS[progress.phase] ?? progress.phase}
-              </span>
-              <span className="onyx-progress-count">
-                {progress.total > 0
-                  ? `${progress.current} / ${progress.total}`
-                  : ""}
-              </span>
+          }
+        />
+      ) : (
+        <div className="chaos-play-grid">
+          <section className="chaos-card chaos-play-hero" style={{ ["--profile-color" as string]: active?.iconColor ?? "var(--chaos-accent)" }}>
+            <div className="chaos-play-hero-glow" />
+            <div className="chaos-play-hero-head">
+              <div>
+                <h1 className="chaos-play-title">{active?.name}</h1>
+                <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
+                  <span className="chaos-badge chaos-badge-accent">Minecraft {active?.mcVersion}</span>
+                  <span className="chaos-badge" style={{ textTransform: "capitalize" }}>
+                    {active?.loader} {active?.loaderVersion ?? ""}
+                  </span>
+                  <span className="chaos-badge">{active?.mods.filter((m) => m.enabled).length} Mods</span>
+                  <span className="chaos-badge">{active ? (active.ramMb / 1024).toFixed(1) : 0} GB RAM</span>
+                  {active?.playTimeSeconds ? <span className="chaos-badge">⏱ {formatPlaytime(active.playTimeSeconds)}</span> : null}
+                </div>
+              </div>
             </div>
-            <div className="onyx-progress-bar-bg">
-              <div
-                className="onyx-progress-bar-fill"
-                style={{ width: `${pct}%` }}
-              />
+            <LaunchPanel instance={active} size="hero" />
+
+            {/* Status */}
+            {status && (
+              <div className="chaos-play-status">
+                <div className="chaos-play-status-row">
+                  <span className={"chaos-dot " + (status.installed ? "online" : status.neverInstalled ? "pending" : "offline")} />
+                  <strong>{status.installed ? "Profil vollständig installiert" : status.neverInstalled ? "Noch nicht installiert – wird beim ersten Start geladen" : "Dateien fehlen oder sind beschädigt"}</strong>
+                  <span className="chaos-faint chaos-mono" style={{ marginLeft: "auto" }}>
+                    {formatBytes(status.sizeBytes)}
+                  </span>
+                </div>
+                <div className="chaos-play-status-grid">
+                  <span>
+                    Java {status.javaRequired}: <strong className={status.javaFound ? "ok" : "bad"}>{status.javaFound ? `Java ${status.javaFound} gefunden` : "fehlt"}</strong>
+                  </span>
+                  <span>
+                    Bibliotheken: <strong className={status.librariesMissing ? "bad" : "ok"}>{status.librariesTotal - status.librariesMissing}/{status.librariesTotal || "?"}</strong>
+                  </span>
+                  <span>
+                    Spieldateien: <strong className={status.assetsMissing ? "bad" : "ok"}>{status.assetsTotal - status.assetsMissing}/{status.assetsTotal || "?"}</strong>
+                  </span>
+                  <span>
+                    Mods: <strong className={status.modsMissing.length ? "bad" : "ok"}>{status.modsTotal - status.modsMissing.length}/{status.modsTotal}</strong>
+                  </span>
+                </div>
+                {status.problems.length > 0 && !status.installed && !status.neverInstalled && (
+                  <div className="chaos-row chaos-wrap" style={{ gap: 8 }}>
+                    <button className="chaos-btn chaos-btn-sm" disabled={repairing} onClick={repair}>
+                      {repairing ? "Repariere …" : "Dateien reparieren"}
+                    </button>
+                    <span className="chaos-faint" style={{ fontSize: 12 }}>
+                      {status.problems.join(" · ")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="chaos-row chaos-wrap" style={{ gap: 8 }}>
+              {active && <CrashAnalyzer instanceId={active.id} instanceName={active.name} />}
+              <button className="chaos-btn chaos-btn-sm" onClick={() => loadLog("launch")}>
+                Launch-Log
+              </button>
+              <button className="chaos-btn chaos-btn-sm" onClick={() => loadLog("minecraft")}>
+                Minecraft-Log
+              </button>
+              <button className="chaos-btn chaos-btn-sm chaos-btn-ghost" onClick={() => active && openPath(`instance:${active.id}`)}>
+                Ordner öffnen
+              </button>
+              <button className="chaos-btn chaos-btn-sm chaos-btn-ghost" onClick={() => active && openPath(`crash:${active.id}`)}>
+                Crash-Reports
+              </button>
             </div>
-            <p className="onyx-progress-message">{progress.message}</p>
-            {phaseHistory && (
-              <details className="onyx-play-log">
-                <summary>Aktivität anzeigen</summary>
-                <pre>{phaseHistory}</pre>
+            {log !== null && (
+              <details open className="chaos-play-log">
+                <summary>
+                  {logKind === "launch" ? "Launch-Log" : "Minecraft-Log"} <button className="chaos-btn chaos-btn-ghost chaos-btn-sm" onClick={() => setLog(null)}>schließen</button>
+                </summary>
+                <pre>{log}</pre>
               </details>
             )}
-          </div>
-        )}
+          </section>
 
-        {/* Launch-Log nach Abschluss (für Diagnose) */}
-        {!launching && launchLog && (
-          <details className="onyx-play-log">
-            <summary>Launch-Log anzeigen</summary>
-            <pre>{launchLog}</pre>
-          </details>
-        )}
-      </div>
-
-      {/* Profil-Auswahl */}
-      <div className="onyx-play-instances">
-        <h2 className="onyx-play-section-title">Deine Profile</h2>
-        {instances.length === 0 ? (
-          <div className="onyx-card" style={{ padding: 24 }}>
-            <EmptyState
-              title="Keine Profile vorhanden"
-              hint="Erstelle dein erstes Profil, um Minecraft zu starten."
-            />
-            <div style={{ textAlign: "center", marginTop: 12 }}>
-              <button className="onyx-btn onyx-btn-primary" onClick={() => navigate("/instances")}>
-                Profil erstellen
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="onyx-grid">
-            {instances.map((inst) => (
-              <button
-                key={inst.id}
-                className={"onyx-card onyx-play-inst" + (inst.id === active?.id ? " selected" : "")}
-                onClick={() => setActive(inst.id)}
-              >
-                <div className="onyx-play-inst-dot" style={{ background: inst.iconColor }} />
-                <div className="onyx-play-inst-info">
-                  <strong>{inst.name}</strong>
-                  <span>{inst.mcVersion} · {inst.mods.length} Mods</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          <aside className="chaos-play-list">
+            <span className="chaos-section-title">Profile</span>
+            {instances.map((inst) => {
+              const st = statusMap[inst.id];
+              return (
+                <button key={inst.id} className={"chaos-card chaos-play-inst" + (inst.id === active?.id ? " selected" : "")} onClick={() => setActive(inst.id)}>
+                  <span className="chaos-play-inst-dot" style={{ background: inst.iconColor }} />
+                  <span className="chaos-col" style={{ gap: 2, minWidth: 0, flex: 1 }}>
+                    <strong className="chaos-truncate">{inst.name}</strong>
+                    <span className="chaos-faint" style={{ fontSize: 11 }}>
+                      {inst.mcVersion} · {inst.loader} · {inst.mods.length} Mods
+                    </span>
+                  </span>
+                  {st && <span className={"chaos-dot " + (st.installed ? "online" : st.neverInstalled ? "pending" : "offline")} />}
+                </button>
+              );
+            })}
+            <button className="chaos-btn" onClick={() => navigate("/profiles")}>
+              + Profil verwalten
+            </button>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }

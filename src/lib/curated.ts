@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Kuratierte, legitime Mod-Empfehlungen
+ * Chaos Launcher - Kuratierte, legitime Mod-Empfehlungen
  *
  * Diese Liste enthält ausschließlich faire, server-erlaubte Mods.
  * KEINE Cheats (KillAura, Reach, Anti-Knockback etc.) - solche

@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Bild-Zuschneiden (Cropper)
+ * Chaos Launcher - Bild-Zuschneiden (Cropper)
  *
  * Erscheint beim Upload eines Hintergrundbilds. Der Nutzer kann
  * einen Rahmen mit der Maus verschieben und vergrößern, um den

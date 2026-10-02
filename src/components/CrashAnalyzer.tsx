@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Crash-Analyse-Bot
+ * Chaos Launcher - Crash-Analyse-Bot
  *
  * Analysiert das Minecraft-Log eines Profils auf bekannte Crash-
  * Ursachen (Mixin-Fehler, Java-Probleme, Grafiktreiber, etc.)

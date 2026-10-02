@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Ingame-Mod-Menu (NoRisk-Stil)
+ * Chaos Launcher - Ingame-Mod-Menu (Chaos-Stil)
  *
  * Zentriertes, abgerundetes Panel mit Kategorie-Sidebar,
  * Mod-Raster mit Toggle-Switches und Einstellungs-Popouts.
@@ -22,8 +22,7 @@ import packageJson from "../../../package.json";
 const APP_VERSION = packageJson.version;
 import { useModuleStore } from "@/stores/useStore";
 import { useInstanceStore } from "@/stores/useStore";
-import { invoke } from "@/lib/bridge";
-import { uid } from "@/lib/utils";
+import { installBySlug } from "@/lib/api/mods";
 import "./IngamePage.css";
 
 type Tab = "mods" | "profile";
@@ -50,7 +49,6 @@ export default function IngamePage() {
   const instances = useInstanceStore((s) => s.instances);
   const activeId = useInstanceStore((s) => s.activeId);
   const activeInstance = instances.find((i) => i.id === activeId);
-  const updateInstance = useInstanceStore((s) => s.update);
 
   const isSearching = query.trim().length > 0;
   const visibleModules = useMemo(
@@ -78,64 +76,16 @@ export default function IngamePage() {
       return;
     }
     if (activeInstance.loader === "vanilla") {
-      showNotice(
-        "Dieses Profil nutzt Vanilla – ohne Modloader können keine Mods geladen werden. Erstelle ein Fabric-Profil.",
-        "error"
-      );
+      showNotice("Dieses Profil nutzt Vanilla – ohne Modloader können keine Mods geladen werden. Erstelle ein Fabric-Profil.", "error");
       return;
     }
     setInstalling(mod.id);
-    showNotice(`Suche "${mod.title}" auf Modrinth …`);
-    const projectType = mod.projectType ?? "mod";
+    showNotice(`Installiere "${mod.title}" …`);
     try {
-      const results = await invoke<
-        Array<{ id: string; slug?: string; title: string }>
-      >("search_mods", {
-        query: mod.slug,
-        source: "modrinth",
-        projectType,
-      });
-      const project = results.find((r) => r.slug === mod.slug) ?? results[0];
-      if (!project) {
-        showNotice(`"${mod.title}" nicht auf Modrinth gefunden.`, "error");
+      const r = await installBySlug(activeInstance.id, mod.slug, mod.title, mod.projectType ?? "mod", (s) => showNotice(s));
+      if (r.installed.length === 0) {
+        showNotice(`"${mod.title}": ${r.failed.join(", ") || "Installation fehlgeschlagen"}`, "error");
         return;
-      }
-      const files = await invoke<
-        Array<{ fileName: string; url: string; sha1: string; primary: boolean }>
-      >("get_mod_versions", {
-        projectId: project.id,
-        mcVersion: activeInstance.mcVersion,
-        loader: activeInstance.loader,
-      });
-      if (!files || files.length === 0) {
-        showNotice(
-          `Keine Version von "${mod.title}" für MC ${activeInstance.mcVersion} (${activeInstance.loader}) gefunden.`,
-          "error"
-        );
-        return;
-      }
-      const file = files.find((f) => f.primary) ?? files[0];
-      showNotice(`Lade "${file.fileName}" herunter …`);
-      await invoke<string>("download_mod_version", {
-        url: file.url,
-        fileName: file.fileName,
-        sha1: file.sha1,
-      });
-      // Zum Profil hinzufügen, falls noch nicht vorhanden
-      if (!activeInstance.mods.some((m) => m.title === mod.title)) {
-        updateInstance(activeInstance.id, {
-          mods: [
-            ...activeInstance.mods,
-            {
-              id: uid(),
-              title: mod.title,
-              source: "modrinth" as const,
-              fileName: file.fileName,
-              enabled: true,
-              projectType,
-            },
-          ],
-        });
       }
       setInstalled(mod.id, true);
       setEnabled(mod.id, true);
@@ -161,13 +111,13 @@ export default function IngamePage() {
 
   return (
     <div className="onyx-content onyx-ingame-wrap">
-      {/* Zentriertes NoRisk-Stil Panel */}
+      {/* Zentriertes Chaos-Stil Panel */}
       <div className="onyx-norisk">
         {/* ---------- Header ---------- */}
         <div className="onyx-norisk-header">
           <div className="onyx-norisk-brand">
             <span className="onyx-norisk-bolt">⚡</span>
-            <span className="onyx-logo-text onyx-norisk-logo">ONYX</span>
+            <span className="onyx-logo-text onyx-norisk-logo">CHAOS</span>
             <span className="onyx-norisk-version">v{APP_VERSION}</span>
           </div>
 
@@ -279,7 +229,7 @@ export default function IngamePage() {
 
                         {mod.hint && (
                           <p className="onyx-norisk-card-hint">
-                            <span className="onyx-prefix"><strong>[Onyx]</strong></span> {mod.hint}
+                            <span className="onyx-prefix"><strong>[Chaos]</strong></span> {mod.hint}
                           </p>
                         )}
 

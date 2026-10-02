@@ -1,0 +1,24 @@
+.chaos-errdlg { display: flex; gap: 16px; align-items: flex-start; }
+.chaos-errdlg-icon {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 900;
+  background: rgba(248, 113, 113, 0.15); color: var(--chaos-danger);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  box-shadow: 0 0 20px rgba(248, 113, 113, 0.25);
+}
+.chaos-errdlg-body { flex: 1; min-width: 0; }
+.chaos-errdlg-body h3 { font-size: 17px; margin-bottom: 12px; }
+.chaos-errdlg-reason {
+  background: var(--chaos-bg-0); border: 1px solid var(--chaos-border); border-radius: var(--chaos-radius-sm);
+  padding: 10px 14px; margin-bottom: 14px;
+}
+.chaos-errdlg-reason-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--chaos-text-faint); }
+.chaos-errdlg-reason p { margin-top: 4px; font-size: 13px; line-height: 1.5; color: var(--chaos-text); }
+.chaos-errdlg-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.chaos-errdlg-details {
+  margin-top: 14px; max-height: 220px; overflow: auto;
+  background: #000; border: 1px solid var(--chaos-border); border-radius: var(--chaos-radius-sm);
+  padding: 10px 12px; font-family: var(--chaos-font-mono); font-size: 11px; color: var(--chaos-text-dim);
+  white-space: pre-wrap; word-break: break-word; user-select: text;
+}

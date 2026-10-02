@@ -143,3 +143,8 @@
   padding: 7px 12px;
   font-size: 12px;
 }
+
+/* Chaos: inkompatible Treffer leicht abgedunkelt */
+.onyx-modcard.incompatible { opacity: 0.72; }
+.onyx-modcard.incompatible:hover { opacity: 1; }
+.onyx-modcard-tags { display: flex; flex-wrap: wrap; gap: 6px; }

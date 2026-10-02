@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Freunde-Liste (voll funktional)
+ * Chaos Launcher - Freunde-Liste (voll funktional)
  *
  * Features:
  *   - Echte Minecraft-Avatare (via Crafatar/Mojang)

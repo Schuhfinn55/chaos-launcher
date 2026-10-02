@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Mojang/Crafatar-Hilfsfunktionen
+ * Chaos Launcher - Mojang/Crafatar-Hilfsfunktionen
  *
  * Lädt echte Minecraft-Spieler-Avatare und UUIDs nach.
  * Avatar über Crafatar (crafatar.com), UUID über Mojang API.

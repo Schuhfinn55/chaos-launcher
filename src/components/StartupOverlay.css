@@ -1,0 +1,55 @@
+.chaos-startup {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(900px 600px at 50% 30%, rgba(var(--chaos-accent-rgb), 0.16), transparent 60%),
+    var(--chaos-bg-0);
+  transition: opacity 0.35s ease;
+}
+.chaos-startup.fade { opacity: 0; pointer-events: none; }
+.chaos-startup-card {
+  width: 440px;
+  max-width: 92vw;
+  padding: 32px 30px 26px;
+  background: rgba(var(--chaos-bg1-rgb), 0.9);
+  border: 1px solid var(--chaos-border-light);
+  border-radius: 20px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(var(--chaos-accent-rgb), 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: onyx-fade-in 0.4s ease;
+}
+.chaos-startup-logo { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.chaos-startup-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.chaos-startup-step {
+  display: grid;
+  grid-template-columns: 22px 130px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--chaos-text-dim);
+  padding: 6px 10px;
+  border-radius: var(--chaos-radius-sm);
+  background: var(--chaos-bg-0);
+  border: 1px solid var(--chaos-border);
+}
+.chaos-startup-step.ok { color: var(--chaos-text); }
+.chaos-startup-step.ok .chaos-startup-step-icon { color: var(--chaos-success); }
+.chaos-startup-step.warn .chaos-startup-step-icon { color: var(--chaos-warning); }
+.chaos-startup-step.error .chaos-startup-step-icon { color: var(--chaos-danger); }
+.chaos-startup-step.running { border-color: rgba(var(--chaos-accent-rgb), 0.4); }
+.chaos-startup-step-icon { font-weight: 800; text-align: center; display: flex; justify-content: center; }
+.chaos-startup-step-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; font-size: 11px; }
+.chaos-startup-step-detail { font-family: var(--chaos-font-mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.chaos-startup-spinner {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid var(--chaos-border-light); border-top-color: var(--chaos-accent);
+  animation: onyx-spin 0.7s linear infinite; display: inline-block;
+}
+@keyframes onyx-spin { to { transform: rotate(360deg); } }
+.chaos-startup-ascii { text-align: center; }

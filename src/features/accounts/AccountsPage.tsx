@@ -1,20 +1,21 @@
 /* ============================================================
- * Onyx Launcher - Accounts (Microsoft-/Minecraft-Login)
+ * Chaos Launcher - Accounts
  *
- * Zweistufiger Device-Code-Flow:
- *   1. login_start  -> liefert Code + URL, die der Nutzer im
- *      Browser eingibt
- *   2. login_finish -> pollt Microsoft, bis die Bestätigung da
- *      ist, und durchläuft Xbox -> XSTS -> Minecraft -> Profil
+ * Microsoft-Login per Device-Code (kein eigenes Passwortfeld),
+ * mehrere Accounts: hinzufügen, wechseln, entfernen. Tokens
+ * bleiben verschlüsselt im Backend.
  * ============================================================ */
 
 import { useState } from "react";
+import { ConfirmDialog, Empty, PageHead } from "@/components/ui";
+import SkinViewer3D from "@/features/cosmetics/SkinViewer3D";
 import { useAccountStore } from "@/stores/useStore";
 import { invoke } from "@/lib/bridge";
-import { PageHeader, EmptyState } from "@/components/PageHeader";
+import { openUrl } from "@/lib/api/launcher";
+import { toast } from "@/stores/toastStore";
+import type { Account } from "@/types";
 import "./AccountsPage.css";
 
-/** Antwort von login_start. */
 interface DeviceCode {
   userCode: string;
   deviceCode: string;
@@ -27,172 +28,171 @@ interface DeviceCode {
 export default function AccountsPage() {
   const accounts = useAccountStore((s) => s.accounts);
   const active = useAccountStore((s) => s.active);
-  const refreshAccounts = useAccountStore((s) => s.load);
+  const reload = useAccountStore((s) => s.load);
   const setActive = useAccountStore((s) => s.setActive);
+  const remove = useAccountStore((s) => s.remove);
 
   const [phase, setPhase] = useState<"idle" | "pending" | "finishing">("idle");
   const [deviceCode, setDeviceCode] = useState<DeviceCode | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [del, setDel] = useState<Account | null>(null);
+  const [refreshing, setRefreshing] = useState<string | null>(null);
 
-  /** Startet den Login: holt den Device-Code von Microsoft. */
   const startLogin = async () => {
     setPhase("pending");
-    setMsg("Anmelde-Code wird angefordert …");
     try {
       const dc = await invoke<DeviceCode>("login_start");
       setDeviceCode(dc);
-      setMsg("Gib den Code auf der Microsoft-Seite ein.");
-      // Automatisch weiter zum Pollen
-      void finishLogin(dc);
+      setPhase("finishing");
+      try {
+        await openUrl(dc.verificationUri);
+      } catch {
+        /* egal */
+      }
+      const account = await invoke<Account>("login_finish", { deviceCode: dc.deviceCode, interval: dc.interval, expiresIn: dc.expiresIn });
+      await reload();
+      toast.success("Angemeldet", `Willkommen, ${account.username}!`);
     } catch (e) {
-      setMsg("Login-Start fehlgeschlagen: " + String(e));
-      setPhase("idle");
-    }
-  };
-
-  /** Pollt Microsoft und schließt den Flow ab. */
-  const finishLogin = async (dc: DeviceCode) => {
-    setPhase("finishing");
-    setMsg("Warte auf Bestätigung im Browser …");
-    try {
-      const account = await invoke<{
-        uuid: string;
-        username: string;
-        avatarUrl?: string;
-        accessToken?: string;
-        refreshToken?: string;
-      }>("login_finish", {
-        deviceCode: dc.deviceCode,
-        interval: dc.interval,
-        expiresIn: dc.expiresIn,
-      });
-
-      // Account lokal speichern: bestehende Liste laden,
-      // neuen Account (als aktiv) hinzufügen, alle anderen inaktiv.
-      const existing = await invoke<
-        Array<{ uuid: string; active: boolean }>
-      >("get_accounts");
-      const updated = existing.map((a) => ({ ...a, active: false }));
-      updated.push({ ...account, active: true } as never);
-      await invoke("save_accounts", { accounts: updated });
-
-      await refreshAccounts();
-      setMsg(`Eingeloggt als ${account.username} ✓`);
-      setDeviceCode(null);
-      setPhase("idle");
-    } catch (e) {
-      setMsg("Login fehlgeschlagen: " + String(e));
+      toast.error("Login fehlgeschlagen", String(e));
+    } finally {
       setDeviceCode(null);
       setPhase("idle");
     }
   };
 
-  /** Kopiert den Code in die Zwischenablage. */
   const copyCode = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* Clipboard ggf. nicht verfügbar */
+      /* egal */
     }
   };
 
-  /** Öffnet die Verifizierungs-URL im Standardbrowser. */
-  const openVerification = async (url: string) => {
+  const refresh = async (acc: Account) => {
+    setRefreshing(acc.uuid);
     try {
-      const { open } = await import("@tauri-apps/plugin-shell");
-      await open(url);
-    } catch {
-      window.open(url, "_blank");
+      await invoke("login_refresh", { uuid: acc.uuid });
+      await reload();
+      toast.success("Sitzung erneuert", acc.username);
+    } catch (e) {
+      toast.error("Erneuern fehlgeschlagen", String(e));
+    } finally {
+      setRefreshing(null);
     }
+  };
+
+  const expiresIn = (acc: Account) => {
+    if (!acc.mcTokenExpiresAt) return "unbekannt";
+    const s = acc.mcTokenExpiresAt - Math.floor(Date.now() / 1000);
+    if (s <= 0) return "abgelaufen (wird beim Start erneuert)";
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return h > 0 ? `noch ${h} Std. ${m} Min.` : `noch ${m} Min.`;
   };
 
   return (
     <div className="onyx-content">
-      <PageHeader
+      <PageHead
         title="Accounts"
-        subtitle="Melde dich mit deinem Microsoft-Account an, um Minecraft zu spielen."
+        subtitle="Melde dich sicher über Microsoft an. Der Launcher fragt nie nach deinem Passwort – du bestätigst die Anmeldung im Browser. Tokens werden verschlüsselt gespeichert."
         actions={
-          <button
-            className="onyx-btn onyx-btn-primary"
-            onClick={startLogin}
-            disabled={phase !== "idle"}
-          >
-            {phase === "idle" && "+ Mit Microsoft anmelden"}
-            {phase === "pending" && "Code wird geladen …"}
-            {phase === "finishing" && "Warte auf Bestätigung …"}
+          <button className="chaos-btn chaos-btn-primary" onClick={startLogin} disabled={phase !== "idle"}>
+            {phase === "idle" ? "+ Account hinzufügen" : phase === "pending" ? "Code wird geladen …" : "Warte auf Bestätigung …"}
           </button>
         }
       />
 
-      {msg && (
-        <div className="onyx-toast onyx-toast-info" style={{ marginBottom: 14 }}>
-          {msg}
-        </div>
-      )}
-
-      {/* Device-Code-Anzeige während des Logins */}
       {deviceCode && (
-        <div className="onyx-card onyx-devicecode">
-          <p className="onyx-devicecode-title">
-            <span className="onyx-prefix"><strong>[Onyx]</strong></span> Anmelden unter:
-          </p>
-          <button
-            className="onyx-devicecode-url"
-            onClick={() => openVerification(deviceCode.verificationUri)}
-          >
+        <div className="chaos-card chaos-devicecode">
+          <p className="chaos-devicecode-title">Anmelden unter</p>
+          <button className="chaos-devicecode-url" onClick={() => openUrl(deviceCode.verificationUri)}>
             {deviceCode.verificationUri} ↗
           </button>
-          <p className="onyx-devicecode-label">Dann diesen Code eingeben:</p>
-          <button
-            className="onyx-devicecode-code"
-            onClick={() => copyCode(deviceCode.userCode)}
-            title="Klicken zum Kopieren"
-          >
+          <p className="chaos-devicecode-label">Dann diesen Code eingeben:</p>
+          <button className="chaos-devicecode-code" onClick={() => copyCode(deviceCode.userCode)} title="Klicken zum Kopieren">
             {deviceCode.userCode}
-            <span className="onyx-devicecode-copy">{copied ? "Kopiert ✓" : "Kopieren"}</span>
+            <span className="chaos-devicecode-copy">{copied ? "Kopiert ✓" : "Kopieren"}</span>
           </button>
-          {phase === "finishing" && (
-            <p className="onyx-devicecode-wait">
-              <span className="onyx-spinner" style={{ width: 14, height: 14, borderWidth: 2, display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />
-              Warte, bis du den Code bestätigt hast …
-            </p>
-          )}
+          <p className="chaos-devicecode-wait">
+            <span className="onyx-spinner" style={{ width: 14, height: 14, borderWidth: 2, display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />
+            Warte, bis du den Code im Browser bestätigt hast …
+          </p>
         </div>
       )}
 
-      {accounts.length === 0 && !deviceCode ? (
-        <EmptyState
-          title="Kein Account verknüpft"
-          hint="Klicke auf '+ Mit Microsoft anmelden'. Du erhältst einen Code, den du im Browser eingibst."
-        />
-      ) : (
-        accounts.length > 0 && (
-          <div className="onyx-list" style={{ marginTop: deviceCode ? 18 : 0 }}>
-            {accounts.map((acc) => (
-              <div
-                key={acc.uuid}
-                className={"onyx-card onyx-account" + (acc.uuid === active?.uuid ? " active" : "")}
-              >
-                {acc.avatarUrl && <img src={acc.avatarUrl} alt="" className="onyx-account-avatar" />}
-                <div className="onyx-account-info">
-                  <strong>{acc.username}</strong>
-                  <span className="onyx-account-uuid">{acc.uuid}</span>
+      <div className="chaos-acc-layout">
+        <div className="chaos-acc-list">
+          {accounts.length === 0 && !deviceCode ? (
+            <Empty icon="👤" title="Kein Account verknüpft" hint="Klicke auf „Account hinzufügen“. Du erhältst einen Code, den du im Browser bei Microsoft eingibst." />
+          ) : (
+            accounts.map((acc) => {
+              const isActive = acc.uuid === active?.uuid;
+              return (
+                <div key={acc.uuid} className={"chaos-card chaos-acc" + (isActive ? " active" : "")}>
+                  <img src={`https://crafatar.com/avatars/${acc.uuid}?size=64&overlay`} alt="" className="chaos-acc-avatar" onError={(e) => ((e.target as HTMLImageElement).style.visibility = "hidden")} />
+                  <div className="chaos-col" style={{ gap: 3, flex: 1, minWidth: 0 }}>
+                    <div className="chaos-row" style={{ gap: 8 }}>
+                      <strong style={{ fontSize: 15 }}>{acc.username}</strong>
+                      {isActive && <span className="chaos-badge chaos-badge-accent">Aktiv</span>}
+                    </div>
+                    <span className="chaos-faint chaos-mono" style={{ fontSize: 11 }}>
+                      {acc.uuid}
+                    </span>
+                    <span className="chaos-faint" style={{ fontSize: 11 }}>
+                      Sitzung: {expiresIn(acc)}
+                      {acc.canRefresh ? "" : " · kein Refresh-Token"}
+                    </span>
+                  </div>
+                  <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
+                    {!isActive && (
+                      <button className="chaos-btn chaos-btn-sm chaos-btn-primary" onClick={() => setActive(acc.uuid)}>
+                        Wechseln
+                      </button>
+                    )}
+                    <button className="chaos-btn chaos-btn-sm" disabled={refreshing === acc.uuid} onClick={() => refresh(acc)} title="Sitzung erneuern">
+                      {refreshing === acc.uuid ? "…" : "↻"}
+                    </button>
+                    <button className="chaos-btn chaos-btn-sm chaos-btn-danger" onClick={() => setDel(acc)} title="Account entfernen">
+                      Entfernen
+                    </button>
+                  </div>
                 </div>
-                {acc.uuid === active?.uuid ? (
-                  <span className="onyx-badge onyx-badge-cyan">Aktiv</span>
-                ) : (
-                  <button className="onyx-btn" onClick={() => setActive(acc.uuid)}>
-                    Aktivieren
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )
-      )}
+              );
+            })
+          )}
+        </div>
+
+        {active && (
+          <aside className="chaos-card chaos-acc-preview">
+            <SkinViewer3D skinUrl={`https://crafatar.com/skins/${active.uuid}`} width={240} height={320} zoom={0.9} />
+            <strong>{active.username}</strong>
+            <span className="chaos-faint" style={{ fontSize: 12 }}>
+              Aktiver Minecraft-Account
+            </span>
+          </aside>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={!!del}
+        title={`${del?.username} entfernen?`}
+        message="Der Account und seine gespeicherten Tokens werden von diesem Gerät gelöscht. Du kannst dich jederzeit erneut anmelden."
+        confirmLabel="Entfernen"
+        danger
+        onConfirm={async () => {
+          if (!del) return;
+          try {
+            await remove(del.uuid);
+            toast.success("Account entfernt", del.username);
+          } catch (e) {
+            toast.error("Entfernen fehlgeschlagen", String(e));
+          }
+          setDel(null);
+        }}
+        onCancel={() => setDel(null)}
+      />
     </div>
   );
 }

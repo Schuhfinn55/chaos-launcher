@@ -1,42 +1,59 @@
-/* Onyx Launcher - obere Leiste (Logo, Account, Status) */
-import { useAccountStore } from "@/stores/useStore";
+/* Chaos Launcher - obere Leiste (Wortmarke, Status, Account) */
+import { useNavigate } from "react-router-dom";
+import { useAccountStore, useInstanceStore, useStatusStore } from "@/stores/useStore";
+import { useT } from "@/lib/i18n/useT";
+import { APP_VERSION } from "@/lib/config/branding";
 import "./Topbar.css";
 
 export default function Topbar() {
-  const active = useAccountStore((s) => s.active);
+  const { t } = useT();
+  const account = useAccountStore((s) => s.active);
+  const instances = useInstanceStore((s) => s.instances);
+  const activeId = useInstanceStore((s) => s.activeId);
+  const running = useStatusStore((s) => s.running);
+  const update = useStatusStore((s) => s.update);
+  const navigate = useNavigate();
+  const active = instances.find((i) => i.id === activeId);
 
   return (
-    <header className="onyx-topbar">
-      <div className="onyx-topbar-brand">
-        <span className="onyx-logo-text" style={{ fontSize: 20 }}>
-          Onyx
+    <header className="chaos-topbar">
+      <div className="chaos-topbar-brand">
+        <span className="chaos-logo-text chaos-wordmark" style={{ fontSize: 18 }}>
+          Chaos Launcher
         </span>
-        <span className="onyx-topbar-sub">Launcher</span>
+        <span className="chaos-topbar-version">v{APP_VERSION}</span>
       </div>
 
-      <div className="onyx-topbar-spacer" />
+      <div className="chaos-topbar-spacer" />
 
-      <div className="onyx-topbar-account">
-        {active ? (
+      {active && (
+        <button className="chaos-topbar-chip" onClick={() => navigate("/profiles")} title={t("home.selectedProfile")}>
+          <span className="chaos-topbar-chip-dot" style={{ background: active.iconColor }} />
+          <span className="chaos-truncate" style={{ maxWidth: 160 }}>{active.name}</span>
+          <span className="chaos-faint">· {active.mcVersion}</span>
+        </button>
+      )}
+      {running.length > 0 && (
+        <span className="chaos-topbar-chip running" title="Minecraft läuft">
+          <span className="chaos-dot online" /> {t("home.running")}
+        </span>
+      )}
+      {update && (
+        <button className="chaos-topbar-chip update" onClick={() => navigate("/settings?tab=launcher")} title={t("startup.updateAvailable")}>
+          ⬆ v{update.version}
+        </button>
+      )}
+
+      <button className="chaos-topbar-account" onClick={() => navigate("/accounts")}>
+        {account ? (
           <>
-            <img
-              src={active.uuid
-                ? `https://crafatar.com/avatars/${active.uuid}?size=32&overlay`
-                : active.avatarUrl || ""}
-              alt=""
-              className="onyx-topbar-avatar"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            <span className="onyx-topbar-username">{active.username}</span>
+            <img src={`https://crafatar.com/avatars/${account.uuid}?size=32&overlay`} alt="" className="chaos-topbar-avatar" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+            <span className="chaos-topbar-username">{account.username}</span>
           </>
         ) : (
-          <span className="onyx-prefix" style={{ fontSize: 12 }}>
-            <strong>[Onyx]</strong> Nicht eingeloggt
-          </span>
+          <span className="chaos-topbar-login">{t("home.login")}</span>
         )}
-      </div>
+      </button>
     </header>
   );
 }

@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Kino-Modus
+ * Chaos Launcher - Kino-Modus
  *
  * Zeigt den Video-Hintergrund im Vollbild an (ohne Topbar/Content).
  * Nur die Sidebar bleibt sichtbar. Perfekt um z.B. ein Video

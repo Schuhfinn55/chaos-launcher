@@ -1,4 +1,4 @@
-/* Onyx Launcher - Wiederverwendbare UI-Bausteine */
+/* Chaos Launcher - Wiederverwendbare UI-Bausteine */
 import type { ReactNode } from "react";
 
 /** Seitenüberschrift mit Onyx-Prefix-Stil. */

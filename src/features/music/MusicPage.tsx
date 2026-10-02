@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Musik-Seite
+ * Chaos Launcher - Musik-Seite
  *
  * Steuert den globalen MusicStore. Die eigentliche Wiedergabe
  * läuft im persistenten MusicPlayer (App.tsx), damit die Musik

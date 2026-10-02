@@ -1,95 +1,20 @@
-.onyx-account {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-}
-.onyx-account.active {
-  border-color: var(--onyx-cyan);
-}
-.onyx-account-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--onyx-cyan-dark);
-}
-.onyx-account-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.onyx-account-info strong {
-  font-size: 14px;
-}
-.onyx-account-uuid {
-  font-size: 11px;
-  color: var(--onyx-text-faint);
-  font-family: var(--onyx-font-mono);
-}
+.chaos-acc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; align-items: start; }
+@media (max-width: 900px) { .chaos-acc-layout { grid-template-columns: 1fr; } }
+.chaos-acc-list { display: flex; flex-direction: column; gap: 10px; }
+.chaos-acc { display: flex; align-items: center; gap: 16px; padding: 14px 18px; }
+.chaos-acc.active { border-color: var(--chaos-accent); box-shadow: 0 0 16px rgba(var(--chaos-accent-rgb), 0.2); }
+.chaos-acc-avatar { width: 48px; height: 48px; border-radius: 10px; border: 2px solid var(--chaos-accent-dark); image-rendering: pixelated; }
+.chaos-acc-preview { padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 
-/* ---------- Device-Code-Anzeige während des Logins ---------- */
-.onyx-devicecode {
-  padding: 24px;
-  text-align: center;
-  margin-bottom: 18px;
-  background: var(--onyx-bg-1);
+.chaos-devicecode { padding: 24px; text-align: center; margin-bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.chaos-devicecode-title { font-size: 12px; color: var(--chaos-text-dim); text-transform: uppercase; letter-spacing: 1.4px; }
+.chaos-devicecode-url { background: none; border: none; color: var(--chaos-accent-light); font-size: 16px; font-weight: 700; font-family: var(--chaos-font-mono); cursor: pointer; text-decoration: underline; }
+.chaos-devicecode-label { font-size: 12px; color: var(--chaos-text-faint); margin-top: 8px; }
+.chaos-devicecode-code {
+  display: inline-flex; align-items: center; gap: 14px; background: var(--chaos-bg-0); border: 2px dashed var(--chaos-accent-dark);
+  border-radius: var(--chaos-radius); padding: 14px 28px; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: var(--chaos-accent-bright);
+  font-family: var(--chaos-font-mono); cursor: pointer; font-variant-numeric: tabular-nums;
 }
-.onyx-devicecode-title {
-  font-size: 13px;
-  color: var(--onyx-text-dim);
-  margin-bottom: 10px;
-}
-.onyx-devicecode-url {
-  display: inline-block;
-  background: none;
-  border: none;
-  color: var(--onyx-cyan);
-  font-size: 16px;
-  font-weight: 700;
-  font-family: var(--onyx-font-mono);
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 18px;
-  text-decoration: underline;
-}
-.onyx-devicecode-url:hover {
-  color: var(--onyx-cyan-light);
-}
-.onyx-devicecode-label {
-  font-size: 12px;
-  color: var(--onyx-text-faint);
-  margin-bottom: 8px;
-}
-.onyx-devicecode-code {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--onyx-bg-0);
-  border: 2px dashed var(--onyx-cyan-dark);
-  border-radius: var(--onyx-radius);
-  padding: 14px 28px;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 6px;
-  color: var(--onyx-cyan-bright);
-  font-family: var(--onyx-font-mono);
-  cursor: pointer;
-  font-variant-numeric: tabular-nums;
-}
-.onyx-devicecode-code:hover {
-  border-color: var(--onyx-cyan);
-  background: rgba(var(--chaos-accent-rgb), 0.06);
-}
-.onyx-devicecode-copy {
-  font-size: 11px;
-  letter-spacing: 0;
-  color: var(--onyx-text-faint);
-  font-weight: 600;
-}
-.onyx-devicecode-wait {
-  margin-top: 16px;
-  font-size: 13px;
-  color: var(--onyx-cyan-light);
-}
-
+.chaos-devicecode-code:hover { border-color: var(--chaos-accent); background: rgba(var(--chaos-accent-rgb), 0.06); }
+.chaos-devicecode-copy { font-size: 11px; letter-spacing: 0; color: var(--chaos-text-faint); font-weight: 600; }
+.chaos-devicecode-wait { margin-top: 8px; font-size: 13px; color: var(--chaos-accent-light); }

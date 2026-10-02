@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Welten-Verwaltung
+ * Chaos Launcher - Welten-Verwaltung
  *
  * Zeigt alle Welten eines Profils an. Welten können gesichert
  * (Backup als ZIP), gelöscht oder geöffnet werden.

@@ -1,43 +1,69 @@
 /* ============================================================
- * Onyx Launcher - Zustand-Stores
+ * Chaos Launcher - Zustand-Stores
  *
- * Wir nutzen Zustand für schlankes State-Management. Persistenz
- * läuft über das Tauri-Backend (localStorage als Fallback).
+ * Persistenz läuft über das Tauri-Backend (localStorage nur für
+ * UI-Zustand wie aktives Profil, Modul-Zustände).
  * ============================================================ */
 
 import { create } from "zustand";
 import { invoke } from "@/lib/bridge";
 import type {
-  Instance,
   Account,
-  Settings,
+  AppInfo,
+  CosmeticsState,
   Friend,
-  SkinEntry,
-  ModuleStates,
-  ModuleState,
   IngameProfile,
+  Instance,
+  InstanceStatus,
+  ModuleStates,
+  ServerStatus,
+  Settings,
+  SkinEntry,
+  UpdateInfo,
 } from "@/types";
 
-/* -------------------- Profile -------------------- */
+/* -------------------- Profile / Instanzen -------------------- */
+const ACTIVE_KEY = "chaos.activeInstance";
+
 interface InstanceStore {
   instances: Instance[];
   activeId: string | null;
   loading: boolean;
+  loaded: boolean;
   load: () => Promise<void>;
   add: (i: Instance) => Promise<void>;
   update: (id: string, patch: Partial<Instance>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   setActive: (id: string | null) => void;
+  /** Aktives Profil (Fallback: Standard aus Einstellungen, dann zuletzt gespielt). */
+  active: () => Instance | null;
 }
 
 export const useInstanceStore = create<InstanceStore>((set, get) => ({
   instances: [],
-  activeId: null,
+  activeId: localStorage.getItem(ACTIVE_KEY) || localStorage.getItem("onyx.activeInstance") || null,
   loading: false,
+  loaded: false,
   async load() {
     set({ loading: true });
-    const instances = await invoke<Instance[]>("get_instances");
-    set({ instances, loading: false });
+    try {
+      const instances = await invoke<Instance[]>("get_instances");
+      let activeId = get().activeId;
+      if (activeId && !instances.some((i) => i.id === activeId)) activeId = null;
+      if (!activeId) {
+        const settings = useSettingsStore.getState().settings;
+        const def = settings?.defaultInstanceId;
+        if (def && instances.some((i) => i.id === def)) activeId = def;
+      }
+      if (!activeId && instances.length > 0) {
+        const sorted = [...instances].sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0));
+        activeId = sorted[0].id;
+      }
+      set({ instances, activeId, loading: false, loaded: true });
+      if (activeId) localStorage.setItem(ACTIVE_KEY, activeId);
+    } catch {
+      set({ loading: false, loaded: true });
+    }
   },
   async add(instance) {
     const next = [...get().instances, instance];
@@ -45,9 +71,7 @@ export const useInstanceStore = create<InstanceStore>((set, get) => ({
     await invoke("save_instances", { instances: next });
   },
   async update(id, patch) {
-    const next = get().instances.map((i) =>
-      i.id === id ? { ...i, ...patch } : i
-    );
+    const next = get().instances.map((i) => (i.id === id ? { ...i, ...patch } : i));
     set({ instances: next });
     await invoke("save_instances", { instances: next });
   },
@@ -55,10 +79,21 @@ export const useInstanceStore = create<InstanceStore>((set, get) => ({
     const next = get().instances.filter((i) => i.id !== id);
     set({ instances: next });
     await invoke("save_instances", { instances: next });
-    if (get().activeId === id) set({ activeId: null });
+    if (get().activeId === id) {
+      const fallback = next[0]?.id ?? null;
+      set({ activeId: fallback });
+      if (fallback) localStorage.setItem(ACTIVE_KEY, fallback);
+      else localStorage.removeItem(ACTIVE_KEY);
+    }
   },
   setActive(id) {
     set({ activeId: id });
+    if (id) localStorage.setItem(ACTIVE_KEY, id);
+    else localStorage.removeItem(ACTIVE_KEY);
+  },
+  active() {
+    const { instances, activeId } = get();
+    return instances.find((i) => i.id === activeId) ?? null;
   },
 }));
 
@@ -66,25 +101,35 @@ export const useInstanceStore = create<InstanceStore>((set, get) => ({
 interface AccountStore {
   accounts: Account[];
   active: Account | null;
+  loaded: boolean;
   load: () => Promise<void>;
-  setActive: (uuid: string) => void;
+  setActive: (uuid: string) => Promise<void>;
+  remove: (uuid: string) => Promise<void>;
+  applyList: (list: Account[]) => void;
 }
 
-export const useAccountStore = create<AccountStore>((set, get) => ({
+export const useAccountStore = create<AccountStore>((set) => ({
   accounts: [],
   active: null,
+  loaded: false,
   async load() {
-    const accounts = await invoke<Account[]>("get_accounts");
-    const active = accounts.find((a) => a.active) ?? null;
-    set({ accounts, active });
+    try {
+      const accounts = await invoke<Account[]>("get_accounts");
+      set({ accounts, active: accounts.find((a) => a.active) ?? null, loaded: true });
+    } catch {
+      set({ loaded: true });
+    }
   },
-  setActive(uuid) {
-    const accounts = get().accounts.map((a) => ({
-      ...a,
-      active: a.uuid === uuid,
-    }));
-    const active = accounts.find((a) => a.uuid === uuid) ?? null;
-    set({ accounts, active });
+  async setActive(uuid) {
+    const accounts = await invoke<Account[]>("set_active_account", { uuid });
+    set({ accounts, active: accounts.find((a) => a.active) ?? null });
+  },
+  async remove(uuid) {
+    const accounts = await invoke<Account[]>("remove_account", { uuid });
+    set({ accounts, active: accounts.find((a) => a.active) ?? null });
+  },
+  applyList(list) {
+    set({ accounts: list, active: list.find((a) => a.active) ?? null });
   },
 }));
 
@@ -98,8 +143,12 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   settings: null,
   async load() {
-    const settings = await invoke<Settings>("get_settings");
-    set({ settings });
+    try {
+      const settings = await invoke<Settings>("get_settings");
+      set({ settings });
+    } catch {
+      /* Backend nicht erreichbar */
+    }
   },
   async save(patch) {
     const current = get().settings;
@@ -122,8 +171,12 @@ interface FriendStore {
 export const useFriendStore = create<FriendStore>((set, get) => ({
   friends: [],
   async load() {
-    const friends = await invoke<Friend[] | null>("get_friends");
-    set({ friends: friends ?? [] });
+    try {
+      const friends = await invoke<Friend[] | null>("get_friends");
+      set({ friends: friends ?? [] });
+    } catch {
+      /* leer */
+    }
   },
   async add(friend) {
     const next = [...get().friends, friend];
@@ -142,30 +195,28 @@ export const useFriendStore = create<FriendStore>((set, get) => ({
   },
 }));
 
-/* -------------------- Skins / Capes -------------------- */
+/* -------------------- Skins -------------------- */
 interface SkinStore {
   skins: SkinEntry[];
-  /** Aktuell ausgewählter Skin (lokal). */
   activeSkinId: string | null;
-  activeCapeId: string | null;
   load: () => Promise<void>;
   add: (s: SkinEntry) => Promise<void>;
   remove: (id: string) => Promise<void>;
   setActiveSkin: (id: string | null) => void;
-  setActiveCape: (id: string | null) => void;
 }
+
+const SKIN_KEY = "chaos.activeSkinId";
 
 export const useSkinStore = create<SkinStore>((set, get) => ({
   skins: [],
-  activeSkinId: null,
-  activeCapeId: null,
+  activeSkinId: localStorage.getItem(SKIN_KEY) || localStorage.getItem("onyx.activeSkinId") || null,
   async load() {
-    const skins = await invoke<SkinEntry[] | null>("get_skins");
-    set({
-      skins: skins ?? [],
-      activeSkinId: localStorage.getItem("onyx.activeSkinId") || null,
-      activeCapeId: localStorage.getItem("onyx.activeCapeId") || null,
-    });
+    try {
+      const skins = await invoke<SkinEntry[] | null>("get_skins");
+      set({ skins: (skins ?? []).filter((s) => s.type === "skin") });
+    } catch {
+      /* leer */
+    }
   },
   async add(skin) {
     const next = [...get().skins, skin];
@@ -174,41 +225,76 @@ export const useSkinStore = create<SkinStore>((set, get) => ({
   },
   async remove(id) {
     const next = get().skins.filter((s) => s.id !== id);
-    // State sofort aktualisieren (UI reagiert sofort)
-    set({
-      skins: next,
-      activeSkinId: get().activeSkinId === id ? null : get().activeSkinId,
-      activeCapeId: get().activeCapeId === id ? null : get().activeCapeId,
-    });
-    // active IDs in localStorage aktualisieren
-    if (get().activeSkinId === null) localStorage.removeItem("onyx.activeSkinId");
-    if (get().activeCapeId === null) localStorage.removeItem("onyx.activeCapeId");
-    // Persistenz (Fehler werden nicht geworfen, State ist schon aktuell)
+    set({ skins: next, activeSkinId: get().activeSkinId === id ? null : get().activeSkinId });
+    if (get().activeSkinId === null) localStorage.removeItem(SKIN_KEY);
     try {
       await invoke("save_skins", { skins: next });
     } catch (e) {
-      console.error("[Onyx] save_skins fehlgeschlagen:", e);
+      console.error("[Chaos] save_skins fehlgeschlagen:", e);
     }
   },
   setActiveSkin(id) {
     set({ activeSkinId: id });
-    if (id) localStorage.setItem("onyx.activeSkinId", id);
-    else localStorage.removeItem("onyx.activeSkinId");
+    if (id) localStorage.setItem(SKIN_KEY, id);
+    else localStorage.removeItem(SKIN_KEY);
   },
-  setActiveCape(id) {
-    set({ activeCapeId: id });
-    if (id) localStorage.setItem("onyx.activeCapeId", id);
-    else localStorage.removeItem("onyx.activeCapeId");
+}));
+
+/* -------------------- Cosmetics -------------------- */
+interface CosmeticsStore {
+  state: CosmeticsState | null;
+  load: () => Promise<void>;
+  set: (s: CosmeticsState) => void;
+}
+
+export const useCosmeticsStore = create<CosmeticsStore>((set) => ({
+  state: null,
+  async load() {
+    try {
+      const state = await invoke<CosmeticsState>("get_cosmetics");
+      set({ state });
+    } catch {
+      set({ state: { capes: [], profiles: [], version: 1 } });
+    }
   },
+  set(s) {
+    set({ state: s });
+  },
+}));
+
+/* -------------------- Status (Startprüfung, Server, Updates) -------------------- */
+interface StatusStore {
+  appInfo: AppInfo | null;
+  update: UpdateInfo | null;
+  updateChecked: boolean;
+  instanceStatus: Record<string, InstanceStatus>;
+  serverStatus: Record<string, ServerStatus>;
+  running: string[];
+  setAppInfo: (a: AppInfo) => void;
+  setUpdate: (u: UpdateInfo | null) => void;
+  setInstanceStatus: (s: InstanceStatus) => void;
+  setServerStatus: (s: ServerStatus) => void;
+  setRunning: (ids: string[]) => void;
+}
+
+export const useStatusStore = create<StatusStore>((set) => ({
+  appInfo: null,
+  update: null,
+  updateChecked: false,
+  instanceStatus: {},
+  serverStatus: {},
+  running: [],
+  setAppInfo: (appInfo) => set({ appInfo }),
+  setUpdate: (update) => set({ update, updateChecked: true }),
+  setInstanceStatus: (s) => set((st) => ({ instanceStatus: { ...st.instanceStatus, [s.instanceId]: s } })),
+  setServerStatus: (s) => set((st) => ({ serverStatus: { ...st.serverStatus, [`${s.address}:${s.port}`]: s } })),
+  setRunning: (running) => set({ running }),
 }));
 
 /* -------------------- Ingame-Module / Profile -------------------- */
 interface ModuleStore {
-  /** Aktive Modul-Zustände (welche Module an sind + ihre Settings). */
   states: ModuleStates;
-  /** Gespeicherte Ingame-Profile (Preset-Sets). */
   profiles: IngameProfile[];
-  /** Aktuell aktives Profil. */
   activeProfileId: string | null;
   load: () => void;
   setEnabled: (moduleId: string, enabled: boolean) => void;
@@ -220,10 +306,18 @@ interface ModuleStore {
   deleteProfile: (id: string) => void;
 }
 
-const MODULES_KEY = "onyx.moduleStates";
-const PROFILES_KEY = "onyx.ingameProfiles";
-const ACTIVE_PROFILE_KEY = "onyx.activeProfile";
+const MODULES_KEY = "chaos.moduleStates";
+const PROFILES_KEY = "chaos.ingameProfiles";
+const ACTIVE_PROFILE_KEY = "chaos.activeProfile";
 
+function readJson<T>(key: string, legacyKey: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 function persistStates(states: ModuleStates) {
   localStorage.setItem(MODULES_KEY, JSON.stringify(states));
 }
@@ -232,58 +326,31 @@ function persistProfiles(profiles: IngameProfile[]) {
 }
 
 export const useModuleStore = create<ModuleStore>((set, get) => ({
-  states: (() => {
-    try {
-      return JSON.parse(localStorage.getItem(MODULES_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  })(),
-  profiles: (() => {
-    try {
-      return JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  })(),
-  activeProfileId: localStorage.getItem(ACTIVE_PROFILE_KEY) || null,
+  states: readJson<ModuleStates>(MODULES_KEY, "onyx.moduleStates", {}),
+  profiles: readJson<IngameProfile[]>(PROFILES_KEY, "onyx.ingameProfiles", []),
+  activeProfileId: localStorage.getItem(ACTIVE_PROFILE_KEY) || localStorage.getItem("onyx.activeProfile") || null,
   load() {
-    try {
-      const states = JSON.parse(localStorage.getItem(MODULES_KEY) || "{}");
-      const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-      const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || null;
-      set({ states, profiles, activeProfileId });
-    } catch {
-      /* leer */
-    }
+    set({
+      states: readJson<ModuleStates>(MODULES_KEY, "onyx.moduleStates", {}),
+      profiles: readJson<IngameProfile[]>(PROFILES_KEY, "onyx.ingameProfiles", []),
+      activeProfileId: localStorage.getItem(ACTIVE_PROFILE_KEY) || null,
+    });
   },
   setEnabled(moduleId, enabled) {
     const cur = get().states[moduleId] ?? { enabled: false, settings: {} };
-    const next: ModuleStates = {
-      ...get().states,
-      [moduleId]: { ...cur, enabled },
-    };
+    const next: ModuleStates = { ...get().states, [moduleId]: { ...cur, enabled } };
     set({ states: next });
     persistStates(next);
   },
   setInstalled(moduleId, installed) {
     const cur = get().states[moduleId] ?? { enabled: false, settings: {} };
-    const next: ModuleStates = {
-      ...get().states,
-      [moduleId]: { ...cur, installed },
-    };
+    const next: ModuleStates = { ...get().states, [moduleId]: { ...cur, installed } };
     set({ states: next });
     persistStates(next);
   },
   setSetting(moduleId, key, value) {
     const cur = get().states[moduleId] ?? { enabled: false, settings: {} };
-    const next: ModuleStates = {
-      ...get().states,
-      [moduleId]: {
-        ...cur,
-        settings: { ...cur.settings, [key]: value },
-      },
-    };
+    const next: ModuleStates = { ...get().states, [moduleId]: { ...cur, settings: { ...cur.settings, [key]: value } } };
     set({ states: next });
     persistStates(next);
   },
@@ -292,11 +359,7 @@ export const useModuleStore = create<ModuleStore>((set, get) => ({
     persistStates({});
   },
   saveProfile(name) {
-    const profile: IngameProfile = {
-      id: "prof_" + Date.now().toString(36),
-      name,
-      states: { ...get().states },
-    };
+    const profile: IngameProfile = { id: "prof_" + Date.now().toString(36), name, states: { ...get().states } };
     const next = [...get().profiles, profile];
     set({ profiles: next });
     persistProfiles(next);
@@ -304,22 +367,14 @@ export const useModuleStore = create<ModuleStore>((set, get) => ({
   loadProfile(id) {
     const profile = get().profiles.find((p) => p.id === id);
     if (!profile) return;
-    set({
-      states: { ...profile.states },
-      activeProfileId: id,
-    });
+    set({ states: { ...profile.states }, activeProfileId: id });
     persistStates(profile.states);
     localStorage.setItem(ACTIVE_PROFILE_KEY, id);
   },
   deleteProfile(id) {
     const next = get().profiles.filter((p) => p.id !== id);
-    set({
-      profiles: next,
-      activeProfileId: get().activeProfileId === id ? null : get().activeProfileId,
-    });
+    set({ profiles: next, activeProfileId: get().activeProfileId === id ? null : get().activeProfileId });
     persistProfiles(next);
-    if (get().activeProfileId === null) {
-      localStorage.removeItem(ACTIVE_PROFILE_KEY);
-    }
+    if (get().activeProfileId === null) localStorage.removeItem(ACTIVE_PROFILE_KEY);
   },
 }));

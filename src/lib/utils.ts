@@ -1,4 +1,4 @@
-/* Onyx Launcher - kleine Hilfsfunktionen */
+/* Chaos Launcher - kleine Hilfsfunktionen */
 
 /** Erzeugt eine eindeutige ID. */
 export function uid(): string {

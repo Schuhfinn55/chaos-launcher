@@ -1,0 +1,31 @@
+.chaos-cc { display: flex; flex-direction: column; gap: 18px; }
+.chaos-cc-hero { position: relative; padding: 34px 36px; overflow: hidden; border-color: rgba(var(--chaos-accent-rgb), 0.4); }
+.chaos-cc-hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(900px 400px at 10% 0%, rgba(var(--chaos-accent-rgb), 0.3), transparent 60%),
+    radial-gradient(600px 300px at 100% 100%, rgba(var(--chaos-accent-dark-rgb), 0.35), transparent 60%),
+    repeating-linear-gradient(135deg, transparent 0 18px, rgba(255, 255, 255, 0.015) 18px 20px);
+  pointer-events: none;
+}
+.chaos-cc-hero-content { position: relative; display: flex; flex-direction: column; gap: 14px; }
+.chaos-cc-state { font-size: 13px; font-weight: 900; letter-spacing: 2px; }
+.chaos-cc-state.on { color: var(--chaos-success); }
+.chaos-cc-state.off { color: var(--chaos-danger); }
+.chaos-cc-ip {
+  display: inline-flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; width: fit-content;
+  background: var(--chaos-bg-0); border: 1px solid var(--chaos-border-light); border-radius: 999px; font-size: 14px; font-weight: 700;
+}
+.chaos-cc-setup { display: flex; flex-direction: column; gap: 8px; max-width: 520px; }
+
+.chaos-cc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.chaos-cc-card { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.chaos-cc-facts { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chaos-cc-facts li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--chaos-bg-0); border: 1px solid var(--chaos-border); border-radius: var(--chaos-radius-sm); }
+.chaos-cc-facts span { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--chaos-text-faint); }
+.chaos-cc-facts strong { font-size: 13px; }
+.chaos-cc-news { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.chaos-cc-news li { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--chaos-bg-0); border: 1px solid var(--chaos-border); border-radius: var(--chaos-radius-sm); }
+.chaos-cc-news strong { font-size: 13px; }
+.chaos-cc-news span { font-size: 12px; color: var(--chaos-text-dim); line-height: 1.45; }
+.chaos-cc-news em { font-size: 11px; color: var(--chaos-text-faint); font-style: normal; }

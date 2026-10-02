@@ -1,557 +1,470 @@
 /* ============================================================
- * Onyx Launcher - Mod-Suche
+ * Chaos Launcher - Mod-Manager
  *
- * Durchsucht Modrinth (live) und CurseForge (sofern API-Key
- * hinterlegt). Eigene Mods lassen sich per Drag&Drop oder
- * Datei-Auswahl hinzufügen.
+ * Tabs: Installiert · Durchsuchen · Updates. Jede Mod als Karte mit
+ * Version, MC-Version, Loader und Abhängigkeiten. Installation mit
+ * Versionsauswahl und automatischer Abhängigkeitsauflösung.
  * ============================================================ */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { Mod } from "@/types";
-import { invoke } from "@/lib/bridge";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ModCard from "@/components/ModCard";
-import { PageHeader, EmptyState } from "@/components/PageHeader";
-import { useInstanceStore } from "@/stores/useStore";
-import { uid } from "@/lib/utils";
-import type { Instance } from "@/types";
+import { ConfirmDialog, Empty, Modal, PageHead, Skeleton, Tabs, Toggle } from "@/components/ui";
+import { useInstanceStore, useSettingsStore } from "@/stores/useStore";
+import { toast } from "@/stores/toastStore";
+import { invoke } from "@/lib/bridge";
+import { uid, formatDate } from "@/lib/utils";
+import { checkModUpdates, getModVersions, getProjects, installFileToInstance, isCompatible, searchMods } from "@/lib/api/mods";
+import { formatBytes } from "@/lib/api/launcher";
+import type { Instance, InstanceMod, Mod, ModFile, ModUpdate, ProjectType } from "@/types";
+import "./ModsPage.css";
 
-const SOURCE_OPTIONS = [
-  { value: "all", label: "Alle Quellen" },
-  { value: "modrinth", label: "Modrinth" },
-  { value: "curseforge", label: "CurseForge" },
-  { value: "local", label: "Eigene Mods" },
-];
+type Tab = "installed" | "browse" | "updates";
 
-const TYPE_OPTIONS = [
+const TYPE_OPTIONS: { value: ProjectType; label: string }[] = [
   { value: "mod", label: "Mods" },
   { value: "shader", label: "Shader" },
   { value: "resourcepack", label: "Resourcepacks" },
-  { value: "modpack", label: "Modpacks" },
 ];
-
-/** Kategorie-Filter (facets für Modrinth). */
 const CATEGORY_OPTIONS = [
   { value: "", label: "Alle Kategorien" },
-  { value: "performance", label: "⚡ Performance" },
-  { value: "optimization", label: "🚀 Optimierung" },
+  { value: "optimization", label: "⚡ Performance" },
+  { value: "utility", label: "🛠️ Werkzeug" },
+  { value: "adventure", label: "🗺️ Abenteuer" },
   { value: "magic", label: "🔮 Magie" },
   { value: "technology", label: "⚙️ Technik" },
-  { value: "adventure", label: "🗺️ Abenteuer" },
-  { value: "utility", label: "🛠️ Werkzeug" },
   { value: "decoration", label: "🎨 Deko" },
   { value: "storage", label: "📦 Lager" },
   { value: "food", label: "🍖 Essen" },
   { value: "mobs", label: "👾 Mobs" },
-  { value: "armor", label: "🛡️ Rüstung" },
-  { value: "weapons", label: "⚔️ Waffen" },
-  { value: "education", label: "📚 Bildung" },
+  { value: "equipment", label: "🛡️ Ausrüstung" },
+  { value: "worldgen", label: "🌍 Weltgenerierung" },
+  { value: "library", label: "📚 Bibliothek" },
+];
+const SORT_OPTIONS = [
+  { value: "relevance", label: "Relevanz" },
+  { value: "downloads", label: "Downloads" },
+  { value: "follows", label: "Follower" },
+  { value: "newest", label: "Neueste" },
+  { value: "updated", label: "Zuletzt aktualisiert" },
 ];
 
 export default function ModsPage() {
-  const [query, setQuery] = useState("");
-  const [source, setSource] = useState("modrinth");
-  const [projectType, setProjectType] = useState("mod");
-  const [category, setCategory] = useState("");
-  const [mods, setMods] = useState<Mod[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [localMods, setLocalMods] = useState<Mod[]>([]);
-  const [dragOver, setDragOver] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const instances = useInstanceStore((s) => s.instances);
+  const activeId = useInstanceStore((s) => s.activeId);
+  const setActive = useInstanceStore((s) => s.setActive);
+  const update = useInstanceStore((s) => s.update);
+  const settings = useSettingsStore((s) => s.settings);
+  const instance = instances.find((i) => i.id === activeId) ?? null;
 
-  // Debounce für die Live-Suche
+  const [tab, setTab] = useState<Tab>("browse");
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState<ProjectType>("mod");
+  const [category, setCategory] = useState("");
+  const [source, setSource] = useState<"modrinth" | "curseforge" | "all">("modrinth");
+  const [sort, setSort] = useState("relevance");
+  const [onlyCompatible, setOnlyCompatible] = useState(true);
+  const [results, setResults] = useState<Mod[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [versionDialog, setVersionDialog] = useState<{ mod: Mod; files: ModFile[] | null } | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [updates, setUpdates] = useState<ModUpdate[] | null>(null);
+  const [removeMod, setRemoveMod] = useState<InstanceMod | null>(null);
+  const [installedMeta, setInstalledMeta] = useState<Record<string, Mod>>({});
+  const fileInput = useRef<HTMLInputElement>(null);
+  const requestId = useRef(0);
+
+  // Suche (debounced, race-sicher)
   useEffect(() => {
-    if (source === "local") return;
-    const term = query.trim();
-    setLoading(true);
+    if (tab !== "browse") return;
+    const id = ++requestId.current;
+    setResults(null);
     setError(null);
     const t = setTimeout(async () => {
       try {
-        // Bei leerer Suche: leeres Query senden -> Modrinth liefert
-        // die beliebtesten Mods (sortiert nach Downloads).
-        const result = await invoke<Mod[]>("search_mods", {
-          query: term,
+        const r = await searchMods({
+          query: query.trim(),
           source,
-          projectType,
+          projectType: type,
           category,
+          mcVersion: onlyCompatible && instance ? instance.mcVersion : "",
+          loader: onlyCompatible && instance && type === "mod" && instance.loader !== "vanilla" ? instance.loader : "",
+          sort: sort as "relevance",
         });
-        setMods(result);
+        if (id === requestId.current) setResults(r);
       } catch (e) {
-        setError(String(e));
-        setMods([]);
-      } finally {
-        setLoading(false);
+        if (id === requestId.current) {
+          setError(String(e));
+          setResults([]);
+        }
       }
     }, 350);
     return () => clearTimeout(t);
-  }, [query, source, projectType, category]);
+  }, [tab, query, type, category, source, sort, onlyCompatible, instance?.mcVersion, instance?.loader, instance]);
 
-  // Lokale Mods aus dem localStorage-ähnlichen Speicher laden
+  // Metadaten (Icons) für installierte Mods nachladen
   useEffect(() => {
-    if (source !== "local") return;
-    const raw = localStorage.getItem("onyx.localMods");
-    setLocalMods(raw ? JSON.parse(raw) : []);
-  }, [source]);
+    if (!instance) return;
+    const ids = instance.mods.filter((m) => m.projectId && m.source === "modrinth" && !installedMeta[m.projectId]).map((m) => m.projectId!) as string[];
+    if (ids.length === 0) return;
+    getProjects([...new Set(ids)])
+      .then((list) => setInstalledMeta((m) => ({ ...m, ...Object.fromEntries(list.map((p) => [p.id, p])) })))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instance?.id, instance?.mods.length]);
 
-  const handleLocalFiles = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const raw = localStorage.getItem("onyx.localMods");
-    const existing: Mod[] = raw ? JSON.parse(raw) : [];
-    const fileArr = Array.from(files).filter((f) =>
-      f.name.toLowerCase().endsWith(".jar")
-    );
-    const newMods: Mod[] = [];
-    let importOk = 0;
-    let importFail = 0;
-
-    for (const f of fileArr) {
-      try {
-        // Datei als ArrayBuffer lesen und base64-kodieren, dann ans
-        // Backend schicken, das sie im Mod-Cache ablegt.
-        const arrayBuffer = await f.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        // Base64 manuell kodieren (große Dateien)
-        let binary = "";
-        const chunk = 0x8000;
-        for (let i = 0; i < bytes.length; i += chunk) {
-          binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as unknown as number[]);
-        }
-        const base64 = btoa(binary);
-        await invoke<string>("save_local_mod", {
-          fileName: f.name,
-          dataBase64: base64,
-        });
-        importOk++;
-        newMods.push({
-          id: uid(),
-          source: "local" as const,
-          title: f.name.replace(/\.jar$/i, ""),
-          description: "Selbst hinzugefügter Mod (lokal).",
-          author: "Du",
-          downloads: 0,
-          categories: ["local"],
-          projectType: "mod" as const,
-          localFileName: f.name,
-          localPath: f.name,
-        });
-      } catch (e) {
-        importFail++;
-        console.error("Mod-Import fehlgeschlagen:", f.name, e);
-      }
+  const loadUpdates = useCallback(async () => {
+    if (!instance) return;
+    setUpdates(null);
+    try {
+      setUpdates(await checkModUpdates(instance.id));
+    } catch (e) {
+      toast.error("Update-Prüfung fehlgeschlagen", String(e));
+      setUpdates([]);
     }
+  }, [instance]);
+  useEffect(() => {
+    if (tab === "updates") void loadUpdates();
+  }, [tab, loadUpdates]);
 
-    const merged = [...existing, ...newMods];
-    localStorage.setItem("onyx.localMods", JSON.stringify(merged));
-    setLocalMods(merged);
+  const installedProjectIds = useMemo(() => new Set((instance?.mods ?? []).map((m) => m.projectId).filter(Boolean)), [instance]);
 
-    if (importFail > 0) {
-      setNotice(
-        `${importOk} Mod(s) importiert, ${importFail} fehlgeschlagen. Klicke "Hinzufügen" und wähle ein Profil.`
-      );
-    } else {
-      setNotice(
-        `${importOk} Mod(s) importiert und gespeichert. Klicke "Hinzufügen" und wähle ein Profil.`
-      );
-    }
-    setTimeout(() => setNotice(null), 5000);
-  }, []);
-
-  const removeLocalMod = (id: string) => {
-    const next = localMods.filter((m) => m.id !== id);
-    localStorage.setItem("onyx.localMods", JSON.stringify(next));
-    setLocalMods(next);
-  };
-
-  const instances = useInstanceStore((s) => s.instances);
-  const activeInstance = instances.find(
-    (i) => i.id === useInstanceStore.getState().activeId
-  );
-  const update = useInstanceStore((s) => s.update);
-
-  const [downloadingMod, setDownloadingMod] = useState<string | null>(null);
-  // Profil-Auswahl-Dialog: zeigt alle Profile, man wählt das Ziel
-  const [profilePicker, setProfilePicker] = useState<Mod | null>(null);
-  // Versions-Auswahl-Dialog (nach Profil-Auswahl)
-  const [versionDialog, setVersionDialog] = useState<{
-    mod: Mod;
-    instance: Instance;
-    files: Array<{
-      fileName: string;
-      url: string;
-      sha1: string;
-      primary: boolean;
-      sizeBytes: number;
-      versionType?: string;
-    }>;
-  } | null>(null);
-
-  const handleAdd = (mod: Mod) => {
-    // Profil-Auswahl-Dialog öffnen
-    setProfilePicker(mod);
-  };
-
-  /** Nach Profil-Auswahl: Versionen laden oder lokale Mod sofort zuweisen. */
-  const handleProfileSelected = async (mod: Mod, instance: Instance) => {
-    setProfilePicker(null);
-
-    // Lokale Mod: sofort hinzufügen
-    if (mod.source === "local") {
-      const target = instances.find((i) => i.id === instance.id);
-      if (!target) return;
-      update(instance.id, {
-        mods: [
-          ...target.mods,
-          {
-            id: uid(),
-            title: mod.title,
-            source: mod.source,
-            fileName: mod.localFileName ?? `${mod.slug ?? mod.id}.jar`,
-            enabled: true,
-            projectType: mod.projectType,
-          },
-        ],
-      });
-      setNotice(`✓ "${mod.title}" zu "${instance.name}" hinzugefügt.`);
-      setTimeout(() => setNotice(null), 4000);
+  /** Öffnet die Versionsauswahl für eine Mod. */
+  const openVersions = async (mod: Mod) => {
+    if (!instance) {
+      toast.warning("Kein Profil", "Wähle oben ein Profil aus.");
       return;
     }
-
-    // Online-Mod: Versionen für dieses Profil suchen
-    setDownloadingMod(mod.title);
-    setNotice(`Suche Versionen für "${mod.title}" (${instance.mcVersion}, ${instance.loader}) …`);
+    if (mod.projectType === "mod" && instance.loader === "vanilla") {
+      toast.warning("Vanilla-Profil", "Mods brauchen einen Modloader (Fabric/Forge/NeoForge/Quilt).");
+      return;
+    }
+    setVersionDialog({ mod, files: null });
     try {
-      const files = await invoke<
-        Array<{
-          fileName: string;
-          url: string;
-          sha1: string;
-          primary: boolean;
-          sizeBytes: number;
-          versionType?: string;
-        }>
-      >("get_mod_versions", {
-        projectId: mod.id,
-        mcVersion: instance.mcVersion,
-        loader: instance.loader,
-      });
-
-      if (!files || files.length === 0) {
-        setNotice(
-          `Keine Version für "${mod.title}" (MC ${instance.mcVersion}, ${instance.loader}) gefunden.`
-        );
-        setTimeout(() => setNotice(null), 5000);
-        setDownloadingMod(null);
-        return;
-      }
-
-      setVersionDialog({ mod, instance, files });
-      setDownloadingMod(null);
-      setNotice(null);
+      const files = await getModVersions(mod.id, instance.mcVersion, instance.loader, mod.source);
+      setVersionDialog({ mod, files });
     } catch (e) {
-      setNotice(`Fehler: ${String(e)}`);
-      setTimeout(() => setNotice(null), 5000);
-      setDownloadingMod(null);
+      toast.error("Versionen konnten nicht geladen werden", String(e));
+      setVersionDialog(null);
     }
   };
 
-  /** Lädt eine ausgewählte Version herunter und fügt sie zum Profil hinzu. */
-  const downloadSelectedVersion = async (
-    mod: Mod,
-    instance: Instance,
-    file: { fileName: string; url: string; sha1: string }
-  ) => {
+  const install = async (mod: Mod, file: ModFile) => {
+    if (!instance) return;
     setVersionDialog(null);
-    setDownloadingMod(mod.title);
-    setNotice(`Lade "${file.fileName}" herunter …`);
-    try {
-      await invoke<string>("download_mod_version", {
-        url: file.url,
-        fileName: file.fileName,
-        sha1: file.sha1,
-      });
-      const target = instances.find((i) => i.id === instance.id);
-      if (!target) return;
-      update(instance.id, {
-        mods: [
-          ...target.mods,
-          {
-            id: uid(),
-            title: mod.title,
-            source: mod.source,
-            fileName: file.fileName,
-            enabled: true,
-            projectType: mod.projectType,
-          },
-        ],
-      });
-      setNotice(`✓ "${mod.title}" zu "${instance.name}" hinzugefügt.`);
-      setTimeout(() => setNotice(null), 4000);
-    } catch (e) {
-      setNotice(`Download fehlgeschlagen: ${String(e)}`);
-      setTimeout(() => setNotice(null), 5000);
-    } finally {
-      setDownloadingMod(null);
+    setBusy(`Installiere ${mod.title} …`);
+    const r = await installFileToInstance(instance.id, mod, file, (s) => setBusy(s));
+    setBusy(null);
+    if (r.failed.length) toast.warning(`${mod.title} installiert`, `Probleme: ${r.failed.join(", ")}`);
+    else toast.success(`${mod.title} installiert`, r.dependencies.length ? `+ Abhängigkeiten: ${r.dependencies.join(", ")}` : undefined);
+  };
+
+  const applyUpdate = async (u: ModUpdate) => {
+    if (!instance) return;
+    const m = instance.mods.find((x) => x.id === u.modId);
+    if (!m) return;
+    setBusy(`Aktualisiere ${u.title} …`);
+    const r = await installFileToInstance(instance.id, { title: m.title, source: m.source, projectType: m.projectType ?? "mod", iconUrl: m.iconUrl }, u.latest, (s) => setBusy(s));
+    setBusy(null);
+    if (r.failed.length) toast.warning("Update mit Problemen", r.failed.join(", "));
+    else toast.success(`${u.title} aktualisiert`, u.latest.versionNumber);
+    setUpdates((list) => (list ?? []).filter((x) => x.modId !== u.modId));
+  };
+
+  const toggleMod = (m: InstanceMod) => instance && update(instance.id, { mods: instance.mods.map((x) => (x.id === m.id ? { ...x, enabled: !x.enabled } : x)) });
+  const doRemove = async () => {
+    if (!instance || !removeMod) return;
+    await update(instance.id, { mods: instance.mods.filter((x) => x.id !== removeMod.id) });
+    invoke("remove_mod_file", { fileName: removeMod.fileName }).catch(() => {});
+    toast.success("Entfernt", removeMod.title);
+    setRemoveMod(null);
+  };
+
+  /** Lokale Dateien (.jar/.zip) importieren. */
+  const handleLocalFiles = async (files: FileList | null) => {
+    if (!files || !instance) return;
+    for (const f of Array.from(files)) {
+      const lower = f.name.toLowerCase();
+      if (!lower.endsWith(".jar") && !lower.endsWith(".zip")) {
+        toast.warning("Übersprungen", `${f.name} ist keine .jar/.zip-Datei.`);
+        continue;
+      }
+      try {
+        const buf = new Uint8Array(await f.arrayBuffer());
+        let binary = "";
+        for (let i = 0; i < buf.length; i += 0x8000) binary += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + 0x8000)) as unknown as number[]);
+        await invoke("save_local_mod", { fileName: f.name, dataBase64: btoa(binary) });
+        const pt: ProjectType = lower.endsWith(".jar") ? "mod" : type === "shader" ? "shader" : "resourcepack";
+        const entry: InstanceMod = { id: uid(), title: f.name.replace(/\.(jar|zip)$/i, ""), source: "local", fileName: f.name, enabled: true, projectType: pt, installedAt: Date.now() };
+        const cur = useInstanceStore.getState().instances.find((i) => i.id === instance.id)!;
+        await update(instance.id, { mods: [...cur.mods.filter((m) => m.fileName !== f.name), entry] });
+        toast.success("Importiert", f.name);
+      } catch (e) {
+        toast.error("Import fehlgeschlagen", String(e));
+      }
     }
   };
 
-  const displayMods = source === "local" ? localMods : mods;
-  const isAdded = (mod: Mod) =>
-    activeInstance?.mods.some((m) => m.title === mod.title) ?? false;
+  const installed = instance?.mods ?? [];
+  const installedSorted = useMemo(() => [...installed].sort((a, b) => (a.projectType ?? "mod").localeCompare(b.projectType ?? "mod") || a.title.localeCompare(b.title)), [installed]);
 
   return (
     <div className="onyx-content">
-      <PageHeader
+      <PageHead
         title="Mods"
-        subtitle="Durchsuche Modrinth und CurseForge, oder füge eigene .jar-Dateien hinzu."
+        subtitle="Durchsuche Modrinth und CurseForge, installiere Mods, Shader und Resourcepacks pro Profil – mit Versionsauswahl, Abhängigkeiten und Updates."
         actions={
-          <button
-            className="onyx-btn onyx-btn-primary"
-            onClick={() => fileInput.current?.click()}
-          >
-            + Eigene Mods hinzufügen
-          </button>
+          <>
+            <select className="onyx-select" value={instance?.id ?? ""} onChange={(e) => setActive(e.target.value)} title="Profil">
+              {instances.length === 0 && <option value="">Kein Profil</option>}
+              {instances.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name} · {i.mcVersion} · {i.loader}
+                </option>
+              ))}
+            </select>
+            <button className="chaos-btn" onClick={() => fileInput.current?.click()} disabled={!instance}>
+              + Eigene Datei
+            </button>
+          </>
         }
       />
+      <input ref={fileInput} type="file" accept=".jar,.zip" multiple style={{ display: "none" }} onChange={(e) => handleLocalFiles(e.target.files)} />
 
-      <input
-        ref={fileInput}
-        type="file"
-        accept=".jar"
-        multiple
-        style={{ display: "none" }}
-        onChange={(e) => handleLocalFiles(e.target.files)}
-      />
-
-      {notice && <div className="onyx-toast onyx-toast-info" style={{ marginBottom: 14 }}>{notice}</div>}
-      {error && <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>{error}</div>}
-      {source === "curseforge" && (
-        <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>
-          <strong>CurseForge:</strong> Um CurseForge zu nutzen, brauchst du einen eigenen API-Key
-          (kostenlos auf console.curseforge.com). Trage ihn in den Einstellungen ein.
-          <strong> Modrinth hat fast alle Mods und braucht keinen Key!</strong>
-        </div>
-      )}
-      {activeInstance && (
-        <div className="onyx-toast" style={{ marginBottom: 14 }}>
-          <span className="onyx-prefix"><strong>[Onyx]</strong></span>{" "}
-          Aktives Profil: <strong>{activeInstance.name}</strong> ·{" "}
-          {activeInstance.mcVersion} · {activeInstance.loader}
-        </div>
+      {!instance && (
+        <Empty icon="📦" title="Kein Profil ausgewählt" hint="Erstelle oder wähle ein Profil, um Mods zu verwalten." action={<button className="chaos-btn chaos-btn-primary" onClick={() => navigate("/profiles")}>Zu den Profilen</button>} />
       )}
 
-      <div className="onyx-toolbar">
-        <input
-          className="onyx-input"
-          placeholder={source === "local" ? "Lokale Mods (keine Suche)" : "Mods, Shader, Resourcepacks suchen …"}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          disabled={source === "local"}
-        />
-        <select
-          className="onyx-select"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-        >
-          {SOURCE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        {source !== "local" && (
-          <>
-            <select
-              className="onyx-select"
-              value={projectType}
-              onChange={(e) => setProjectType(e.target.value)}
-            >
-              {TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-            <select
-              className="onyx-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </>
-        )}
-      </div>
-
-      {/* Drag&Drop-Bereich nur für lokale Mods */}
-      {source === "local" && (
-        <div
-          className={"onyx-dropzone" + (dragOver ? " over" : "")}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            handleLocalFiles(e.dataTransfer.files);
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" opacity="0.5">
-            <path d="M19 13v6H5v-6H3v8h18v-8zM11 4h2v8.6l3.3-3.3 1.4 1.4L12 16.6 6.3 10.7l1.4-1.4L11 12.6z" />
-          </svg>
-          <p>.jar-Dateien hierher ziehen oder klicken zum Auswählen</p>
-        </div>
-      )}
-
-      {loading ? (
-        <div className="onyx-loading"><div className="onyx-spinner" /></div>
-      ) : displayMods.length === 0 ? (
-        <EmptyState
-          title={source === "local" ? "Noch keine eigenen Mods" : "Suche nach Mods"}
-          hint={source === "local" ? "Ziehe .jar-Dateien hierher." : "Gib oben einen Suchbegriff ein."}
-        />
-      ) : (
-        <div className="onyx-grid">
-          {displayMods.map((mod) =>
-            mod.source === "local" ? (
-              <LocalModCard key={mod.id} mod={mod} onAdd={handleAdd} onRemove={removeLocalMod} />
-            ) : (
-              <ModCard
-                key={mod.id}
-                mod={mod}
-                onAdd={handleAdd}
-                added={isAdded(mod)}
-              />
-            )
+      {instance && (
+        <>
+          <div className="chaos-row" style={{ justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+            <Tabs
+              value={tab}
+              onChange={setTab}
+              items={[
+                { id: "installed", label: "Installiert", badge: installed.length },
+                { id: "browse", label: "Durchsuchen" },
+                { id: "updates", label: "Updates", badge: updates?.length || undefined },
+              ]}
+            />
+            <span className="chaos-badge chaos-badge-accent">
+              {instance.name} · {instance.mcVersion} · {instance.loader}
+            </span>
+          </div>
+          {busy && (
+            <div className="onyx-toast onyx-toast-info chaos-row" style={{ marginBottom: 14 }}>
+              <span className="onyx-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> {busy}
+            </div>
           )}
-        </div>
-      )}
 
-      <ModDropzoneStyles />
-
-      {/* Profil-Auswahl-Dialog (welches Profil?) */}
-      {profilePicker && (
-        <div className="onyx-version-overlay" onClick={() => setProfilePicker(null)}>
-          <div className="onyx-version-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>"{profilePicker.title}" zu Profil hinzufügen</h3>
-            <p className="onyx-version-hint">Wähle das Ziel-Profil:</p>
-            <div className="onyx-version-list">
-              {instances.length === 0 ? (
-                <p className="onyx-version-hint">Keine Profile vorhanden. Erstelle zuerst eines.</p>
-              ) : (
-                instances.map((inst) => (
-                  <button
-                    key={inst.id}
-                    className="onyx-version-item"
-                    onClick={() => handleProfileSelected(profilePicker, inst)}
-                  >
-                    <div className="onyx-version-item-info">
-                      <strong>{inst.name}</strong>
-                      <span>
-                        {inst.mcVersion} · {inst.loader} · {inst.mods.length} Mods
-                      </span>
+          {/* ---------- Installiert ---------- */}
+          {tab === "installed" &&
+            (installedSorted.length === 0 ? (
+              <Empty icon="🧩" title="Noch keine Mods in diesem Profil" hint="Wechsle zu „Durchsuchen“ oder importiere eigene Dateien." action={<button className="chaos-btn chaos-btn-primary" onClick={() => setTab("browse")}>Mods durchsuchen</button>} />
+            ) : (
+              <div className="chaos-installed-list">
+                {installedSorted.map((m) => {
+                  const meta = m.projectId ? installedMeta[m.projectId] : undefined;
+                  const compatible = isCompatible({ gameVersions: m.gameVersions ?? [], loaders: m.loaders ?? [] }, instance, m.projectType ?? "mod");
+                  const upd = updates?.find((u) => u.modId === m.id);
+                  const depTitles = (m.dependencies ?? []).map((d) => installed.find((x) => x.projectId === d)?.title ?? installedMeta[d]?.title ?? d);
+                  return (
+                    <div key={m.id} className={"chaos-card chaos-installed" + (m.enabled ? "" : " disabled") + (compatible ? "" : " incompatible")}>
+                      <div className="chaos-installed-icon">{meta?.iconUrl || m.iconUrl ? <img src={meta?.iconUrl || m.iconUrl} alt="" /> : <span>{m.title.charAt(0).toUpperCase()}</span>}</div>
+                      <div className="chaos-col" style={{ gap: 4, minWidth: 0, flex: 1 }}>
+                        <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
+                          <strong className="chaos-truncate">{m.title}</strong>
+                          <span className="chaos-badge">{m.projectType === "shader" ? "Shader" : m.projectType === "resourcepack" ? "Resourcepack" : "Mod"}</span>
+                          {m.versionNumber && <span className="chaos-badge chaos-badge-accent">{m.versionNumber}</span>}
+                          {(m.gameVersions?.length ?? 0) > 0 && <span className="chaos-badge">MC {m.gameVersions!.slice(0, 3).join(", ")}{m.gameVersions!.length > 3 ? " …" : ""}</span>}
+                          {(m.loaders?.length ?? 0) > 0 && <span className="chaos-badge" style={{ textTransform: "capitalize" }}>{m.loaders!.join(", ")}</span>}
+                          {!compatible && <span className="chaos-badge chaos-badge-danger">⚠ inkompatibel mit {instance.mcVersion}</span>}
+                          {upd && <span className="chaos-badge chaos-badge-warning">Update: {upd.latest.versionNumber}</span>}
+                          {m.source === "local" && <span className="chaos-badge">lokal</span>}
+                        </div>
+                        <span className="chaos-faint chaos-truncate" style={{ fontSize: 11 }}>
+                          {m.fileName}
+                          {m.installedAt ? ` · installiert ${formatDate(m.installedAt)}` : ""}
+                          {depTitles.length > 0 ? ` · benötigt: ${depTitles.join(", ")}` : ""}
+                        </span>
+                      </div>
+                      {upd && (
+                        <button className="chaos-btn chaos-btn-primary chaos-btn-sm" onClick={() => applyUpdate(upd)}>
+                          Update
+                        </button>
+                      )}
+                      <Toggle checked={m.enabled} onChange={() => toggleMod(m)} />
+                      <button className="chaos-btn chaos-btn-sm chaos-btn-danger" onClick={() => setRemoveMod(m)} title="Entfernen">
+                        ✕
+                      </button>
                     </div>
-                    <span className="onyx-version-dl">Hinzufügen</span>
-                  </button>
-                ))
+                  );
+                })}
+              </div>
+            ))}
+
+          {/* ---------- Durchsuchen ---------- */}
+          {tab === "browse" && (
+            <>
+              <div className="chaos-mods-toolbar">
+                <input className="chaos-input" style={{ maxWidth: 360 }} placeholder="Mods, Shader, Resourcepacks suchen …" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <select className="onyx-select" value={type} onChange={(e) => setType(e.target.value as ProjectType)}>
+                  {TYPE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <select className="onyx-select" value={category} onChange={(e) => setCategory(e.target.value)}>
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <select className="onyx-select" value={sort} onChange={(e) => setSort(e.target.value)}>
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <select className="onyx-select" value={source} onChange={(e) => setSource(e.target.value as "modrinth")}>
+                  <option value="modrinth">Modrinth</option>
+                  <option value="curseforge">CurseForge</option>
+                  <option value="all">Beide</option>
+                </select>
+                <label className="chaos-row" style={{ gap: 8, fontSize: 12, whiteSpace: "nowrap" }}>
+                  <Toggle checked={onlyCompatible} onChange={setOnlyCompatible} /> nur passend zu {instance.mcVersion}
+                </label>
+              </div>
+              {source !== "modrinth" && !settings?.curseforgeApiKey && <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>Für CurseForge wird ein API-Key benötigt (Einstellungen → Launcher). Modrinth funktioniert ohne Key.</div>}
+              {error && <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>{error}</div>}
+              {results === null ? (
+                <div className="onyx-grid">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="chaos-card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <Skeleton kind="title" />
+                      <Skeleton kind="text" />
+                      <Skeleton kind="text" style={{ width: "60%" }} />
+                    </div>
+                  ))}
+                </div>
+              ) : results.length === 0 ? (
+                <Empty icon="🔍" title="Keine Treffer" hint="Anderen Suchbegriff oder Filter versuchen." />
+              ) : (
+                <div className="onyx-grid">
+                  {results.map((mod) => (
+                    <ModCard key={`${mod.source}-${mod.id}`} mod={mod} instance={instance} added={installedProjectIds.has(mod.id)} onAdd={openVersions} />
+                  ))}
+                </div>
               )}
-            </div>
-            <button className="onyx-btn" onClick={() => setProfilePicker(null)}>Abbrechen</button>
-          </div>
-        </div>
+            </>
+          )}
+
+          {/* ---------- Updates ---------- */}
+          {tab === "updates" && (
+            <>
+              <div className="chaos-row" style={{ marginBottom: 14, gap: 10 }}>
+                <button className="chaos-btn" onClick={loadUpdates}>
+                  ↻ Erneut prüfen
+                </button>
+                {updates && updates.length > 1 && (
+                  <button
+                    className="chaos-btn chaos-btn-primary"
+                    onClick={async () => {
+                      for (const u of updates) await applyUpdate(u);
+                    }}
+                  >
+                    Alle aktualisieren ({updates.length})
+                  </button>
+                )}
+              </div>
+              {updates === null ? (
+                <div className="chaos-col" style={{ gap: 10 }}>
+                  <Skeleton kind="block" />
+                  <Skeleton kind="block" />
+                </div>
+              ) : updates.length === 0 ? (
+                <Empty icon="✅" title="Alle Mods sind aktuell" hint="Geprüft werden Modrinth-Mods passend zu Version und Loader des Profils." />
+              ) : (
+                <div className="chaos-installed-list">
+                  {updates.map((u) => (
+                    <div key={u.modId} className="chaos-card chaos-installed">
+                      <div className="chaos-col" style={{ gap: 4, flex: 1, minWidth: 0 }}>
+                        <strong>{u.title}</strong>
+                        <span className="chaos-faint" style={{ fontSize: 12 }}>
+                          {u.currentVersion || "unbekannt"} → <strong style={{ color: "var(--chaos-success)" }}>{u.latest.versionNumber}</strong> · {formatBytes(u.latest.sizeBytes)} · {u.latest.datePublished.slice(0, 10)}
+                        </span>
+                      </div>
+                      <button className="chaos-btn chaos-btn-primary chaos-btn-sm" onClick={() => applyUpdate(u)}>
+                        Aktualisieren
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
 
-      {/* Versions-Auswahl-Dialog */}
-      {versionDialog && (
-        <div className="onyx-version-overlay" onClick={() => setVersionDialog(null)}>
-          <div className="onyx-version-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>{versionDialog.mod.title} – Version wählen</h3>
-            <p className="onyx-version-hint">
-              Für {versionDialog.instance.name} ({versionDialog.instance.mcVersion}, {versionDialog.instance.loader})
-            </p>
-            <div className="onyx-version-list">
-              {versionDialog.files.map((f, idx) => (
-                <button
-                  key={idx}
-                  className={"onyx-version-item" + (f.primary ? " primary" : "")}
-                  onClick={() => downloadSelectedVersion(versionDialog.mod, versionDialog.instance, f)}
-                >
-                  <div className="onyx-version-item-info">
-                    <strong>{f.fileName}</strong>
-                    <span>
-                      {(f.sizeBytes / 1024 / 1024).toFixed(1)} MB
-                      {f.versionType ? ` · ${f.versionType}` : ""}
-                      {f.primary ? " · ⭐ Empfohlen" : ""}
-                    </span>
-                  </div>
-                  <span className="onyx-version-dl">Download</span>
-                </button>
-              ))}
-            </div>
-            <button className="onyx-btn" onClick={() => setVersionDialog(null)}>Abbrechen</button>
+      {/* Versionsauswahl */}
+      <Modal open={!!versionDialog} onClose={() => setVersionDialog(null)} title={versionDialog ? `${versionDialog.mod.title} – Version wählen` : ""} hint={instance ? `Für ${instance.name} (${instance.mcVersion}, ${instance.loader}). Benötigte Abhängigkeiten werden automatisch mitinstalliert.` : ""} width={640}>
+        {versionDialog && (versionDialog.files === null ? (
+          <div className="chaos-col" style={{ gap: 8 }}>
+            <Skeleton kind="block" />
+            <Skeleton kind="block" />
           </div>
-        </div>
-      )}
+        ) : versionDialog.files.length === 0 ? (
+          <Empty title="Keine Dateien gefunden" hint="Für diese Mod gibt es keine Version für dein Profil." />
+        ) : (
+          <VersionList files={versionDialog.files} instance={instance!} projectType={versionDialog.mod.projectType} onPick={(f) => install(versionDialog.mod, f)} />
+        ))}
+      </Modal>
+
+      <ConfirmDialog open={!!removeMod} title={`"${removeMod?.title}" entfernen?`} message="Die Mod wird aus dem Profil entfernt. Andere Profile sind nicht betroffen." confirmLabel="Entfernen" danger onConfirm={doRemove} onCancel={() => setRemoveMod(null)} />
     </div>
   );
 }
 
-/* Lokale Styles für die Dropzone (inline, weil nur hier genutzt). */
-function ModDropzoneStyles() {
-  return <style>{`
-    .onyx-dropzone {
-      border: 2px dashed var(--onyx-border-light);
-      border-radius: var(--onyx-radius);
-      padding: 36px;
-      text-align: center;
-      color: var(--onyx-text-dim);
-      margin-bottom: 18px;
-      transition: all 0.15s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .onyx-dropzone.over {
-      border-color: var(--onyx-cyan);
-      background: rgba(var(--chaos-accent-rgb), 0.06);
-    }
-    .onyx-dropzone p { font-size: 13px; }
-  `}</style>;
-}
-
-/* Karten-Variante für lokal hinzugefügte Mods (mit Entfernen-Button). */
-function LocalModCard({ mod, onAdd, onRemove }: { mod: Mod; onAdd: (mod: Mod) => void; onRemove: (id: string) => void }) {
+function VersionList({ files, instance, projectType, onPick }: { files: ModFile[]; instance: Instance; projectType: ProjectType; onPick: (f: ModFile) => void }) {
+  const [showAll, setShowAll] = useState(false);
+  const compatible = files.filter((f) => isCompatible(f, instance, projectType));
+  const list = showAll ? files : compatible.length > 0 ? compatible : files;
   return (
-    <div className="onyx-card onyx-modcard">
-      <div className="onyx-modcard-top">
-        <div className="onyx-modcard-icon">
-          <span className="onyx-modcard-icon-fallback">
-            {mod.title.charAt(0).toUpperCase()}
-          </span>
-        </div>
-        <div className="onyx-modcard-meta">
-          <h3 className="onyx-modcard-title" title={mod.title}>{mod.title}</h3>
-          <span className="onyx-modcard-author">lokale Datei</span>
-        </div>
-        <span className="onyx-badge onyx-badge-cyan onyx-modcard-source">Lokal</span>
-      </div>
-      <p className="onyx-modcard-desc">{mod.localFileName}</p>
-      <div className="onyx-modcard-bottom">
-        <span className="onyx-modcard-dl">lokale Mod</span>
-        <button
-          className="onyx-btn onyx-btn-primary"
-          onClick={() => onAdd(mod)}
-        >
-          + Hinzufügen
+    <div className="chaos-col" style={{ gap: 8 }}>
+      {list.slice(0, 30).map((f) => {
+        const ok = isCompatible(f, instance, projectType);
+        const required = f.dependencies.filter((d) => d.dependencyType === "required").length;
+        return (
+          <button key={f.versionId + f.fileName} className={"chaos-version-item" + (ok ? "" : " incompatible")} onClick={() => onPick(f)}>
+            <div className="chaos-col" style={{ gap: 3, minWidth: 0, flex: 1 }}>
+              <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
+                <strong>{f.versionNumber || f.versionName}</strong>
+                <span className={"chaos-badge " + (f.versionType === "release" ? "chaos-badge-success" : f.versionType === "beta" ? "chaos-badge-warning" : "chaos-badge-danger")}>{f.versionType}</span>
+                {f.primary && <span className="chaos-badge chaos-badge-accent">empfohlen</span>}
+                {!ok && <span className="chaos-badge chaos-badge-danger">inkompatibel</span>}
+              </div>
+              <span className="chaos-faint chaos-truncate" style={{ fontSize: 11 }}>
+                {f.fileName} · {formatBytes(f.sizeBytes)} · {f.datePublished.slice(0, 10)}
+              </span>
+              <span className="chaos-faint" style={{ fontSize: 11 }}>
+                MC {f.gameVersions.slice(0, 6).join(", ")}
+                {f.gameVersions.length > 6 ? " …" : ""} · {f.loaders.join(", ") || "—"}
+                {required > 0 ? ` · ${required} Abhängigkeit${required > 1 ? "en" : ""}` : ""}
+              </span>
+            </div>
+            <span className="chaos-btn chaos-btn-primary chaos-btn-sm">Installieren</span>
+          </button>
+        );
+      })}
+      {!showAll && compatible.length > 0 && compatible.length < files.length && (
+        <button className="chaos-btn chaos-btn-ghost chaos-btn-sm" onClick={() => setShowAll(true)}>
+          Auch {files.length - compatible.length} inkompatible Versionen anzeigen
         </button>
-        <button
-          className="onyx-btn onyx-btn-danger"
-          onClick={() => onRemove(mod.id)}
-        >
-          Entfernen
-        </button>
-      </div>
+      )}
     </div>
   );
 }

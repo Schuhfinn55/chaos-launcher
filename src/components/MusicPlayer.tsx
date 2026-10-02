@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Globaler MusicPlayer
+ * Chaos Launcher - Globaler MusicPlayer
  *
  * Wird in App.tsx gerendert (persistent). Spielt lokale Musik über
  * ein verstecktes <audio>-Element ab, und YouTube über ein verstecktes

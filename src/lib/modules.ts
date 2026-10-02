@@ -1,5 +1,5 @@
 /* ============================================================
- * Onyx Launcher - Modul-Definitionen (NoRisk-Stil)
+ * Chaos Launcher - Modul-Definitionen (Chaos-Stil)
  *
  * Definiert alle Module für das Ingame-Menü. Jedes Modul ist
  * entweder eine echte installierbare Mod (slug gesetzt) oder
@@ -47,7 +47,7 @@ export interface OnyxModule {
   hint?: string;
 }
 
-/* ---------- Kategorien (NoRisk-Stil Sidebar) ---------- */
+/* ---------- Kategorien (Chaos-Stil Sidebar) ---------- */
 export const MODULE_CATEGORIES: {
   id: ModuleCategory;
   label: string;
