@@ -14,8 +14,8 @@ import { useInstanceStore, useSettingsStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import { invoke } from "@/lib/bridge";
 import { uid, formatDate } from "@/lib/utils";
-import { checkModUpdates, getModVersions, getProjects, installFileToInstance, isCompatible, searchMods } from "@/lib/api/mods";
-import { formatBytes } from "@/lib/api/launcher";
+import { checkModUpdates, getModVersions, getProjects, installFileToInstance, isCompatible, searchMods, curseforgeStatus, CURSEFORGE_CONSOLE_URL, type CfStatus } from "@/lib/api/mods";
+import { formatBytes, openUrl } from "@/lib/api/launcher";
 import type { Instance, InstanceMod, Mod, ModFile, ModUpdate, ProjectType } from "@/types";
 import "./ModsPage.css";
 
@@ -59,6 +59,11 @@ export default function ModsPage() {
   const instance = instances.find((i) => i.id === activeId) ?? null;
 
   const [tab, setTab] = useState<Tab>("browse");
+  const [cfStatus, setCfStatus] = useState<CfStatus | null>(null);
+  useEffect(() => {
+    if (tab !== "browse") return;
+    curseforgeStatus().then(setCfStatus).catch(() => setCfStatus(null));
+  }, [tab, settings?.curseforgeApiKey]);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<ProjectType>("mod");
   const [category, setCategory] = useState("");
@@ -339,6 +344,19 @@ export default function ModsPage() {
                   <Toggle checked={onlyCompatible} onChange={setOnlyCompatible} /> nur passend zu {instance.mcVersion}
                 </label>
               </div>
+              {source !== "modrinth" && cfStatus && !cfStatus.ok && (
+                <div className="onyx-toast onyx-toast-warn chaos-row chaos-wrap" style={{ marginBottom: 14, gap: 10, alignItems: "center" }}>
+                  <span style={{ flex: 1 }}>
+                    <strong>CurseForge:</strong> {cfStatus.message}
+                  </span>
+                  <button className="chaos-btn chaos-btn-sm" onClick={() => openUrl(CURSEFORGE_CONSOLE_URL)}>
+                    Key holen ↗
+                  </button>
+                  <button className="chaos-btn chaos-btn-sm" onClick={() => (window.location.hash = "#/settings?tab=launcher")}>
+                    Einstellungen
+                  </button>
+                </div>
+              )}
               {error && <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>{error}</div>}
               {results === null ? (
                 <div className="onyx-grid">

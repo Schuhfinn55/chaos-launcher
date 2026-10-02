@@ -239,6 +239,9 @@ const mocks: Record<string, MockHandler> = {
   async clear_cache() {
     return 0;
   },
+  async curseforge_status() {
+    return { configured: false, ok: false, http: 0, message: "Mock: kein CurseForge-Key." };
+  },
   async get_player_skin() {
     throw new Error("Mock: kein Sessionserver");
   },

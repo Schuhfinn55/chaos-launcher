@@ -16,6 +16,18 @@ export async function searchMods(params: SearchParams): Promise<Mod[]> {
   return invoke<Mod[]>("search_mods", { params });
 }
 
+export interface CfStatus {
+  configured: boolean;
+  ok: boolean;
+  http: number;
+  message: string;
+}
+export const CURSEFORGE_CONSOLE_URL = "https://console.curseforge.com/";
+/** Prüft den hinterlegten CurseForge-Key. */
+export async function curseforgeStatus(): Promise<CfStatus> {
+  return invoke<CfStatus>("curseforge_status");
+}
+
 export async function getProjects(ids: string[]): Promise<Mod[]> {
   if (ids.length === 0) return [];
   return invoke<Mod[]>("get_projects", { ids });

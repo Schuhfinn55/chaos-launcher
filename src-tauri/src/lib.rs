@@ -111,6 +111,7 @@ pub fn run() {
             commands::instances::instance_size,
             // Mods
             commands::mods::search_mods,
+            commands::mods::curseforge_status,
             commands::mods::get_projects,
             commands::mods::get_mod_versions,
             commands::mods::get_all_mod_versions,

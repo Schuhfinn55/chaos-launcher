@@ -17,6 +17,7 @@ import { uid } from "@/lib/utils";
 import { CHAOSCRAFT } from "@/lib/config/chaoscraft";
 import { checkForUpdates, clearCache, detectJava, downloadJava, getCacheInfo, getMemoryInfo, getVersionsDetailed, installUpdate, openPath, openUrl, repairInstance, formatBytes } from "@/lib/api/launcher";
 import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize } from "@/lib/api/cosmetics";
+import { curseforgeStatus, CURSEFORGE_CONSOLE_URL, type CfStatus } from "@/lib/api/mods";
 import type { CacheInfo, CustomTheme, JavaInfo, MemoryInfo, Settings, UpdateInfo, VersionInfo } from "@/types";
 import "./SettingsPage.css";
 
@@ -429,7 +430,10 @@ function Launcher({ s, set }: P) {
   const [checking, setChecking] = useState(false);
   const [installing, setInstalling] = useState<string | null>(null);
   const [updProgress, setUpdProgress] = useState<{ message: string; done: number; total: number } | null>(null);
+  const [cfStatus, setCfStatus] = useState<CfStatus | null>(null);
+  const [cfTesting, setCfTesting] = useState(false);
   useEffect(() => {
+    curseforgeStatus().then(setCfStatus).catch(() => {});
     getCacheInfo().then(setCache).catch(() => {});
     let un: (() => void) | null = null;
     listen<{ message: string; done: number; total: number }>("update://progress", setUpdProgress).then((u) => (un = u));
@@ -542,9 +546,21 @@ function Launcher({ s, set }: P) {
           </div>
         </label>
         <label className="chaos-field" style={{ marginTop: 12 }}>
-          <span>CurseForge-API-Key (optional, für CurseForge-Suche & -Downloads)</span>
+          <span>CurseForge-API-Key (für CurseForge-Suche & -Downloads; Modrinth braucht keinen)</span>
           <input className="chaos-input" type="password" value={s.curseforgeApiKey} onChange={(e) => set({ curseforgeApiKey: e.target.value })} placeholder="$2a$10$… bleibt nur lokal" />
         </label>
+        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 8, alignItems: "center" }}>
+          <button className="chaos-btn chaos-btn-sm" disabled={cfTesting} onClick={async () => { setCfTesting(true); try { setCfStatus(await curseforgeStatus()); } finally { setCfTesting(false); } }}>
+            {cfTesting ? "Prüfe …" : "Key testen"}
+          </button>
+          <button className="chaos-btn chaos-btn-sm chaos-btn-ghost" onClick={() => openUrl(CURSEFORGE_CONSOLE_URL)}>
+            Kostenlosen Key holen ↗
+          </button>
+          {cfStatus && <span className={"chaos-badge " + (cfStatus.ok ? "chaos-badge-success" : "chaos-badge-warning")}>{cfStatus.ok ? "Verbunden" : cfStatus.configured ? `Abgelehnt (HTTP ${cfStatus.http})` : "Kein Key"}</span>}
+        </div>
+        <p className="chaos-faint" style={{ fontSize: 12, marginTop: 6 }}>
+          So geht's: console.curseforge.com → mit CurseForge/Overwolf-Account anmelden → „API Keys“ → Key kopieren und oben einfügen. Der Key wird nur lokal gespeichert.
+        </p>
       </Section>
       <Section title="Cache & Wartung">
         {cache && (

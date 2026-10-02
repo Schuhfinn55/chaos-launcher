@@ -238,6 +238,44 @@ pub async fn get_modrinth_projects(ids: &[String]) -> Result<Vec<ModEntry>, Stri
 
 /* ----------------------- CurseForge ----------------------- */
 
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CfStatus {
+    pub configured: bool,
+    pub ok: bool,
+    pub http: u16,
+    pub message: String,
+}
+
+fn cf_http_error(code: u16) -> String {
+    match code {
+        401 | 403 => format!("CurseForge lehnt den API-Key ab (HTTP {code}). Hole einen kostenlosen Key unter console.curseforge.com und trage ihn in den Einstellungen ein."),
+        429 => "CurseForge: zu viele Anfragen (HTTP 429) – bitte kurz warten.".to_string(),
+        _ => format!("CurseForge HTTP {code}"),
+    }
+}
+
+/// Testet den Key gegen /v1/games.
+pub async fn curseforge_status(key: &str) -> CfStatus {
+    if key.is_empty() {
+        return CfStatus { configured: false, ok: false, http: 0, message: "Kein CurseForge-API-Key hinterlegt – es wird nur Modrinth durchsucht.".to_string() };
+    }
+    let Ok(client) = http_client() else {
+        return CfStatus { configured: true, ok: false, http: 0, message: "HTTP-Client-Fehler".to_string() };
+    };
+    match client.get(format!("{CURSEFORGE_BASE}/games")).header("x-api-key", key).send().await {
+        Ok(resp) => {
+            let code = resp.status().as_u16();
+            if resp.status().is_success() {
+                CfStatus { configured: true, ok: true, http: code, message: "CurseForge verbunden.".to_string() }
+            } else {
+                CfStatus { configured: true, ok: false, http: code, message: cf_http_error(code) }
+            }
+        }
+        Err(e) => CfStatus { configured: true, ok: false, http: 0, message: format!("CurseForge nicht erreichbar: {e}") },
+    }
+}
+
 #[derive(Deserialize)]
 struct CfSearchResponse {
     data: Vec<CfMod>,
@@ -343,7 +381,7 @@ async fn search_curseforge(params: SearchParams, api_key: &str) -> Result<Vec<Mo
         .await
         .map_err(|e| format!("CurseForge-Anfrage fehlgeschlagen: {e}"))?;
     if !resp.status().is_success() {
-        return Err(format!("CurseForge HTTP {} - API-Key korrekt?", resp.status()));
+        return Err(cf_http_error(resp.status().as_u16()));
     }
     let body: CfSearchResponse = resp.json().await.map_err(|e| format!("CurseForge-Antwort ungültig: {e}"))?;
     Ok(body

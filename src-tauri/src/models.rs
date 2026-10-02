@@ -310,7 +310,7 @@ fn default_min_ram() -> u32 {
     2048
 }
 /// Standard-CurseForge-API-Key des Chaos Launchers (in den Einstellungen überschreibbar).
-pub const DEFAULT_CURSEFORGE_KEY: &str = "$2a$10$bAv3oW6KGFJEBYopqG.0H.hgPmo4N5qkOQtAYvAULU6g/v2Qc2x3y";
+pub const DEFAULT_CURSEFORGE_KEY: &str = "";
 
 fn default_cf_key() -> String {
     DEFAULT_CURSEFORGE_KEY.to_string()
