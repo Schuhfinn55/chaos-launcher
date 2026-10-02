@@ -239,6 +239,15 @@ const mocks: Record<string, MockHandler> = {
   async clear_cache() {
     return 0;
   },
+  async cosmetics_server_status() {
+    return { running: false, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: 0, error: "" };
+  },
+  async cosmetics_server_start() {
+    return { running: true, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: Date.now(), error: "" };
+  },
+  async cosmetics_server_stop() {
+    return { running: false, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: 0, error: "" };
+  },
   async get_remote_cosmetics() {
     return null;
   },

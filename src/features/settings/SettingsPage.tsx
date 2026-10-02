@@ -16,9 +16,9 @@ import { BUILTIN_THEMES } from "@/lib/themes";
 import { uid } from "@/lib/utils";
 import { CHAOSCRAFT } from "@/lib/config/chaoscraft";
 import { checkForUpdates, clearCache, detectJava, downloadJava, getCacheInfo, getMemoryInfo, getVersionsDetailed, installUpdate, openPath, openUrl, repairInstance, formatBytes } from "@/lib/api/launcher";
-import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize } from "@/lib/api/cosmetics";
+import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize, apiInfo, cosmeticsServerStart, cosmeticsServerStatus, cosmeticsServerStop, type CosmeticsServerStatus } from "@/lib/api/cosmetics";
 import { curseforgeStatus, CURSEFORGE_CONSOLE_URL, type CfStatus } from "@/lib/api/mods";
-import type { CacheInfo, CustomTheme, JavaInfo, MemoryInfo, Settings, UpdateInfo, VersionInfo } from "@/types";
+import type { CacheInfo, CustomTheme, JavaInfo, MemoryInfo, Settings, UpdateInfo, VersionInfo, CosmeticsApiInfo } from "@/types";
 import "./SettingsPage.css";
 
 type Cat = "general" | "display" | "minecraft" | "cosmetics" | "client" | "launcher" | "discord" | "chaoscraft";
@@ -384,8 +384,12 @@ function MinecraftCat({ s, set }: P) {
 /* ---------------- Cosmetics ---------------- */
 function Cosmetics({ s, set }: P) {
   const [size, setSize] = useState<number | null>(null);
+  const [srv, setSrv] = useState<CosmeticsServerStatus | null>(null);
+  const [apiState, setApiState] = useState<CosmeticsApiInfo | null>(null);
+  const [apiTesting, setApiTesting] = useState(false);
   useEffect(() => {
     cosmeticsCacheSize().then(setSize).catch(() => {});
+    cosmeticsServerStatus().then(setSrv).catch(() => {});
   }, []);
   return (
     <>
@@ -395,8 +399,68 @@ function Cosmetics({ s, set }: P) {
         <Toggle checked={s.showOtherCapes !== false} onChange={(v) => set({ showOtherCapes: v })} label="Fremde Capes anzeigen" description="Capes anderer Chaos-Launcher-Spieler über die Cosmetics-API laden." />
         <Toggle checked={s.autoLoadCapes !== false} onChange={(v) => set({ autoLoadCapes: v })} label="Eigene Capes automatisch laden" description="Aktives Cape beim Start automatisch bereitstellen." />
       </Section>
-      <Section title="Chaos-Cosmetics-API" desc="Optional. Über die API sehen sich Chaos-Spieler gegenseitig. Die Anmeldung läuft über den Mojang-Session-Handshake – dein Microsoft-Token wird nie an die API gesendet.">
-        <input className="chaos-input chaos-mono" value={s.cosmeticsApiUrl ?? ""} onChange={(e) => set({ cosmeticsApiUrl: e.target.value })} placeholder="https://cosmetics.chaoscraftsmp.de" />
+      <Section title="Cosmetics anderer Spieler sehen" desc="Damit sich Chaos-Spieler gegenseitig Capes, Hüte und Effekte sehen, braucht es eine gemeinsame Cosmetics-API. Entweder startet EIN Spieler (z. B. du als Server-Betreiber) den eingebauten Server hier im Launcher, oder ihr nutzt einen gehosteten Server (chaos-cosmetics-api). Alle anderen tragen nur die Adresse ein.">
+        <Toggle
+          checked={!!s.cosmeticsServerEnabled}
+          onChange={async (v) => {
+            set({ cosmeticsServerEnabled: v });
+            try {
+              if (v) {
+                const st = await cosmeticsServerStart(s.cosmeticsServerPort ?? 8787);
+                setSrv(st);
+                set({ cosmeticsServerEnabled: true, cosmeticsApiUrl: `http://127.0.0.1:${st.port}`, cosmeticsApiAllowHttp: true });
+                toast.success("Cosmetics-Server läuft", `Freunde tragen ein: ${st.publicUrl}`);
+              } else {
+                setSrv(await cosmeticsServerStop());
+                toast.info("Cosmetics-Server gestoppt");
+              }
+            } catch (e) {
+              set({ cosmeticsServerEnabled: false });
+              toast.error("Cosmetics-Server konnte nicht starten", String(e));
+            }
+          }}
+          label="Eingebauten Cosmetics-Server auf diesem PC starten"
+          description="Startet automatisch mit dem Launcher. Benötigt eine Portfreigabe (TCP) im Router auf diesen PC, damit Freunde von außen zugreifen können."
+        />
+        <div className="chaos-row chaos-wrap" style={{ gap: 10, marginTop: 10, alignItems: "flex-end" }}>
+          <label className="chaos-field" style={{ width: 120 }}>
+            <span>Port</span>
+            <input className="chaos-input chaos-mono" type="number" min={1024} max={65535} value={s.cosmeticsServerPort ?? 8787} onChange={(e) => set({ cosmeticsServerPort: Number(e.target.value) || 8787 })} />
+          </label>
+          <label className="chaos-field" style={{ flex: 1, minWidth: 260 }}>
+            <span>Öffentliche Adresse (für Freunde)</span>
+            <input className="chaos-input chaos-mono" value={s.cosmeticsServerPublicUrl ?? ""} onChange={(e) => set({ cosmeticsServerPublicUrl: e.target.value.trim() })} placeholder={srv?.publicUrl ?? "http://chaoscraftsmp.duckdns.org:8787"} />
+          </label>
+        </div>
+        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10, alignItems: "center" }}>
+          <span className={"chaos-badge " + (srv?.running ? "chaos-badge-success" : "")}>{srv?.running ? `Läuft · Port ${srv.port}` : "Gestoppt"}</span>
+          {srv && <span className="chaos-badge">{srv.players} Spieler · {srv.capes} Capes</span>}
+          {srv && <span className="chaos-badge chaos-mono">LAN: {srv.localUrl}</span>}
+          {srv && (
+            <button className="chaos-btn chaos-btn-sm" onClick={() => { navigator.clipboard?.writeText(s.cosmeticsServerPublicUrl?.trim() || srv.publicUrl); toast.success("Adresse kopiert", s.cosmeticsServerPublicUrl?.trim() || srv.publicUrl); }}>
+              Adresse für Freunde kopieren
+            </button>
+          )}
+          <button className="chaos-btn chaos-btn-sm chaos-btn-ghost" onClick={() => cosmeticsServerStatus().then(setSrv).catch(() => {})}>
+            Aktualisieren
+          </button>
+        </div>
+        {srv?.error && <p className="chaos-faint" style={{ fontSize: 12, marginTop: 6, color: "var(--chaos-danger)" }}>{srv.error}</p>}
+        <ol className="chaos-faint" style={{ fontSize: 12, lineHeight: 1.8, paddingLeft: 18, margin: "10px 0 0" }}>
+          <li>Schalter oben einschalten – dein Launcher nutzt den Server sofort selbst.</li>
+          <li>Im Router Port {s.cosmeticsServerPort ?? 8787} (TCP) auf diesen PC weiterleiten (wie beim Minecraft-Server).</li>
+          <li>Freunde tragen unten bei „Adresse der Cosmetics-API“ die öffentliche Adresse ein und schalten „HTTP erlauben“ ein. Fertig – Cape, Hut und Effekt werden vor jedem Spielstart automatisch abgeglichen.</li>
+        </ol>
+      </Section>
+      <Section title="Adresse der Cosmetics-API" desc="Die Adresse des gemeinsamen Servers (eingebaut oder gehostet). Die Anmeldung läuft über den Mojang-Session-Handshake – dein Microsoft-Token wird nie an die API gesendet.">
+        <input className="chaos-input chaos-mono" value={s.cosmeticsApiUrl ?? ""} onChange={(e) => set({ cosmeticsApiUrl: e.target.value.trim() })} placeholder="http://chaoscraftsmp.duckdns.org:8787" />
+        <Toggle checked={!!s.cosmeticsApiAllowHttp} onChange={(v) => set({ cosmeticsApiAllowHttp: v })} label="HTTP erlauben (ohne Verschlüsselung)" description="Nur für den eingebauten oder einen eigenen, vertrauten Server. Es werden nur Cosmetic-Daten und Cape-Bilder übertragen, keine Zugangsdaten." />
+        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10 }}>
+          <button className="chaos-btn chaos-btn-sm" disabled={apiTesting} onClick={async () => { setApiTesting(true); try { const i = await apiInfo(); setApiState(i); toast[i.reachable ? "success" : "error"](i.reachable ? "Cosmetics-API erreichbar" : "Cosmetics-API nicht erreichbar", i.reachable ? `API ${i.apiVersion}` : i.message); } finally { setApiTesting(false); } }}>
+            {apiTesting ? "Prüfe …" : "Verbindung testen"}
+          </button>
+          {apiState && <span className={"chaos-badge " + (apiState.reachable ? "chaos-badge-success" : "chaos-badge-warning")}>{apiState.reachable ? `Verbunden (API ${apiState.apiVersion})` : apiState.message || "Nicht erreichbar"}</span>}
+        </div>
       </Section>
       <Section title="Cache">
         <div className="chaos-row" style={{ gap: 10 }}>

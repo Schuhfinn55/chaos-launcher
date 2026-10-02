@@ -84,7 +84,12 @@ src-tauri/src/
 
 ## 🔌 Chaos-Cosmetics-API
 
-Über die API sehen sich Chaos-Spieler gegenseitig **Capes, Hüte und Effekte**. Ein fertiger Server liegt in [`chaos-cosmetics-api/`](chaos-cosmetics-api/README.md) (Node.js ≥ 18, keine Abhängigkeiten, `node server.js`). Basis-URL in *Einstellungen → Cosmetics* eintragen; danach synchronisiert der Launcher automatisch beim Ändern und vor jedem Spielstart, der Chaos Client fragt die API für sichtbare Spieler ab (mit Cache). Ohne API funktionieren Cosmetics lokal (eigener PC, alle Accounts).
+Über die API sehen sich Chaos-Spieler gegenseitig **Capes, Hüte und Effekte**. Zwei Wege:
+
+1. **Eingebauter Server (am einfachsten):** *Einstellungen → Cosmetics → „Eingebauten Cosmetics-Server auf diesem PC starten“*. Ein Spieler (z. B. der Server-Betreiber) schaltet ihn ein, gibt Port 8787 (TCP) im Router frei und teilt die Adresse (Standard `http://<chaoscraft-host>:8787`). Alle anderen tragen die Adresse ein und erlauben HTTP. Daten liegen unter `%APPDATA%\chaos-launcher\cosmetics-server\`.
+2. **Gehosteter Server:** [`chaos-cosmetics-api/`](chaos-cosmetics-api/README.md) (Node.js ≥ 18, keine Abhängigkeiten, `node server.js`), ideal hinter Caddy mit HTTPS.
+
+Danach synchronisiert der Launcher Cape, Hut und Effekt automatisch beim Ändern und vor jedem Spielstart; der Chaos Client fragt die API für sichtbare Spieler ab (mit Cache). Ohne API funktionieren Cosmetics lokal (eigener PC, alle Accounts).
 
 | Endpunkt | Zweck |
 |---|---|
@@ -97,7 +102,7 @@ src-tauri/src/
 | `POST /v1/capes` (Bearer, multipart `file`, `name`) → `RemoteCape` | Cape hochladen |
 | `GET /v1/capes/{id}/texture` | PNG |
 
-Der Microsoft-/Minecraft-Token wird ausschließlich an `sessionserver.mojang.com` gesendet. HTTPS ist Pflicht (HTTP nur für localhost/LAN-Tests).
+Der Microsoft-/Minecraft-Token wird ausschließlich an `sessionserver.mojang.com` gesendet. HTTPS wird bevorzugt; HTTP nur für localhost/LAN oder nach ausdrücklichem Opt-in in den Einstellungen (es werden nur Cosmetic-Daten und Cape-Bilder übertragen).
 
 ## 🗂 Daten
 

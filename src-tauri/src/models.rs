@@ -259,6 +259,17 @@ pub struct Settings {
     /// Basis-URL der Chaos-Cosmetics-API (leer = nur lokal).
     #[serde(default)]
     pub cosmetics_api_url: String,
+    /// HTTP-Adresse für die Cosmetics-API erlauben (nur für eigenen/vertrauten Server).
+    #[serde(default)]
+    pub cosmetics_api_allow_http: bool,
+    /// Eingebauten Cosmetics-Server beim Launcher-Start mitstarten.
+    #[serde(default)]
+    pub cosmetics_server_enabled: bool,
+    #[serde(default = "default_cosmetics_port")]
+    pub cosmetics_server_port: u16,
+    /// Öffentliche Adresse des eingebauten Servers (leer = http://<chaoscraft-host>:<port>).
+    #[serde(default)]
+    pub cosmetics_server_public_url: String,
 
     // ---- Launcher ----
     #[serde(default = "default_true")]
@@ -315,6 +326,9 @@ pub const DEFAULT_CURSEFORGE_KEY: &str = "";
 fn default_cf_key() -> String {
     DEFAULT_CURSEFORGE_KEY.to_string()
 }
+fn default_cosmetics_port() -> u16 {
+    8787
+}
 fn default_menu_key() -> i32 {
     -1
 }
@@ -356,6 +370,10 @@ impl Default for Settings {
             show_other_capes: true,
             auto_load_capes: true,
             cosmetics_api_url: String::new(),
+            cosmetics_api_allow_http: false,
+            cosmetics_server_enabled: false,
+            cosmetics_server_port: 8787,
+            cosmetics_server_public_url: String::new(),
             auto_update: true,
             update_channel: default_channel(),
             download_limit: 32,

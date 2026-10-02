@@ -186,6 +186,10 @@ export interface Settings {
   showOtherCapes?: boolean;
   autoLoadCapes?: boolean;
   cosmeticsApiUrl?: string;
+  cosmeticsApiAllowHttp?: boolean;
+  cosmeticsServerEnabled?: boolean;
+  cosmeticsServerPort?: number;
+  cosmeticsServerPublicUrl?: string;
   // Launcher
   autoUpdate?: boolean;
   updateChannel?: "stable" | "beta";

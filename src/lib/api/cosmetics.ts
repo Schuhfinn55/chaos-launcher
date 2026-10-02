@@ -96,6 +96,20 @@ export interface RemoteCosmetics {
 export async function getRemoteCosmetics(uuid: string): Promise<RemoteCosmetics | null> {
   return invoke<RemoteCosmetics | null>("get_remote_cosmetics", { uuid });
 }
+export interface CosmeticsServerStatus {
+  running: boolean;
+  port: number;
+  localIp: string;
+  localUrl: string;
+  publicUrl: string;
+  players: number;
+  capes: number;
+  startedAt: number;
+  error: string;
+}
+export const cosmeticsServerStatus = () => invoke<CosmeticsServerStatus>("cosmetics_server_status");
+export const cosmeticsServerStart = (port?: number) => invoke<CosmeticsServerStatus>("cosmetics_server_start", { port: port ?? null });
+export const cosmeticsServerStop = () => invoke<CosmeticsServerStatus>("cosmetics_server_stop");
 export async function syncCosmetics(accountUuid: string): Promise<{ synced: boolean; message: string; remoteCapeId: string }> {
   return invoke("sync_cosmetics", { accountUuid });
 }

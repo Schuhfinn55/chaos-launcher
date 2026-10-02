@@ -85,10 +85,20 @@ fn base(url: &str) -> Result<String, String> {
     if u.is_empty() {
         return Err("Keine Cosmetics-API konfiguriert.".to_string());
     }
-    if !u.starts_with("https://") && !is_local_http(u) {
-        return Err("Die Cosmetics-API muss über HTTPS erreichbar sein (HTTP nur für localhost/LAN).".to_string());
+    if !u.starts_with("https://") && !is_local_http(u) && !http_allowed() {
+        return Err("Die Cosmetics-API muss über HTTPS erreichbar sein. Für einen eigenen Server kannst du HTTP in den Einstellungen ausdrücklich erlauben.".to_string());
     }
     Ok(u.to_string())
+}
+
+/// Hat der Nutzer HTTP für die Cosmetics-API ausdrücklich erlaubt?
+fn http_allowed() -> bool {
+    crate::storage::load_settings().map(|s| s.cosmetics_api_allow_http).unwrap_or(false)
+}
+
+/// Ist eine Cape-URL zulässig? HTTPS immer; HTTP nur lokal oder mit Opt-in.
+pub fn url_allowed(url: &str) -> bool {
+    url.starts_with("https://") || is_local_http(url) || (url.starts_with("http://") && http_allowed())
 }
 
 /// HTTP ist nur für lokale Tests erlaubt (localhost, private Netze).
@@ -219,15 +229,10 @@ pub async fn authenticate(api_url: &str, account: &Account) -> Result<String, St
 pub async fn upload_cape(api_url: &str, token: &str, name: &str, png: Vec<u8>) -> Result<RemoteCape, String> {
     let b = base(api_url)?;
     let client = http_client()?;
-    let part = reqwest::multipart::Part::bytes(png)
-        .file_name("cape.png")
-        .mime_str("image/png")
-        .map_err(|e| format!("MIME: {e}"))?;
-    let form = reqwest::multipart::Form::new().text("name", name.to_string()).part("file", part);
     let resp = client
         .post(format!("{b}/v1/capes"))
         .bearer_auth(token)
-        .multipart(form)
+        .json(&serde_json::json!({ "name": name, "dataBase64": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &png) }))
         .send()
         .await
         .map_err(|e| format!("Cape-Upload: {e}"))?;
@@ -284,8 +289,8 @@ pub async fn cache_player_cape(api_url: &str, uuid: &str) -> Result<Option<std::
             }
         }
     }
-    if !cape.url.starts_with("https://") {
-        return Err("Cape-URL ist nicht HTTPS.".to_string());
+    if !url_allowed(&cape.url) {
+        return Err("Cape-URL ist nicht HTTPS (HTTP in den Einstellungen erlauben, falls es dein eigener Server ist).".to_string());
     }
     let client = http_client()?;
     let bytes = client

@@ -21,6 +21,7 @@ pub mod client_update;
 pub mod commands;
 pub mod cosmetics;
 pub mod cosmetics_api;
+pub mod cosmetics_server;
 pub mod discord;
 pub mod forge;
 pub mod integrity;
@@ -57,6 +58,17 @@ pub fn run() {
             }
             if let Err(e) = storage::ensure_data_dir() {
                 log::warn!("[Chaos] Datenverzeichnis konnte nicht erstellt werden: {e}");
+            }
+            // Eingebauter Cosmetics-Server (optional)
+            if let Ok(settings) = storage::load_settings() {
+                if settings.cosmetics_server_enabled {
+                    let port = settings.cosmetics_server_port;
+                    std::thread::spawn(move || {
+                        if let Err(e) = cosmetics_server::start(port) {
+                            log::warn!("[CosmeticsServer] Start fehlgeschlagen: {e}");
+                        }
+                    });
+                }
             }
             // Discord-Status (optional)
             if let Ok(settings) = storage::load_settings() {
@@ -182,6 +194,9 @@ pub fn run() {
             commands::cosmetics::sync_ingame_state,
             commands::cosmetics::get_player_skin,
             commands::cosmetics::get_remote_cosmetics,
+            commands::cosmetics::cosmetics_server_status,
+            commands::cosmetics::cosmetics_server_start,
+            commands::cosmetics::cosmetics_server_stop,
             commands::cosmetics::set_cosmetic,
             commands::system::discord_set_state,
             // Launch

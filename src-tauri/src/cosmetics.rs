@@ -369,6 +369,7 @@ pub fn export_for_instance(
         "showOtherCapes": settings.show_other_capes,
         "autoLoadCapes": settings.auto_load_capes,
         "apiUrl": settings.cosmetics_api_url.trim(),
+        "allowHttp": settings.cosmetics_api_allow_http,
         "ownerUuid": account_uuid.replace('-', "").to_lowercase(),
         "ownerName": account_name,
         "activeCape": active.as_ref().map(|c| serde_json::json!({

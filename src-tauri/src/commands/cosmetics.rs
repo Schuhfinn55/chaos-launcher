@@ -12,6 +12,24 @@ pub fn get_cosmetics() -> Result<CosmeticsState, String> {
     cosmetics::load()
 }
 
+/* ---------- Eingebauter Cosmetics-Server ---------- */
+
+#[tauri::command]
+pub fn cosmetics_server_status() -> crate::cosmetics_server::ServerStatus {
+    crate::cosmetics_server::status()
+}
+
+#[tauri::command]
+pub fn cosmetics_server_start(port: Option<u16>) -> Result<crate::cosmetics_server::ServerStatus, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    crate::cosmetics_server::start(port.unwrap_or(settings.cosmetics_server_port))
+}
+
+#[tauri::command]
+pub fn cosmetics_server_stop() -> crate::cosmetics_server::ServerStatus {
+    crate::cosmetics_server::stop()
+}
+
 /// Echter Account-Skin vom Mojang-Sessionserver (Data-URL + Modell).
 #[tauri::command]
 pub async fn get_player_skin(uuid: String) -> Result<cosmetics::PlayerSkin, String> {
