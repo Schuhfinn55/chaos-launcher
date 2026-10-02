@@ -1,48 +1,50 @@
-//! Onyx Launcher - Auto-Update-System
+//! Chaos Launcher - Auto-Update-System
 //!
-//! Prüft GitHub Releases auf neue Versionen und lädt Updates
-//! automatisch herunter. Der Nutzer bekommt beim Start ein Banner
-//! angezeigt, wenn eine neue Version verfügbar ist.
+//! Prüft GitHub Releases auf neue Versionen. Updates werden nur
+//! installiert, wenn die Setup-Datei über eine im Release
+//! veröffentlichte SHA-256-Summe verifiziert werden kann
+//! (Asset `<name>.sha256` oder `SHA256SUMS`). Ohne Prüfsumme wird
+//! die Release-Seite im Browser geöffnet - der Launcher startet keine
+//! unverifizierten ausführbaren Dateien.
 
 use crate::mod_search::http_client;
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::time::Duration;
 
-/// Die GitHub-Repository für Update-Checks.
-const GITHUB_REPO: &str = "Schuhfinn55/onyx-launcher";
-/// Die aktuelle Version des Launchers (wird beim Build gesetzt).
+/// GitHub-Repository für Update-Checks.
+const GITHUB_REPO: &str = "Schuhfinn55/chaos-launcher";
 const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Information über ein verfügbares Update.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateInfo {
-    /// Neue Versionsnummer (z.B. "1.1.0").
     pub version: String,
-    /// Release-URL auf GitHub.
+    pub current_version: String,
     pub release_url: String,
-    /// Release-Notes (Markdown).
     pub release_notes: String,
-    /// Download-URL für die Setup.exe.
     pub download_url: String,
-    /// Dateiname des Downloads.
     pub file_name: String,
-    /// Dateigröße in Bytes.
     pub file_size: u64,
-    /// Ob diese Version neuer ist als die aktuelle.
     pub is_newer: bool,
+    /// Ob eine SHA-256-Prüfsumme vorliegt (direkte Installation möglich).
+    pub verifiable: bool,
+    pub published_at: String,
+    pub prerelease: bool,
 }
 
-/// GitHub Release API Antwort.
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
     tag_name: String,
     html_url: String,
     body: Option<String>,
     assets: Vec<GitHubAsset>,
+    #[serde(default)]
+    prerelease: bool,
+    #[serde(default)]
+    published_at: String,
 }
 
-/// GitHub Release Asset.
 #[derive(Debug, Deserialize)]
 struct GitHubAsset {
     name: String,
@@ -50,82 +52,75 @@ struct GitHubAsset {
     size: u64,
 }
 
-/// Prüft, ob ein Update verfügbar ist. Fragt die GitHub API ab
-/// und vergleicht die neueste Version mit der aktuellen.
-pub async fn check_for_update() -> Result<Option<UpdateInfo>, String> {
+/// Prüft, ob ein Update verfügbar ist. `channel`: "stable" | "beta".
+pub async fn check_for_update(channel: &str) -> Result<Option<UpdateInfo>, String> {
     let client = http_client()?;
-
-    let url = format!("https://api.github.com/repos/{}/releases/latest", GITHUB_REPO);
-    log::info!("[Onyx] Prüfe auf Updates: {}", url);
-
+    let url = if channel == "beta" {
+        format!("https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=5")
+    } else {
+        format!("https://api.github.com/repos/{GITHUB_REPO}/releases/latest")
+    };
+    log::info!("[Chaos] Prüfe auf Updates: {url}");
     let resp = client
         .get(&url)
-        .header("Accept", "application/vnd.github.v3+json")
-        .header("User-Agent", "onyx-launcher")
+        .header("Accept", "application/vnd.github+json")
         .send()
         .await
         .map_err(|e| format!("Update-Check: {e}"))?;
-
     if !resp.status().is_success() {
-        log::info!("[Onyx] Update-Check: HTTP {}", resp.status());
+        log::info!("[Chaos] Update-Check: HTTP {}", resp.status());
         return Ok(None);
     }
+    let release: GitHubRelease = if channel == "beta" {
+        let list: Vec<GitHubRelease> = resp.json().await.map_err(|e| format!("Update-Check parsen: {e}"))?;
+        match list.into_iter().next() {
+            Some(r) => r,
+            None => return Ok(None),
+        }
+    } else {
+        resp.json().await.map_err(|e| format!("Update-Check parsen: {e}"))?
+    };
 
-    let release: GitHubRelease = resp
-        .json()
-        .await
-        .map_err(|e| format!("Update-Check parsen: {e}"))?;
-
-    // Versionsnummer aus Tag extrahieren (z.B. "v1.1.0" → "1.1.0")
     let latest_version = release.tag_name.trim_start_matches('v').to_string();
     let is_newer = is_version_newer(&latest_version, CURRENT_VERSION);
-
-    log::info!(
-        "[Onyx] Aktuell: {}, Latest: {}, Update verfügbar: {}",
-        CURRENT_VERSION, latest_version, is_newer
-    );
-
-    // Setup.exe Asset finden
-    let asset = release.assets.iter().find(|a| {
-        a.name.to_lowercase().ends_with("-setup.exe") || a.name.to_lowercase().ends_with("setup.exe")
-    });
-
     if !is_newer {
         return Ok(None);
     }
-
-    let (download_url, file_name, file_size) = if let Some(a) = asset {
-        (
-            a.browser_download_url.clone(),
-            a.name.clone(),
-            a.size,
-        )
-    } else {
-        // Fallback: Release-Seite, manuell herunterladen
-        (
-            release.html_url.clone(),
-            "Onyx-Launcher-Setup.exe".to_string(),
-            0,
-        )
+    let asset = release
+        .assets
+        .iter()
+        .find(|a| a.name.to_lowercase().ends_with("setup.exe"));
+    let verifiable = match asset {
+        Some(a) => release
+            .assets
+            .iter()
+            .any(|x| x.name.to_lowercase() == format!("{}.sha256", a.name.to_lowercase()) || x.name.eq_ignore_ascii_case("SHA256SUMS")),
+        None => false,
     };
-
+    let (download_url, file_name, file_size) = match asset {
+        Some(a) => (a.browser_download_url.clone(), a.name.clone(), a.size),
+        None => (release.html_url.clone(), "Chaos-Launcher-Setup.exe".to_string(), 0),
+    };
     Ok(Some(UpdateInfo {
         version: latest_version,
+        current_version: CURRENT_VERSION.to_string(),
         release_url: release.html_url,
         release_notes: release.body.unwrap_or_default(),
         download_url,
         file_name,
         file_size,
         is_newer,
+        verifiable,
+        published_at: release.published_at,
+        prerelease: release.prerelease,
     }))
 }
 
-/// Vergleicht zwei Versionsnummern (z.B. "1.1.0" > "1.0.0").
-/// Gibt true zurück, wenn `a` neuer ist als `b`.
-fn is_version_newer(a: &str, b: &str) -> bool {
+/// Vergleicht zwei Versionsnummern; true wenn `a` neuer als `b`.
+pub fn is_version_newer(a: &str, b: &str) -> bool {
     let parse = |s: &str| -> Vec<u32> {
-        s.split('.')
-            .filter_map(|p| p.trim().parse::<u32>().ok())
+        s.split(['.', '-'])
+            .filter_map(|p| p.trim().chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse::<u32>().ok())
             .collect()
     };
     let va = parse(a);
@@ -143,70 +138,76 @@ fn is_version_newer(a: &str, b: &str) -> bool {
     false
 }
 
-/// Lädt das Update herunter und startet den Installer.
-/// Der Launcher wird danach beendet, der Installer übernimmt.
-pub async fn download_and_install_update(download_url: String) -> Result<String, String> {
-    log::info!("[Onyx] Lade Update herunter: {}", download_url);
-
-    // Temporäre Datei im Temp-Verzeichnis
-    let temp_dir = std::env::temp_dir();
-    let dest = temp_dir.join("onyx-launcher-update.exe");
-
-    // Wenn es eine GitHub-Release-Seite ist (kein direkter Download),
-    // öffnen wir sie im Browser statt herunterzuladen.
-    if download_url.contains("/releases/tag/") || download_url.contains("/releases/latest") {
-        open_browser(&download_url)?;
-        return Ok("Download-Seite im Browser geöffnet. Lade die Setup.exe herunter und führe sie aus.".to_string());
+/// Lädt das Update herunter, prüft die SHA-256-Summe und startet den
+/// Installer. `progress` erhält Statusmeldungen.
+pub async fn download_and_install_update(info: &UpdateInfo, progress: &(dyn Fn(String, u64, u64) + Send + Sync)) -> Result<String, String> {
+    let download_url = &info.download_url;
+    if download_url.contains("/releases/tag/") || download_url.contains("/releases/latest") || !info.verifiable {
+        crate::system::open_url(&info.release_url)?;
+        return Ok("Für dieses Release liegt keine Prüfsumme vor. Die Download-Seite wurde im Browser geöffnet – bitte lade die Setup-Datei dort herunter.".to_string());
     }
+    if !download_url.starts_with("https://") {
+        return Err("Unsichere Update-URL abgelehnt.".to_string());
+    }
+    let client = crate::mod_search::download_client()?;
 
-    // Direkter Download der .exe
-    let client = http_client()?;
-    let resp = client
-        .get(&download_url)
-        .header("User-Agent", "onyx-launcher")
-        .send()
-        .await
-        .map_err(|e| format!("Download: {e}"))?;
+    // Prüfsumme laden
+    progress("Lade Prüfsumme …".to_string(), 0, 0);
+    let expected = fetch_expected_sha256(&client, info).await?;
 
+    progress(format!("Lade {} …", info.file_name), 0, info.file_size);
+    let resp = client.get(download_url).send().await.map_err(|e| format!("Download: {e}"))?;
     if !resp.status().is_success() {
-        // GitHub leitet weiter – versuche mit Redirect-Client
         return Err(format!("Download HTTP {}", resp.status()));
     }
+    let bytes = resp.bytes().await.map_err(|e| format!("Download bytes: {e}"))?;
+    progress("Prüfe Datei …".to_string(), bytes.len() as u64, info.file_size);
 
-    let bytes = resp
-        .bytes()
-        .await
-        .map_err(|e| format!("Download bytes: {e}"))?;
+    let mut hasher = Sha256::new();
+    hasher.update(&bytes);
+    let actual = hex::encode(hasher.finalize());
+    if actual != expected.to_lowercase() {
+        return Err(format!("Prüfsumme stimmt nicht überein ({actual} ≠ {expected}). Update abgebrochen."));
+    }
 
+    let dest = std::env::temp_dir().join(format!("chaos-launcher-{}-setup.exe", info.version));
     std::fs::write(&dest, &bytes).map_err(|e| format!("Update speichern: {e}"))?;
+    log::info!("[Chaos] Update verifiziert und gespeichert: {}", dest.display());
 
-    log::info!("[Onyx] Update gespeichert: {} ({} Bytes)", dest.display(), bytes.len());
-
-    // Installer starten und Launcher beenden
     #[cfg(windows)]
     {
-        use std::process::Command;
-        Command::new(&dest)
-            .spawn()
-            .map_err(|e| format!("Installer starten: {e}"))?;
-        // Launcher nach kurzer Verzögerung beenden
+        std::process::Command::new(&dest).spawn().map_err(|e| format!("Installer starten: {e}"))?;
         std::thread::spawn(|| {
             std::thread::sleep(Duration::from_secs(2));
             std::process::exit(0);
         });
     }
-
     Ok("Update wird installiert. Der Launcher startet neu …".to_string())
 }
 
-/// Öffnet eine URL im Standard-Browser.
-fn open_browser(url: &str) -> Result<(), String> {
-    #[cfg(windows)]
-    {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "", url])
-            .spawn()
-            .map_err(|e| format!("Browser öffnen: {e}"))?;
+async fn fetch_expected_sha256(client: &reqwest::Client, info: &UpdateInfo) -> Result<String, String> {
+    // 1. <file>.sha256
+    let base = info.download_url.rsplit_once('/').map(|(b, _)| b.to_string()).unwrap_or_default();
+    let candidates = [format!("{base}/{}.sha256", info.file_name), format!("{base}/SHA256SUMS")];
+    for url in candidates {
+        if let Ok(resp) = client.get(&url).send().await {
+            if resp.status().is_success() {
+                if let Ok(txt) = resp.text().await {
+                    for line in txt.lines() {
+                        let line = line.trim();
+                        if line.is_empty() {
+                            continue;
+                        }
+                        let mut parts = line.split_whitespace();
+                        let hash = parts.next().unwrap_or("");
+                        let name = parts.next().unwrap_or("").trim_start_matches('*');
+                        if hash.len() == 64 && (name.is_empty() || name.eq_ignore_ascii_case(&info.file_name)) {
+                            return Ok(hash.to_string());
+                        }
+                    }
+                }
+            }
+        }
     }
-    Ok(())
+    Err("Keine SHA-256-Prüfsumme im Release gefunden.".to_string())
 }

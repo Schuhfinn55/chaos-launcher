@@ -54,7 +54,7 @@
 }
 .onyx-skin-dropzone.over {
   border-color: var(--onyx-cyan);
-  background: rgba(34, 211, 238, 0.08);
+  background: rgba(var(--chaos-accent-rgb), 0.08);
 }
 .onyx-skin-dropzone-title {
   font-size: 14px;
@@ -296,7 +296,7 @@
 }
 .onyx-cape-coming-icon {
   font-size: 72px;
-  filter: drop-shadow(0 4px 16px rgba(34, 211, 238, 0.3));
+  filter: drop-shadow(0 4px 16px rgba(var(--chaos-accent-rgb), 0.3));
   animation: onyx-tutorial-bounce 2s ease-in-out infinite;
 }
 .onyx-cape-coming-soon h2 {
@@ -337,7 +337,7 @@
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(34, 211, 238, 0.1);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(var(--chaos-accent-rgb), 0.1);
 }
 .onyx-modal h3 {
   font-size: 16px;

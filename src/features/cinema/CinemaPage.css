@@ -31,7 +31,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 12px 20px;
-  background: linear-gradient(transparent, rgba(6, 20, 26, 0.9));
+  background: linear-gradient(transparent, rgba(var(--chaos-bg0-rgb), 0.9));
 }
 
 .onyx-cinema-selector {

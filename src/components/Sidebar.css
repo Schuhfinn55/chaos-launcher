@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 22px;
-  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4));
+  filter: drop-shadow(0 0 8px rgba(var(--chaos-accent-rgb), 0.4));
 }
 
 .onyx-sidebar-nav {

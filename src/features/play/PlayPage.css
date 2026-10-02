@@ -42,12 +42,12 @@
   background: linear-gradient(135deg, var(--onyx-cyan-dark), var(--onyx-cyan));
   color: var(--onyx-bg-0);
   cursor: pointer;
-  box-shadow: 0 0 30px rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 30px rgba(var(--chaos-accent-rgb), 0.4);
   transition: all 0.2s ease;
 }
 .onyx-play-launch:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--onyx-cyan), var(--onyx-cyan-light));
-  box-shadow: 0 0 40px rgba(34, 211, 238, 0.6);
+  box-shadow: 0 0 40px rgba(var(--chaos-accent-rgb), 0.6);
   transform: translateY(-1px);
 }
 .onyx-play-launch:disabled {

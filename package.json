@@ -1,15 +1,16 @@
 {
-  "name": "onyx-launcher",
+  "name": "chaos-launcher",
   "private": true,
-  "version": "1.2.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "Onyx Launcher - ein Minecraft Launcher mit Modrinth- und CurseForge-Suche",
+  "description": "Chaos Launcher - der Minecraft-Client-Launcher für ChaoscraftSMP mit Profilen, Mods, Cosmetics und Capes",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "icons": "node src-tauri/icons/make_icon.cjs && node src-tauri/icons/make_ico.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",

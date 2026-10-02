@@ -514,7 +514,7 @@ function ModDropzoneStyles() {
     }
     .onyx-dropzone.over {
       border-color: var(--onyx-cyan);
-      background: rgba(34, 211, 238, 0.06);
+      background: rgba(var(--chaos-accent-rgb), 0.06);
     }
     .onyx-dropzone p { font-size: 13px; }
   `}</style>;

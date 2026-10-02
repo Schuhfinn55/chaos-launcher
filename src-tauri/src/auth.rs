@@ -1,4 +1,4 @@
-//! Onyx Launcher - Microsoft-/Minecraft-Authentifizierung
+//! Chaos Launcher - Microsoft-/Minecraft-Authentifizierung
 //!
 //! Implementiert den vollständigen Login-Flow über den
 //! OAuth 2.0 Device Authorization Grant (kein Browserfenster
@@ -412,5 +412,6 @@ pub async fn complete_login(ms_token: String, refresh: String) -> Result<Account
         access_token: Some(mc_token),
         refresh_token: Some(refresh),
         mc_token_expires_at: Some(expires_at),
+        added_at: crate::system::now_millis(),
     })
 }

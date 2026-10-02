@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Onyx Launcher",
-  "version": "1.2.0",
-  "identifier": "de.onyx.launcher",
+  "productName": "Chaos Launcher",
+  "version": "2.0.0",
+  "identifier": "de.chaoscraft.launcher",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -12,14 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "Onyx Launcher",
-        "width": 1180,
-        "height": 760,
-        "minWidth": 900,
-        "minHeight": 600,
+        "title": "Chaos Launcher",
+        "width": 1240,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 640,
         "resizable": true,
         "fullscreen": false,
-        "decorations": true
+        "decorations": true,
+        "center": true
       }
     ],
     "security": {
@@ -34,7 +35,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "resources/onyx-visuals.jar"
+      "resources/chaos-client.jar"
     ]
   }
 }

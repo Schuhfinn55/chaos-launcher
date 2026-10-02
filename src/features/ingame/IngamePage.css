@@ -19,15 +19,15 @@
   max-width: 1080px;
   background: linear-gradient(
     180deg,
-    rgba(11, 31, 41, 0.92) 0%,
-    rgba(6, 20, 26, 0.96) 100%
+    rgba(var(--chaos-bg1-rgb), 0.92) 0%,
+    rgba(var(--chaos-bg0-rgb), 0.96) 100%
   );
   backdrop-filter: blur(16px);
   border: 1px solid var(--onyx-border-light);
   border-radius: 16px;
   box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 0 0 1px rgba(var(--chaos-accent-rgb), 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
   display: flex;
@@ -44,7 +44,7 @@
   border-bottom: 1px solid var(--onyx-border);
   background: linear-gradient(
     180deg,
-    rgba(34, 211, 238, 0.04) 0%,
+    rgba(var(--chaos-accent-rgb), 0.04) 0%,
     transparent 100%
   );
 }
@@ -57,7 +57,7 @@
 }
 .onyx-norisk-bolt {
   font-size: 22px;
-  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.6));
+  filter: drop-shadow(0 0 8px rgba(var(--chaos-accent-rgb), 0.6));
 }
 .onyx-norisk-logo {
   font-size: 22px;
@@ -116,7 +116,7 @@
 }
 .onyx-norisk-search:focus-within {
   border-color: var(--onyx-cyan);
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--chaos-accent-rgb), 0.12);
 }
 .onyx-norisk-search-icon {
   font-size: 13px;
@@ -160,7 +160,7 @@
   flex-shrink: 0;
   padding: 12px 8px;
   border-right: 1px solid var(--onyx-border);
-  background: rgba(6, 20, 26, 0.5);
+  background: rgba(var(--chaos-bg0-rgb), 0.5);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -188,10 +188,10 @@
 .onyx-norisk-cat.active {
   background: linear-gradient(
     135deg,
-    rgba(34, 211, 238, 0.18) 0%,
-    rgba(8, 145, 178, 0.12) 100%
+    rgba(var(--chaos-accent-rgb), 0.18) 0%,
+    rgba(var(--chaos-accent-dark-rgb), 0.12) 100%
   );
-  border-color: rgba(34, 211, 238, 0.4);
+  border-color: rgba(var(--chaos-accent-rgb), 0.4);
   color: var(--onyx-cyan-bright);
   box-shadow: inset 2px 0 0 var(--onyx-cyan);
 }
@@ -257,7 +257,7 @@
   border-radius: var(--onyx-radius-sm);
   font-size: 13px;
   border-left: 3px solid var(--onyx-cyan);
-  background: rgba(34, 211, 238, 0.08);
+  background: rgba(var(--chaos-accent-rgb), 0.08);
 }
 .onyx-norisk-toast-ok {
   border-left-color: var(--onyx-success);
@@ -292,10 +292,10 @@
   transition: all 0.18s ease;
 }
 .onyx-norisk-card.on {
-  border-color: rgba(34, 211, 238, 0.35);
+  border-color: rgba(var(--chaos-accent-rgb), 0.35);
   background: linear-gradient(
     135deg,
-    rgba(34, 211, 238, 0.06) 0%,
+    rgba(var(--chaos-accent-rgb), 0.06) 0%,
     var(--onyx-bg-1) 60%
   );
 }
@@ -304,7 +304,7 @@
 }
 .onyx-norisk-card.expanded {
   border-color: var(--onyx-cyan);
-  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.2);
+  box-shadow: 0 0 0 1px rgba(var(--chaos-accent-rgb), 0.2);
 }
 
 .onyx-norisk-card-top {
@@ -324,7 +324,7 @@
   border-radius: var(--onyx-radius-sm);
 }
 .onyx-norisk-card.on .onyx-norisk-card-icon {
-  background: rgba(34, 211, 238, 0.15);
+  background: rgba(var(--chaos-accent-rgb), 0.15);
 }
 .onyx-norisk-card-meta {
   flex: 1;
@@ -378,7 +378,7 @@
 .onyx-norisk-switch input:checked + .onyx-norisk-slider {
   background: linear-gradient(135deg, var(--onyx-cyan-dark), var(--onyx-cyan));
   border-color: var(--onyx-cyan);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 8px rgba(var(--chaos-accent-rgb), 0.4);
 }
 .onyx-norisk-switch input:checked + .onyx-norisk-slider::before {
   transform: translateX(16px);
@@ -414,7 +414,7 @@
   color: var(--onyx-cyan-light);
   line-height: 1.4;
   padding: 6px 8px;
-  background: rgba(34, 211, 238, 0.05);
+  background: rgba(var(--chaos-accent-rgb), 0.05);
   border-radius: 4px;
 }
 
@@ -484,7 +484,7 @@
   background: var(--onyx-cyan);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 6px rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 6px rgba(var(--chaos-accent-rgb), 0.5);
 }
 .onyx-norisk-range::-moz-range-thumb {
   width: 14px;
@@ -502,7 +502,7 @@
   justify-content: space-between;
   padding: 12px 20px;
   border-top: 1px solid var(--onyx-border);
-  background: rgba(6, 20, 26, 0.6);
+  background: rgba(var(--chaos-bg0-rgb), 0.6);
   font-size: 12px;
 }
 .onyx-norisk-footer-instance {
@@ -573,7 +573,7 @@
 }
 .onyx-norisk-profile-card.active {
   border-color: var(--onyx-cyan);
-  background: rgba(34, 211, 238, 0.06);
+  background: rgba(var(--chaos-accent-rgb), 0.06);
 }
 .onyx-norisk-profile-info h4 {
   font-size: 14px;

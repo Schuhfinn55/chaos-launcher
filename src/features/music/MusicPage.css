@@ -164,7 +164,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), var(--onyx-bg-1));
+  background: linear-gradient(135deg, rgba(var(--chaos-accent-rgb), 0.08), var(--onyx-bg-1));
   border: 1px solid var(--onyx-cyan-dark);
   border-radius: var(--onyx-radius);
   margin-bottom: 20px;
@@ -243,7 +243,7 @@
 }
 .onyx-music-track.active {
   border-color: var(--onyx-cyan);
-  background: rgba(34, 211, 238, 0.06);
+  background: rgba(var(--chaos-accent-rgb), 0.06);
 }
 .onyx-music-track-icon {
   font-size: 20px;
