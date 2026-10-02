@@ -1,0 +1,132 @@
+/* Onyx Launcher - Seitenleiste-Layout */
+.onyx-sidebar {
+  width: var(--onyx-sidebar-w);
+  height: 100%;
+  background: var(--onyx-bg-1);
+  border-right: 1px solid var(--onyx-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  flex-shrink: 0;
+}
+
+.onyx-sidebar-logo {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4));
+}
+
+.onyx-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  width: 100%;
+  align-items: center;
+}
+
+.onyx-sidebar-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--onyx-radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.onyx-sidebar-item:hover {
+  background: var(--onyx-bg-2);
+  color: var(--onyx-cyan-light);
+}
+.onyx-sidebar-item.active {
+  background: var(--onyx-cyan-deep);
+  color: var(--onyx-cyan-bright);
+  box-shadow: var(--onyx-glow);
+}
+.onyx-sidebar-item.active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 26px;
+  background: var(--onyx-cyan);
+  border-radius: 0 3px 3px 0;
+}
+
+.onyx-sidebar-icon {
+  display: flex;
+}
+
+.onyx-sidebar-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.onyx-sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Social-Buttons (Discord + YouTube) */
+.onyx-sidebar-social {
+  display: flex;
+  gap: 10px;
+}
+.onyx-social-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--onyx-radius);
+  border: 1px solid var(--onyx-border-light);
+  background: var(--onyx-bg-2);
+  color: var(--onyx-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.onyx-social-btn:hover {
+  transform: translateY(-3px) scale(1.1);
+}
+.onyx-social-discord {
+  color: #99aab5;
+}
+.onyx-social-discord:hover {
+  background: #5865f2;
+  border-color: #5865f2;
+  color: #fff;
+  box-shadow: 0 0 14px rgba(88, 101, 242, 0.6);
+}
+.onyx-social-youtube {
+  color: #b38f8f;
+}
+.onyx-social-youtube:hover {
+  background: #ff0000;
+  border-color: #ff0000;
+  color: #fff;
+  box-shadow: 0 0 14px rgba(255, 0, 0, 0.5);
+}
+
+.onyx-sidebar-version {
+  font-size: 10px;
+  color: var(--onyx-text-faint);
+  font-family: var(--onyx-font-mono);
+}

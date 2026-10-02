@@ -1,0 +1,245 @@
+/* ============================================================
+ * Onyx Launcher - Globaler MusicPlayer (Mini-Widget)
+ * ============================================================ */
+
+/* Verstecktes YouTube iframe (Ton läuft, kein sichtbares Video) */
+.onyx-music-hidden-yt {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  left: -9999px;
+  top: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Mini-Player Widget unten rechts */
+.onyx-mini-player {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 8000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: rgba(11, 31, 41, 0.95);
+  border: 1px solid var(--onyx-cyan-dark);
+  border-radius: 999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(34, 211, 238, 0.1);
+  backdrop-filter: blur(12px);
+  animation: onyx-mini-slide-up 0.3s ease;
+  max-width: 520px;
+}
+@keyframes onyx-mini-slide-up {
+  0% { transform: translateY(100px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.onyx-mini-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 160px;
+}
+.onyx-mini-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.onyx-mini-title {
+  min-width: 0;
+}
+.onyx-mini-title strong {
+  font-size: 12px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--onyx-text);
+}
+.onyx-mini-title span {
+  font-size: 10px;
+  color: var(--onyx-text-dim);
+}
+
+.onyx-mini-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.onyx-mini-controls button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.onyx-mini-controls button:hover {
+  background: var(--onyx-cyan-deep);
+}
+.onyx-mini-play {
+  background: linear-gradient(135deg, var(--onyx-cyan-dark), var(--onyx-cyan)) !important;
+  color: var(--onyx-bg-0) !important;
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 15px !important;
+}
+
+.onyx-mini-volume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.onyx-mini-volume button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.onyx-mini-volume button:hover {
+  background: var(--onyx-cyan-deep);
+  color: var(--onyx-text);
+}
+.onyx-mini-volume input {
+  width: 70px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--onyx-bg-3);
+  border-radius: 999px;
+  outline: none;
+}
+.onyx-mini-volume input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--onyx-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.onyx-mini-volume input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--onyx-cyan);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.onyx-mini-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.onyx-mini-close:hover {
+  background: var(--onyx-danger);
+  color: white;
+}
+
+/* YouTube-Vorschläge Panel (über dem Mini-Player) */
+.onyx-music-related {
+  position: fixed;
+  bottom: 72px;
+  right: 16px;
+  z-index: 8000;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 14px;
+  background: rgba(11, 31, 41, 0.95);
+  border: 1px solid var(--onyx-border-light);
+  border-radius: var(--onyx-radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+}
+.onyx-music-related h4 {
+  font-size: 13px;
+  color: var(--onyx-cyan-bright);
+  margin-bottom: 10px;
+}
+.onyx-related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.onyx-related-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: var(--onyx-bg-2);
+  border: 1px solid var(--onyx-border);
+  border-radius: var(--onyx-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--onyx-font);
+  text-align: left;
+  width: 100%;
+}
+.onyx-related-item:hover {
+  border-color: var(--onyx-cyan);
+  background: var(--onyx-bg-3);
+}
+.onyx-related-item img {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.onyx-related-meta {
+  flex: 1;
+  min-width: 0;
+}
+.onyx-related-meta strong {
+  font-size: 12px;
+  display: block;
+  color: var(--onyx-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.onyx-related-meta span {
+  font-size: 10px;
+  color: var(--onyx-text-dim);
+}
+.onyx-related-add {
+  font-size: 18px;
+  color: var(--onyx-cyan);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .onyx-mini-player {
+    max-width: calc(100% - 32px);
+    flex-wrap: wrap;
+  }
+  .onyx-music-related {
+    width: calc(100% - 32px);
+  }
+}

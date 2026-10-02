@@ -1,0 +1,290 @@
+/* ============================================================
+ * Onyx Launcher - Musik-Player
+ * ============================================================ */
+
+/* Upload + YouTube */
+.onyx-music-add {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.onyx-music-youtube {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 300px;
+}
+.onyx-music-youtube .onyx-input {
+  flex: 1;
+}
+
+/* Player-Bar */
+.onyx-music-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-cyan-dark);
+  border-radius: var(--onyx-radius);
+  margin-bottom: 20px;
+  box-shadow: var(--onyx-glow);
+  flex-wrap: wrap;
+}
+
+.onyx-music-now-playing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.onyx-music-icon {
+  font-size: 28px;
+}
+.onyx-music-now-playing strong {
+  font-size: 14px;
+  display: block;
+}
+.onyx-music-now-playing span {
+  font-size: 11px;
+  color: var(--onyx-text-dim);
+}
+
+.onyx-music-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.onyx-music-controls button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--onyx-border-light);
+  border-radius: 50%;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.onyx-music-controls button:hover {
+  background: var(--onyx-cyan-deep);
+  border-color: var(--onyx-cyan);
+}
+.onyx-music-play {
+  width: 48px !important;
+  height: 48px !important;
+  font-size: 20px !important;
+  background: linear-gradient(135deg, var(--onyx-cyan-dark), var(--onyx-cyan)) !important;
+  color: var(--onyx-bg-0) !important;
+  border-color: var(--onyx-cyan) !important;
+}
+
+.onyx-music-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.onyx-music-options button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--onyx-border-light);
+  border-radius: 6px;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.15s ease;
+}
+.onyx-music-options button:hover {
+  background: var(--onyx-cyan-deep);
+  color: var(--onyx-text);
+}
+.onyx-music-options button.active {
+  background: var(--onyx-cyan-deep);
+  border-color: var(--onyx-cyan);
+  color: var(--onyx-cyan-bright);
+}
+.onyx-music-volume {
+  width: 90px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--onyx-bg-3);
+  border-radius: 999px;
+  outline: none;
+}
+.onyx-music-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--onyx-cyan);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.onyx-music-volume::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--onyx-cyan);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* YouTube Embed */
+.onyx-music-yt-embed {
+  margin-bottom: 20px;
+  border-radius: var(--onyx-radius);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.onyx-music-yt-embed iframe {
+  width: 100%;
+  height: 360px;
+  border: none;
+  display: block;
+}
+
+/* Playlist */
+.onyx-music-playlist-title {
+  font-size: 15px;
+  color: var(--onyx-text);
+  margin-bottom: 12px;
+}
+
+/* Now-Playing Bar */
+.onyx-music-now-playing-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), var(--onyx-bg-1));
+  border: 1px solid var(--onyx-cyan-dark);
+  border-radius: var(--onyx-radius);
+  margin-bottom: 20px;
+}
+.onyx-music-now-icon {
+  font-size: 32px;
+}
+.onyx-music-now-playing-bar strong {
+  font-size: 14px;
+  display: block;
+}
+.onyx-music-now-playing-bar span {
+  font-size: 11px;
+  color: var(--onyx-text-dim);
+}
+.onyx-music-anim {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--onyx-cyan);
+  animation: onyx-music-pulse 1.5s ease-in-out infinite;
+}
+
+/* Playlist Header mit Quick-Controls */
+.onyx-music-playlist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.onyx-music-playlist-header h3 {
+  font-size: 15px;
+  color: var(--onyx-text);
+}
+.onyx-music-quick-controls {
+  display: flex;
+  gap: 6px;
+}
+.onyx-music-quick-controls button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--onyx-border-light);
+  border-radius: 6px;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.15s ease;
+}
+.onyx-music-quick-controls button:hover {
+  background: var(--onyx-cyan-deep);
+}
+.onyx-music-quick-controls button.active {
+  background: var(--onyx-cyan-deep);
+  border-color: var(--onyx-cyan);
+  color: var(--onyx-cyan-bright);
+}
+.onyx-music-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.onyx-music-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-border);
+  border-radius: var(--onyx-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.onyx-music-track:hover {
+  border-color: var(--onyx-cyan-dark);
+  background: var(--onyx-bg-2);
+}
+.onyx-music-track.active {
+  border-color: var(--onyx-cyan);
+  background: rgba(34, 211, 238, 0.06);
+}
+.onyx-music-track-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.onyx-music-track-info {
+  flex: 1;
+  min-width: 0;
+}
+.onyx-music-track-info strong {
+  font-size: 13px;
+  display: block;
+  color: var(--onyx-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.onyx-music-track-info span {
+  font-size: 11px;
+  color: var(--onyx-text-dim);
+}
+.onyx-music-playing-anim {
+  font-size: 12px;
+  color: var(--onyx-cyan);
+  animation: onyx-music-pulse 1s ease-in-out infinite;
+}
+@keyframes onyx-music-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.onyx-music-track-del {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+}
+
+@media (max-width: 700px) {
+  .onyx-music-player {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .onyx-music-yt-embed iframe {
+    height: 240px;
+  }
+}

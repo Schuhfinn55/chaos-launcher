@@ -1,0 +1,400 @@
+/* Onyx Launcher - Skins-Seite */
+
+/* Tabs (Skin/Cape) */
+.onyx-skin-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--onyx-border);
+  padding-bottom: 8px;
+}
+.onyx-skin-tab {
+  padding: 8px 20px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--onyx-text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--onyx-radius-sm) var(--onyx-radius-sm) 0 0;
+  font-family: var(--onyx-font);
+  transition: all 0.15s ease;
+}
+.onyx-skin-tab:hover {
+  color: var(--onyx-text);
+  background: var(--onyx-bg-2);
+}
+.onyx-skin-tab.active {
+  color: var(--onyx-cyan);
+  border-color: var(--onyx-border-light);
+  border-bottom-color: var(--onyx-bg-1);
+  background: var(--onyx-bg-1);
+  margin-bottom: -9px;
+  padding-bottom: 16px;
+}
+
+/* Drag&Drop-Zone */
+.onyx-skin-dropzone {
+  border: 2px dashed var(--onyx-border-light);
+  border-radius: var(--onyx-radius);
+  padding: 28px;
+  text-align: center;
+  color: var(--onyx-text-dim);
+  margin-bottom: 18px;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.onyx-skin-dropzone:hover {
+  border-color: var(--onyx-cyan-dark);
+  background: var(--onyx-bg-2);
+}
+.onyx-skin-dropzone.over {
+  border-color: var(--onyx-cyan);
+  background: rgba(34, 211, 238, 0.08);
+}
+.onyx-skin-dropzone-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--onyx-text);
+}
+.onyx-skin-dropzone-hint {
+  font-size: 12px;
+  color: var(--onyx-text-faint);
+}
+
+/* Modell-Auswahl + Mojang-Button */
+.onyx-skin-model {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.onyx-skin-model span {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  font-weight: 600;
+}
+.onyx-skin-model .onyx-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+/* ---------- 3D-Skin-Vorschau ---------- */
+.onyx-skin3d-panel {
+  display: flex;
+  gap: 20px;
+  padding: 18px;
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-border);
+  border-radius: var(--onyx-radius);
+  margin-bottom: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.onyx-skin3d-canvas {
+  cursor: grab;
+  background: transparent;
+  border-radius: var(--onyx-radius-sm);
+  display: block;
+  flex-shrink: 0;
+  max-width: 100%;
+  height: auto;
+}
+.onyx-skin3d-canvas:active {
+  cursor: grabbing;
+}
+.onyx-skin3d-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+.onyx-skin3d-title {
+  font-size: 16px;
+  color: var(--onyx-cyan-bright);
+  font-weight: 700;
+  margin: 0;
+}
+.onyx-skin3d-source {
+  font-size: 13px;
+  color: var(--onyx-text);
+  margin: 0;
+  word-break: break-word;
+}
+.onyx-skin3d-hint {
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+  font-style: italic;
+  margin: 4px 0 0;
+}
+
+/* Skin-Karten */
+.onyx-skin-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 10px;
+  cursor: pointer;
+}
+.onyx-skin-card.active {
+  border-color: var(--onyx-cyan);
+  box-shadow: var(--onyx-glow);
+  cursor: default;
+}
+.onyx-skin-card:not(.active):hover {
+  border-color: var(--onyx-cyan-light);
+}
+.onyx-skin-card-img {
+  position: relative;
+  background:
+    repeating-conic-gradient(var(--onyx-bg-2) 0% 25%, var(--onyx-bg-3) 0% 50%) 50% / 16px 16px;
+  border-radius: var(--onyx-radius-sm);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+.onyx-skin-card-img img {
+  max-width: 100%;
+  max-height: 120px;
+  image-rendering: pixelated;
+}
+/* Haken-Badge beim aktiven Skin */
+.onyx-skin-card-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--onyx-cyan);
+  color: var(--onyx-bg-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: var(--onyx-glow);
+}
+/* Hinweistext statt Button */
+.onyx-skin-card-hint {
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+  font-style: italic;
+  flex: 1;
+}
+.onyx-skin-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.onyx-skin-card-info strong {
+  font-size: 14px;
+}
+.onyx-skin-card-info span {
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+}
+.onyx-skin-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.onyx-skin-card-actions .onyx-btn {
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+/* ---------- Eingebaute Cape-Bibliothek ---------- */
+.onyx-builtin-capes {
+  margin-bottom: 24px;
+}
+.onyx-builtin-title {
+  font-size: 15px;
+  color: var(--onyx-text);
+  margin-bottom: 6px;
+}
+.onyx-builtin-hint {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  margin-bottom: 12px;
+}
+.onyx-builtin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.onyx-builtin-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: center;
+}
+.onyx-builtin-card:hover {
+  border-color: var(--onyx-cyan);
+  transform: translateY(-2px);
+}
+.onyx-builtin-preview {
+  background: repeating-conic-gradient(var(--onyx-bg-2) 0% 25%, var(--onyx-bg-3) 0% 50%) 50% / 12px 12px;
+  border-radius: var(--onyx-radius-sm);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+.onyx-builtin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.onyx-builtin-info strong {
+  font-size: 13px;
+}
+.onyx-builtin-info span {
+  font-size: 11px;
+  color: var(--onyx-text-dim);
+}
+.onyx-builtin-actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.onyx-builtin-actions .onyx-btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+/* ---------- Bibliotheks-Titel ---------- */
+.onyx-library-title {
+  font-size: 15px;
+  color: var(--onyx-text);
+  margin: 20px 0 12px;
+}
+
+/* ---------- Cape Coming Soon ---------- */
+.onyx-cape-coming-soon {
+  text-align: center;
+  padding: 60px 24px;
+  background: var(--onyx-bg-1);
+  border: 1px dashed var(--onyx-border-light);
+  border-radius: var(--onyx-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.onyx-cape-coming-icon {
+  font-size: 72px;
+  filter: drop-shadow(0 4px 16px rgba(34, 211, 238, 0.3));
+  animation: onyx-tutorial-bounce 2s ease-in-out infinite;
+}
+.onyx-cape-coming-soon h2 {
+  font-size: 24px;
+  color: var(--onyx-cyan-bright);
+  font-weight: 700;
+}
+.onyx-cape-coming-soon p {
+  font-size: 14px;
+  color: var(--onyx-text-dim);
+  max-width: 440px;
+  line-height: 1.6;
+}
+.onyx-cape-coming-hint {
+  font-size: 13px;
+  color: var(--onyx-cyan-light);
+  margin-top: 8px;
+}
+
+/* ---------- Modal (Cape-Ziel-Auswahl) ---------- */
+.onyx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: onyx-fade-in 0.2s ease;
+}
+.onyx-modal {
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-border-light);
+  border-radius: var(--onyx-radius);
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(34, 211, 238, 0.1);
+}
+.onyx-modal h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.onyx-modal-hint {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  margin-bottom: 16px;
+}
+.onyx-modal-hint code {
+  background: var(--onyx-bg-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--onyx-cyan);
+}
+.onyx-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.onyx-modal-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--onyx-bg-2);
+  border: 1px solid var(--onyx-border);
+  border-radius: var(--onyx-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--onyx-font);
+  text-align: left;
+  width: 100%;
+}
+.onyx-modal-item:hover {
+  border-color: var(--onyx-cyan-dark);
+  background: var(--onyx-bg-3);
+}
+.onyx-modal-item.active {
+  border-color: var(--onyx-cyan);
+}
+.onyx-modal-item-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.onyx-modal-item-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--onyx-text);
+}
+.onyx-modal-item-meta {
+  font-size: 11px;
+  color: var(--onyx-text-dim);
+}
+

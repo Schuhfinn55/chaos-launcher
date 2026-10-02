@@ -1,0 +1,37 @@
+[package]
+name = "onyx-launcher"
+version = "1.2.0"
+description = "Onyx Launcher - ein Minecraft Launcher mit Modrinth- und CurseForge-Suche"
+authors = ["Onyx SMP"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "onyx_launcher_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "multipart"], default-features = false }
+tokio = { version = "1", features = ["full"] }
+sha1 = "0.10"
+sha2 = "0.10"
+hex = "0.4"
+zip = "2"
+chrono = "0.4"
+futures = "0.3"
+dirs = "5"
+thiserror = "1"
+log = "0.4"
+env_logger = "0.11"
+
+[features]
+# Standardmäßig keine Custom-Protocol (vereinfacht den Dev-Build)
+default = []

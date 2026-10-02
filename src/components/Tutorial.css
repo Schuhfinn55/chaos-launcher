@@ -1,0 +1,209 @@
+/* ============================================================
+ * Onyx Launcher - Tutorial (schwebendes Fenster)
+ *
+ * Das Tutorial ist ein kleines, verschiebbares Fenster, das die
+ * App nicht blockiert. Man kann durch die App navigieren und das
+ * Tutorial bleibt im Vordergrund.
+ * ============================================================ */
+
+/* ---------- Schwebendes Fenster ---------- */
+.onyx-tutorial-window {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 380px;
+  background: linear-gradient(
+    180deg,
+    rgba(14, 42, 53, 0.98) 0%,
+    rgba(6, 20, 26, 0.99) 100%
+  );
+  border: 1px solid var(--onyx-border-light);
+  border-radius: 12px;
+  padding: 0;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(34, 211, 238, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 9999;
+  animation: onyx-tutorial-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+@keyframes onyx-tutorial-slide-in {
+  0% { transform: translate(0, 100px); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+
+/* ---------- Titelleiste (dragbar) ---------- */
+.onyx-tutorial-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(34, 211, 238, 0.06);
+  border-bottom: 1px solid var(--onyx-border);
+  cursor: move;
+  user-select: none;
+}
+.onyx-tutorial-titlebar-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--onyx-cyan-bright);
+}
+.onyx-tutorial-titlebar-actions {
+  display: flex;
+  gap: 4px;
+}
+.onyx-tutorial-minimize,
+.onyx-tutorial-close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.onyx-tutorial-minimize:hover {
+  background: var(--onyx-cyan-deep);
+  color: var(--onyx-cyan-bright);
+}
+.onyx-tutorial-close:hover {
+  background: var(--onyx-danger);
+  color: white;
+}
+
+/* ---------- Fortschrittsbalken ---------- */
+.onyx-tutorial-progress {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  padding: 12px 14px 0;
+}
+.onyx-tutorial-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: var(--onyx-bg-3);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+.onyx-tutorial-dot:hover {
+  background: var(--onyx-cyan-dark);
+}
+.onyx-tutorial-dot.active {
+  background: var(--onyx-cyan);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+  transform: scale(1.4);
+}
+.onyx-tutorial-dot.done {
+  background: var(--onyx-cyan-dark);
+}
+
+/* ---------- Inhalt ---------- */
+.onyx-tutorial-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  min-height: 140px;
+  justify-content: center;
+}
+.onyx-tutorial-icon {
+  font-size: 42px;
+  filter: drop-shadow(0 4px 12px rgba(34, 211, 238, 0.3));
+  animation: onyx-tutorial-bounce 2s ease-in-out infinite;
+}
+@keyframes onyx-tutorial-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.onyx-tutorial-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--onyx-text);
+}
+.onyx-tutorial-text {
+  font-size: 13px;
+  color: var(--onyx-text-dim);
+  line-height: 1.55;
+  max-width: 320px;
+}
+
+/* ---------- Buttons ---------- */
+.onyx-tutorial-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 16px;
+}
+.onyx-tutorial-actions .onyx-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+/* ---------- Schritt-Anzeige ---------- */
+.onyx-tutorial-step-info {
+  text-align: center;
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+  padding: 0 16px 14px;
+}
+
+/* ---------- Minimiert (FAB) ---------- */
+.onyx-tutorial-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--onyx-cyan-dark), var(--onyx-cyan));
+  border: none;
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.4), 0 0 0 4px rgba(34, 211, 238, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  z-index: 9999;
+  animation: onyx-tutorial-pulse 2s ease-in-out infinite;
+  position: relative;
+}
+@keyframes onyx-tutorial-pulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(34, 211, 238, 0.4), 0 0 0 4px rgba(34, 211, 238, 0.1); }
+  50% { box-shadow: 0 8px 32px rgba(34, 211, 238, 0.6), 0 0 0 8px rgba(34, 211, 238, 0.15); }
+}
+.onyx-tutorial-fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--onyx-bg-0);
+  color: var(--onyx-cyan-bright);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--onyx-cyan);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  .onyx-tutorial-window {
+    width: calc(100% - 24px);
+    right: 12px;
+    bottom: 12px;
+  }
+}

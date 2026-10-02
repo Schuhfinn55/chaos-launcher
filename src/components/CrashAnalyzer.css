@@ -1,0 +1,109 @@
+/* ============================================================
+ * Onyx Launcher - Crash-Analyse Panel
+ * ============================================================ */
+
+.onyx-crash-panel {
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-border-light);
+  border-radius: var(--onyx-radius);
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.onyx-crash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.onyx-crash-header h3 {
+  font-size: 14px;
+  color: var(--onyx-text);
+}
+.onyx-crash-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 4px;
+  background: var(--onyx-bg-3);
+  color: var(--onyx-text-dim);
+  cursor: pointer;
+  font-size: 14px;
+}
+.onyx-crash-close:hover {
+  background: var(--onyx-danger);
+  color: white;
+}
+
+.onyx-crash-loading {
+  text-align: center;
+  padding: 24px;
+  color: var(--onyx-text-dim);
+}
+.onyx-crash-spinner {
+  font-size: 32px;
+  margin-bottom: 8px;
+  animation: onyx-crash-spin 1.5s linear infinite;
+}
+@keyframes onyx-crash-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.onyx-crash-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.onyx-crash-error {
+  border-left: 3px solid var(--onyx-danger);
+  padding-left: 12px;
+}
+.onyx-crash-ok {
+  border-left: 3px solid var(--onyx-success);
+  padding-left: 12px;
+}
+
+.onyx-crash-icon {
+  font-size: 28px;
+}
+
+.onyx-crash-cause {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.onyx-crash-cause strong {
+  font-size: 15px;
+  color: var(--onyx-text);
+}
+.onyx-crash-cause span {
+  font-size: 13px;
+  color: var(--onyx-text-dim);
+}
+.onyx-crash-error .onyx-crash-cause strong {
+  color: var(--onyx-danger);
+}
+.onyx-crash-ok .onyx-crash-cause strong {
+  color: var(--onyx-success);
+}
+
+.onyx-crash-mod {
+  margin: 4px 0;
+}
+
+.onyx-crash-section {
+  font-size: 13px;
+  color: var(--onyx-text-dim);
+  line-height: 1.5;
+}
+.onyx-crash-section strong {
+  display: block;
+  color: var(--onyx-text);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.onyx-crash-section p {
+  font-size: 13px;
+  color: var(--onyx-text-dim);
+}

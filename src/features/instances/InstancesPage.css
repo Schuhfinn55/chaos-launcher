@@ -1,0 +1,254 @@
+/* Onyx Launcher - Instanzen-Seite */
+
+/* ---------- Preset-Auswahl ---------- */
+.onyx-preset-panel {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.onyx-preset-panel h3 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.onyx-preset-hint {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  margin-bottom: 16px;
+}
+.onyx-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.onyx-preset-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  text-align: left;
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-border);
+  transition: all 0.2s ease;
+  font-family: var(--onyx-font);
+}
+.onyx-preset-card:hover {
+  border-color: var(--onyx-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.onyx-preset-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.onyx-preset-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--onyx-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.onyx-preset-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.onyx-preset-info strong {
+  font-size: 14px;
+  color: var(--onyx-text);
+}
+.onyx-preset-info > span:nth-child(2) {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  line-height: 1.4;
+}
+.onyx-preset-meta {
+  font-size: 11px;
+  color: var(--onyx-cyan-light);
+  font-weight: 600;
+}
+
+/* ---------- Preset-Versions-Dialog ---------- */
+.onyx-preset-modal-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.onyx-preset-modal-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--onyx-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.onyx-preset-modal-header h3 {
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+.onyx-preset-modal-mods {
+  margin-bottom: 20px;
+}
+.onyx-preset-modal-mods > strong {
+  font-size: 13px;
+  display: block;
+  margin-bottom: 8px;
+}
+.onyx-preset-modal-modlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.onyx-preset-modal-nomods {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  font-style: italic;
+}
+.onyx-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ---------- Formular ---------- */
+.onyx-inst-form {
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.onyx-inst-form h3 {
+  font-size: 15px;
+  color: var(--onyx-cyan-light);
+}
+.onyx-inst-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.onyx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.onyx-field span {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  font-weight: 600;
+}
+.onyx-color-row {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+.onyx-color-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.onyx-color-dot:hover {
+  transform: scale(1.12);
+}
+.onyx-color-dot.selected {
+  border-color: var(--onyx-white);
+  box-shadow: var(--onyx-glow);
+}
+
+.onyx-inst-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.onyx-inst {
+  padding: 18px;
+}
+.onyx-inst.active {
+  border-color: var(--onyx-cyan);
+  box-shadow: var(--onyx-glow);
+}
+.onyx-inst-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.onyx-inst-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--onyx-radius-sm);
+  flex-shrink: 0;
+  box-shadow: 0 0 12px currentColor;
+}
+.onyx-inst-headinfo {
+  flex: 1;
+  min-width: 0;
+}
+.onyx-inst-headinfo h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.onyx-inst-headinfo span {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+}
+.onyx-inst-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.onyx-inst-mods {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--onyx-border);
+}
+.onyx-inst-mods-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.onyx-inst-mods-head strong {
+  font-size: 13px;
+}
+.onyx-inst-hint {
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+}
+.onyx-inst-nomods {
+  font-size: 12px;
+  color: var(--onyx-text-faint);
+  padding: 6px 0;
+}
+.onyx-inst-modlist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.onyx-inst-mod {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--onyx-bg-2);
+  border-radius: var(--onyx-radius-sm);
+}
+.onyx-inst-mod.disabled {
+  opacity: 0.5;
+}
+.onyx-inst-modname {
+  flex: 1;
+  font-size: 13px;
+}
+.onyx-inst-mod .onyx-btn {
+  padding: 5px 10px;
+  font-size: 11px;
+}

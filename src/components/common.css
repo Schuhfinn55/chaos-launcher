@@ -1,0 +1,249 @@
+/* Onyx Launcher - gemeinsame UI-Styles */
+
+.onyx-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.onyx-page-subtitle {
+  margin-top: 6px;
+  color: var(--onyx-text-dim);
+  font-size: 13px;
+  max-width: 600px;
+}
+.onyx-page-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.onyx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--onyx-text-dim);
+}
+.onyx-empty-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+.onyx-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--onyx-text);
+  margin-bottom: 4px;
+}
+.onyx-empty-hint {
+  font-size: 12px;
+  color: var(--onyx-text-faint);
+}
+
+/* Mod-Raster */
+.onyx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* Filter-Leiste */
+.onyx-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.onyx-toolbar .onyx-input {
+  max-width: 380px;
+}
+.onyx-select {
+  padding: 9px 12px;
+  border-radius: var(--onyx-radius-sm);
+  border: 1px solid var(--onyx-border-light);
+  background: var(--onyx-bg-0);
+  color: var(--onyx-text);
+  font-size: 13px;
+  font-family: var(--onyx-font);
+  outline: none;
+  cursor: pointer;
+}
+.onyx-select:focus {
+  border-color: var(--onyx-cyan);
+}
+.onyx-select option {
+  background: var(--onyx-bg-1);
+}
+
+/* Listen (z.B. Instanzen) */
+.onyx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Scroll-Container für Seiteninhalte */
+.onyx-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+/* Loading-Spinner (Onyx-Cyan) */
+.onyx-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid var(--onyx-border-light);
+  border-top-color: var(--onyx-cyan);
+  border-radius: 50%;
+  animation: onyx-spin 0.7s linear infinite;
+}
+@keyframes onyx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.onyx-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* Toast / Hinweis-Leiste */
+.onyx-toast {
+  padding: 10px 16px;
+  border-radius: var(--onyx-radius-sm);
+  font-size: 13px;
+  border: 1px solid var(--onyx-border-light);
+  background: var(--onyx-bg-2);
+}
+.onyx-toast-info {
+  border-color: var(--onyx-cyan-dark);
+  color: var(--onyx-cyan-light);
+}
+.onyx-toast-warn {
+  border-color: var(--onyx-warning);
+  color: var(--onyx-warning);
+}
+
+/* Versions-Auswahl-Dialog */
+
+/* Globales Modal-Overlay (wiederverwendbar) */
+.onyx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: onyx-fade-in 0.2s ease;
+}
+.onyx-modal {
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-border-light);
+  border-radius: var(--onyx-radius);
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(34, 211, 238, 0.1);
+}
+.onyx-modal h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.onyx-modal-hint {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.onyx-version-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: onyx-fade-in 0.2s ease;
+}
+.onyx-version-dialog {
+  background: var(--onyx-bg-1);
+  border: 1px solid var(--onyx-cyan-dark);
+  border-radius: var(--onyx-radius);
+  padding: 20px;
+  max-width: 560px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--onyx-glow);
+}
+.onyx-version-dialog h3 {
+  font-size: 16px;
+  color: var(--onyx-cyan-light);
+  margin-bottom: 4px;
+}
+.onyx-version-hint {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  margin-bottom: 14px;
+}
+.onyx-version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.onyx-version-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--onyx-bg-2);
+  border: 1px solid var(--onyx-border);
+  border-radius: var(--onyx-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--onyx-font);
+  color: var(--onyx-text);
+  text-align: left;
+}
+.onyx-version-item:hover {
+  border-color: var(--onyx-cyan);
+  background: var(--onyx-bg-3);
+}
+.onyx-version-item.primary {
+  border-color: var(--onyx-cyan-dark);
+}
+.onyx-version-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.onyx-version-item-info strong {
+  font-size: 13px;
+  word-break: break-all;
+}
+.onyx-version-item-info span {
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+}
+.onyx-version-dl {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--onyx-cyan);
+  white-space: nowrap;
+}

@@ -1,0 +1,145 @@
+.onyx-modcard {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 10px;
+}
+
+.onyx-modcard-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.onyx-modcard-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--onyx-radius-sm);
+  overflow: hidden;
+  background: var(--onyx-bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--onyx-border);
+}
+.onyx-modcard-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.onyx-modcard-icon-fallback {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--onyx-cyan);
+}
+.onyx-modcard-meta {
+  flex: 1;
+  min-width: 0;
+}
+.onyx-modcard-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--onyx-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.onyx-modcard-author {
+  font-size: 11px;
+  color: var(--onyx-text-faint);
+}
+.onyx-modcard-source {
+  flex-shrink: 0;
+}
+
+.onyx-modcard-desc {
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  line-height: 1.45;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Vollständige Beschreibung beim Hover */
+.onyx-modcard {
+  position: relative;
+}
+.onyx-modcard-full-desc {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 10;
+  background: var(--onyx-bg-0);
+  border: 1px solid var(--onyx-cyan-dark);
+  border-radius: var(--onyx-radius-sm);
+  padding: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), var(--onyx-glow);
+  animation: onyx-desc-fade 0.18s ease;
+  pointer-events: none;
+}
+@keyframes onyx-desc-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.onyx-modcard-full-desc strong {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--onyx-cyan);
+  margin-bottom: 6px;
+}
+.onyx-modcard-full-desc p {
+  font-size: 12px;
+  color: var(--onyx-text);
+  line-height: 1.5;
+  max-height: 160px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.onyx-modcard-full-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.onyx-modcard-full-link {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--onyx-cyan-light);
+  text-decoration: none;
+  pointer-events: auto;
+}
+.onyx-modcard-full-link:hover {
+  text-decoration: underline;
+}
+
+.onyx-modcard-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.onyx-modcard-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+}
+.onyx-modcard-dl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--onyx-text-dim);
+  font-weight: 600;
+}
+.onyx-modcard-bottom .onyx-btn {
+  padding: 7px 12px;
+  font-size: 12px;
+}
