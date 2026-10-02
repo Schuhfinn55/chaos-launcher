@@ -146,8 +146,43 @@ pub fn load_accounts() -> Result<Vec<Account>, String> {
             a.refresh_token = Some(secure::unprotect(&t).unwrap_or_default());
         }
     }
+    // Duplikate (gleiche UUID) aus alten Versionen zusammenführen – der
+    // letzte Eintrag gewinnt – und sicherstellen, dass höchstens ein
+    // Account aktiv ist.
+    let before = accounts.len();
+    let mut deduped: Vec<Account> = Vec::with_capacity(before);
+    for a in accounts.into_iter() {
+        if let Some(pos) = deduped.iter().position(|x| x.uuid == a.uuid) {
+            let was_active = deduped[pos].active;
+            deduped[pos] = a;
+            deduped[pos].active |= was_active;
+        } else {
+            deduped.push(a);
+        }
+    }
+    let mut accounts = deduped;
+    if accounts.len() != before {
+        needs_rewrite = true;
+    }
+    let active_count = accounts.iter().filter(|a| a.active).count();
+    if active_count > 1 {
+        let mut seen = false;
+        for a in accounts.iter_mut().rev() {
+            if a.active {
+                if seen {
+                    a.active = false;
+                } else {
+                    seen = true;
+                }
+            }
+        }
+        needs_rewrite = true;
+    } else if active_count == 0 && !accounts.is_empty() {
+        accounts[0].active = true;
+        needs_rewrite = true;
+    }
     if needs_rewrite {
-        // Klartext-Altbestand sofort verschlüsselt zurückschreiben.
+        // Klartext-Altbestand verschlüsselt und bereinigt zurückschreiben.
         let _ = save_accounts(&accounts);
     }
     Ok(accounts)

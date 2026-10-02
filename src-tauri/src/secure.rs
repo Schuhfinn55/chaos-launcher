@@ -125,3 +125,32 @@ pub fn redact(token: &str) -> String {
     }
     format!("{}…{}", &token[..4], &token[token.len() - 2..])
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn roundtrip_protect_unprotect() {
+        let secret = "eyJhbGciOi...sehr-geheimer-token";
+        let stored = protect(secret).expect("protect");
+        assert!(is_protected(&stored));
+        assert_ne!(stored, secret, "Token darf nicht im Klartext gespeichert werden");
+        assert!(!stored.contains("geheimer"), "verschlüsselter Wert enthält Klartext");
+        let back = unprotect(&stored).expect("unprotect");
+        assert_eq!(back, secret);
+    }
+
+    #[test]
+    fn legacy_plaintext_is_accepted() {
+        assert_eq!(unprotect("plain-old-token").unwrap(), "plain-old-token");
+        assert!(!is_protected("plain-old-token"));
+        assert_eq!(protect("").unwrap(), "");
+    }
+
+    #[test]
+    fn redact_hides_token() {
+        let r = redact("abcdefghijklmnop");
+        assert!(r.starts_with("abcd") && r.ends_with("op") && !r.contains("efgh"));
+    }
+}

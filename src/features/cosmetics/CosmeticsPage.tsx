@@ -298,6 +298,7 @@ function CapesSection({
   const fileInput = useRef<HTMLInputElement>(null);
   const capes = cosmetics?.capes ?? [];
   const profile = cosmetics?.profiles.find((p) => p.accountUuid === account?.uuid);
+  const templateUrls = useMemo(() => Object.fromEntries(CHAOS_CAPES.map((b) => [b.id, b.generate()])), []);
 
   useEffect(() => {
     apiInfo().then(setApi).catch(() => {});
@@ -488,7 +489,7 @@ function CapesSection({
       <div className="chaos-cos-templates">
         {CHAOS_CAPES.map((b) => (
           <button key={b.id} className="chaos-card hoverable chaos-cos-template" disabled={busy} onClick={() => importBuiltin(b)}>
-            <img src={capeThumbnailSync(b.generate())} alt={b.name} />
+            <TemplateThumb dataUrl={templateUrls[b.id]} />
             <strong>{b.name}</strong>
             <span>{b.description}</span>
           </button>
@@ -570,12 +571,17 @@ async function capeThumbnail(dataUrl: string): Promise<string> {
     img.src = dataUrl;
   });
 }
-function capeThumbnailSync(dataUrl: string): string {
-  // Vorlagen sind synchron per Canvas erzeugt → direkt zeichnen
-  const img = new Image();
-  img.src = dataUrl;
-  if (img.complete && img.naturalWidth > 0) return drawCapeThumb(img);
-  return dataUrl;
+/** Vorschaubild einer Vorlage (asynchron aus der 64×32-Textur gezeichnet). */
+function TemplateThumb({ dataUrl }: { dataUrl: string }) {
+  const [thumb, setThumb] = useState<string>("");
+  useEffect(() => {
+    let alive = true;
+    capeThumbnail(dataUrl).then((t) => alive && setThumb(t));
+    return () => {
+      alive = false;
+    };
+  }, [dataUrl]);
+  return thumb ? <img src={thumb} alt="" /> : <span className="chaos-skeleton block" style={{ width: 45, height: 72 }} />;
 }
 function drawCapeThumb(img: HTMLImageElement): string {
   const scale = img.naturalWidth / 64;
