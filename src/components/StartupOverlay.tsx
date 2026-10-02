@@ -11,7 +11,8 @@ import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import { AsciiProgress, ProgressBar } from "@/components/ui";
 import { useAccountStore, useInstanceStore, useSettingsStore, useStatusStore } from "@/stores/useStore";
-import { checkAllInstances, checkForUpdates, getAppInfo, runningInstances } from "@/lib/api/launcher";
+import { checkAllInstances, checkClientUpdate, checkForUpdates, getAppInfo, runningInstances, saveServers } from "@/lib/api/launcher";
+import { loadSavedServers } from "@/lib/api/servers";
 import { useT } from "@/lib/i18n/useT";
 import "./StartupOverlay.css";
 
@@ -70,10 +71,28 @@ export default function StartupOverlay({ onDone }: { onDone: () => void }) {
       }
       setPct(35);
 
-      // 2. Client-Version (gebündelte Chaos-Client-Mod)
+      // 2. Client-Version (Chaos-Client-Mod) + Client-Update-Check
       update(1, "running");
       const app = useStatusStore.getState().appInfo;
-      update(1, app?.clientModVersion ? "ok" : "warn", app?.clientModVersion ? `Chaos Client ${app.clientModVersion}` : "Chaos Client nicht gebündelt");
+      saveServers(loadSavedServers()).catch(() => {});
+      if (!app?.clientModVersion) {
+        update(1, "warn", t("startup.clientMissing"));
+      } else {
+        const settings = useSettingsStore.getState().settings;
+        let cu: Awaited<ReturnType<typeof checkClientUpdate>> = null;
+        if (settings?.clientAutoUpdate !== false) {
+          try {
+            cu = await Promise.race([
+              checkClientUpdate(settings?.updateChannel),
+              new Promise<null>((r) => setTimeout(() => r(null), 6000)),
+            ]);
+          } catch {
+            cu = null;
+          }
+        }
+        status.setClientUpdate(cu);
+        update(1, cu ? "warn" : "ok", cu ? `${t("startup.clientUpdateAvailable")}: ${cu.version}` : `Chaos Client ${app.clientModVersion}${app.clientModSource === "downloaded" ? " · " + t("startup.downloaded") : ""}`);
+      }
       setPct(50);
 
       // 3. Profil

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHead, Toggle } from "@/components/ui";
 import ImageCropper from "@/components/ImageCropper";
+import ClientSettings from "./ClientSettings";
 import { useInstanceStore, useSettingsStore, useStatusStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import { invoke, listen } from "@/lib/bridge";
@@ -19,12 +20,13 @@ import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize } fr
 import type { CacheInfo, CustomTheme, JavaInfo, MemoryInfo, Settings, UpdateInfo, VersionInfo } from "@/types";
 import "./SettingsPage.css";
 
-type Cat = "general" | "display" | "minecraft" | "cosmetics" | "launcher" | "discord" | "chaoscraft";
+type Cat = "general" | "display" | "minecraft" | "cosmetics" | "client" | "launcher" | "discord" | "chaoscraft";
 const CATS: { id: Cat; label: string; icon: string }[] = [
   { id: "general", label: "Allgemein", icon: "⚙" },
   { id: "display", label: "Darstellung", icon: "🎨" },
   { id: "minecraft", label: "Minecraft", icon: "⛏" },
   { id: "cosmetics", label: "Cosmetics", icon: "🧥" },
+  { id: "client", label: "Chaos Client", icon: "✸" },
   { id: "launcher", label: "Launcher", icon: "🚀" },
   { id: "discord", label: "Discord", icon: "💬" },
   { id: "chaoscraft", label: "Chaoscraft", icon: "🔥" },
@@ -66,6 +68,7 @@ export default function SettingsPage() {
           {cat === "display" && <Display s={settings} set={set} />}
           {cat === "minecraft" && <MinecraftCat s={settings} set={set} />}
           {cat === "cosmetics" && <Cosmetics s={settings} set={set} />}
+          {cat === "client" && <ClientSettings s={settings} set={set} />}
           {cat === "launcher" && <Launcher s={settings} set={set} />}
           {cat === "discord" && <Discord s={settings} set={set} />}
           {cat === "chaoscraft" && <Chaoscraft s={settings} set={set} />}

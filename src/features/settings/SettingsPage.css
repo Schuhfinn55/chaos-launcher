@@ -35,3 +35,9 @@
 .chaos-cache-list li:last-child { border-bottom: none; }
 .chaos-cache-list strong { font-family: var(--chaos-font-mono); font-size: 12px; text-align: right; }
 .chaos-release-notes { margin-top: 8px; font-size: 11px; font-family: var(--chaos-font-mono); white-space: pre-wrap; background: #000; padding: 10px; border-radius: 8px; color: var(--chaos-text-dim); max-height: 240px; overflow: auto; user-select: text; }
+
+/* Lizenztabelle (Einstellungen › Chaos Client) */
+.chaos-license-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.chaos-license-table th { text-align: left; font-weight: 600; color: var(--chaos-text-dim); padding: 6px 8px; border-bottom: 1px solid var(--chaos-border); }
+.chaos-license-table td { padding: 7px 8px; border-bottom: 1px solid var(--chaos-border); vertical-align: top; }
+.chaos-license-table tr:last-child td { border-bottom: none; }

@@ -20,6 +20,7 @@ import type {
   Settings,
   SkinEntry,
   UpdateInfo,
+  ClientUpdateInfo,
 } from "@/types";
 
 /* -------------------- Profile / Instanzen -------------------- */
@@ -266,12 +267,14 @@ export const useCosmeticsStore = create<CosmeticsStore>((set) => ({
 interface StatusStore {
   appInfo: AppInfo | null;
   update: UpdateInfo | null;
+  clientUpdate: ClientUpdateInfo | null;
   updateChecked: boolean;
   instanceStatus: Record<string, InstanceStatus>;
   serverStatus: Record<string, ServerStatus>;
   running: string[];
   setAppInfo: (a: AppInfo) => void;
   setUpdate: (u: UpdateInfo | null) => void;
+  setClientUpdate: (u: ClientUpdateInfo | null) => void;
   setInstanceStatus: (s: InstanceStatus) => void;
   setServerStatus: (s: ServerStatus) => void;
   setRunning: (ids: string[]) => void;
@@ -280,12 +283,14 @@ interface StatusStore {
 export const useStatusStore = create<StatusStore>((set) => ({
   appInfo: null,
   update: null,
+  clientUpdate: null,
   updateChecked: false,
   instanceStatus: {},
   serverStatus: {},
   running: [],
   setAppInfo: (appInfo) => set({ appInfo }),
   setUpdate: (update) => set({ update, updateChecked: true }),
+  setClientUpdate: (clientUpdate) => set({ clientUpdate }),
   setInstanceStatus: (s) => set((st) => ({ instanceStatus: { ...st.instanceStatus, [s.instanceId]: s } })),
   setServerStatus: (s) => set((st) => ({ serverStatus: { ...st.serverStatus, [`${s.address}:${s.port}`]: s } })),
   setRunning: (running) => set({ running }),

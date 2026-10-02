@@ -563,11 +563,22 @@ pub async fn launch_instance(
         log_step(format!("Mods FEHLEND: {}", mods_missing.join(", ")));
     }
 
-    // Cosmetics exportieren
+    // Cosmetics: Ingame-Änderungen übernehmen, dann exportieren
+    match crate::cosmetics::import_ingame_state(home, uuid) {
+        Ok(Some(name)) => log_step(format!("Cosmetics: ingame gewähltes Cape übernommen: {name}")),
+        Ok(None) => {}
+        Err(e) => log_step(format!("WARNUNG: ingame-state.json: {e}")),
+    }
     if let Err(e) = crate::cosmetics::export_for_instance(home, uuid, username, settings) {
         log_step(format!("WARNUNG: Cosmetics-Export fehlgeschlagen: {e}"));
     } else {
         log_step("Cosmetics exportiert (chaos-cosmetics/)");
+    }
+
+    // Shared-Daten für den Chaos Client (Account, Profil, Server, Freunde, Menütaste …)
+    match crate::shared::export_shared(home, &instance, username, uuid, settings) {
+        Ok(_) => log_step("Chaos-Client shared.json geschrieben"),
+        Err(e) => log_step(format!("WARNUNG: shared.json: {e}")),
     }
 
     // ----- 7. Argumente -----
@@ -1446,8 +1457,26 @@ fn version_constraint_matches(constraint: &str, version: &str) -> bool {
     c == version
 }
 
-/// Löst den Pfad zur gebündelten chaos-client.jar auf.
+/// Löst den Pfad zur aktiven chaos-client.jar auf: eine per Client-Update
+/// heruntergeladene (verifizierte) JAR hat Vorrang, wenn sie neuer ist als
+/// die gebündelte.
 pub fn chaos_client_resource_path() -> Option<PathBuf> {
+    let bundled = bundled_client_path();
+    let bundled_ver = bundled.as_ref().and_then(|p| jar_mod_version(p));
+    if let Some((path, ver)) = crate::client_update::downloaded_client() {
+        let newer = match &bundled_ver {
+            Some(b) => crate::updater::is_version_newer(&ver, b),
+            None => true,
+        };
+        if newer {
+            return Some(path);
+        }
+    }
+    bundled
+}
+
+/// Pfad der im Launcher gebündelten chaos-client.jar.
+pub fn bundled_client_path() -> Option<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
@@ -1459,9 +1488,18 @@ pub fn chaos_client_resource_path() -> Option<PathBuf> {
     candidates.into_iter().find(|p| p.exists())
 }
 
-/// Version der gebündelten Client-Mod (aus fabric.mod.json).
+/// Version der aktiven Client-Mod (aus fabric.mod.json).
 pub fn chaos_client_version() -> Option<String> {
-    let src = chaos_client_resource_path()?;
+    jar_mod_version(&chaos_client_resource_path()?)
+}
+
+/// Version der gebündelten Client-Mod.
+pub fn bundled_client_version() -> Option<String> {
+    jar_mod_version(&bundled_client_path()?)
+}
+
+/// Liest `version` aus der fabric.mod.json einer Mod-JAR (nur wenn id == chaosclient).
+pub fn jar_mod_version(src: &Path) -> Option<String> {
     let file = fs::File::open(src).ok()?;
     let mut archive = zip::ZipArchive::new(file).ok()?;
     let mut entry = archive.by_name("fabric.mod.json").ok()?;
@@ -1469,5 +1507,8 @@ pub fn chaos_client_version() -> Option<String> {
     use std::io::Read;
     entry.read_to_string(&mut txt).ok()?;
     let v: serde_json::Value = serde_json::from_str(&txt).ok()?;
+    if v.get("id").and_then(|x| x.as_str()) != Some("chaosclient") {
+        return None;
+    }
     v.get("version").and_then(|x| x.as_str()).map(|s| s.to_string())
 }

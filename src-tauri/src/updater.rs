@@ -34,29 +34,30 @@ pub struct UpdateInfo {
 }
 
 #[derive(Debug, Deserialize)]
-struct GitHubRelease {
-    tag_name: String,
-    html_url: String,
-    body: Option<String>,
-    assets: Vec<GitHubAsset>,
+pub(crate) struct GitHubRelease {
+    pub tag_name: String,
+    pub html_url: String,
+    pub body: Option<String>,
+    pub assets: Vec<GitHubAsset>,
     #[serde(default)]
-    prerelease: bool,
+    pub prerelease: bool,
     #[serde(default)]
-    published_at: String,
+    pub published_at: String,
 }
 
 #[derive(Debug, Deserialize)]
-struct GitHubAsset {
-    name: String,
-    browser_download_url: String,
-    size: u64,
+pub(crate) struct GitHubAsset {
+    pub name: String,
+    pub browser_download_url: String,
+    pub size: u64,
 }
 
-/// Prüft, ob ein Update verfügbar ist. `channel`: "stable" | "beta".
-pub async fn check_for_update(channel: &str) -> Result<Option<UpdateInfo>, String> {
+/// Lädt die neuesten Releases (stable: nur „latest“, beta: die letzten 10
+/// inkl. Pre-Releases) aus dem Chaos-GitHub-Repository.
+pub(crate) async fn fetch_releases(channel: &str) -> Result<Vec<GitHubRelease>, String> {
     let client = http_client()?;
     let url = if channel == "beta" {
-        format!("https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=5")
+        format!("https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=10")
     } else {
         format!("https://api.github.com/repos/{GITHUB_REPO}/releases/latest")
     };
@@ -69,16 +70,20 @@ pub async fn check_for_update(channel: &str) -> Result<Option<UpdateInfo>, Strin
         .map_err(|e| format!("Update-Check: {e}"))?;
     if !resp.status().is_success() {
         log::info!("[Chaos] Update-Check: HTTP {}", resp.status());
-        return Ok(None);
+        return Ok(Vec::new());
     }
-    let release: GitHubRelease = if channel == "beta" {
-        let list: Vec<GitHubRelease> = resp.json().await.map_err(|e| format!("Update-Check parsen: {e}"))?;
-        match list.into_iter().next() {
-            Some(r) => r,
-            None => return Ok(None),
-        }
+    if channel == "beta" {
+        resp.json().await.map_err(|e| format!("Update-Check parsen: {e}"))
     } else {
-        resp.json().await.map_err(|e| format!("Update-Check parsen: {e}"))?
+        let r: GitHubRelease = resp.json().await.map_err(|e| format!("Update-Check parsen: {e}"))?;
+        Ok(vec![r])
+    }
+}
+
+/// Prüft, ob ein Update verfügbar ist. `channel`: "stable" | "beta".
+pub async fn check_for_update(channel: &str) -> Result<Option<UpdateInfo>, String> {
+    let Some(release) = fetch_releases(channel).await?.into_iter().next() else {
+        return Ok(None);
     };
 
     let latest_version = release.tag_name.trim_start_matches('v').to_string();

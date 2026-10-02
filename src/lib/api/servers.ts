@@ -26,6 +26,8 @@ export function loadSavedServers(): SavedServer[] {
 }
 export function saveSavedServers(list: SavedServer[]) {
   localStorage.setItem(KEY, JSON.stringify(list));
+  // Für den Chaos Client (Server-Schnellmenü) auch im Backend ablegen
+  invoke("save_servers", { servers: list }).catch(() => {});
 }
 
 /** Aktuelle Chaoscraft-Adresse (Einstellungen überschreiben den Standard). */

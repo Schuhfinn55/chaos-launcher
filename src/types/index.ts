@@ -197,6 +197,10 @@ export interface Settings {
   // Chaoscraft / News
   chaoscraftServer?: string;
   newsUrl?: string;
+  // Chaos Client (Fabric-Mod)
+  /** GLFW-Keycode der Ingame-Menütaste, -1 = RIGHT SHIFT. */
+  clientMenuKey?: number;
+  clientAutoUpdate?: boolean;
 }
 
 /** Ein eigenes Theme mit hochgeladenem Hintergrund. */
@@ -373,9 +377,26 @@ export interface MemoryInfo {
 export interface AppInfo {
   version: string;
   clientModVersion: string | null;
+  /** "bundled" | "downloaded" */
+  clientModSource: string;
   dataDir: string;
   migratedFromOnyx: boolean;
   os: string;
+}
+
+/** Update der Chaos-Client-Mod (JAR aus den Releases). */
+export interface ClientUpdateInfo {
+  version: string;
+  currentVersion: string;
+  currentSource: string;
+  releaseUrl: string;
+  releaseNotes: string;
+  downloadUrl: string;
+  fileName: string;
+  fileSize: number;
+  verifiable: boolean;
+  publishedAt: string;
+  prerelease: boolean;
 }
 
 export interface UpdateInfo {

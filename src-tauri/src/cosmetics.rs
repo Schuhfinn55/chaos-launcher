@@ -11,6 +11,11 @@
 //!   cape.png      - aktives Cape des Spielers (optional)
 //!   players/<uuid>.png - lokal bekannte Capes anderer Spieler
 //!   cache/        - von der Cosmetics-API geladene Capes (Cache)
+//!   capes/<id>.png - komplette Cape-Bibliothek des Accounts (zum
+//!                    Wechseln im Ingame-Menü des Chaos Clients)
+//!   ingame-state.json - wird vom Chaos Client geschrieben, wenn der
+//!                    Spieler ingame das Cape wechselt; der Launcher
+//!                    übernimmt den Zustand beim Start/Öffnen (Sync).
 
 use crate::models::{Cape, CosmeticsProfile, CosmeticsState, Settings};
 use crate::storage;
@@ -20,7 +25,7 @@ use sha1::{Digest, Sha1};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub const COSMETICS_FORMAT_VERSION: u32 = 1;
+pub const COSMETICS_FORMAT_VERSION: u32 = 2;
 
 /// Erlaubte Cape-Formate (Breite × Höhe). Minecraft-Capes sind 2:1,
 /// 64×32 ist das Standardformat; höhere Auflösungen sind Vielfache.
@@ -294,6 +299,22 @@ pub fn export_for_instance(
         }
     }
 
+    // 2b. Cape-Bibliothek des Accounts (zum Wechseln im Chaos Client)
+    let lib_dir = dir.join("capes");
+    let _ = fs::remove_dir_all(&lib_dir);
+    fs::create_dir_all(&lib_dir).ok();
+    let mut library: Vec<serde_json::Value> = Vec::new();
+    if settings.cosmetics_enabled {
+        for c in state.capes.iter().filter(|c| c.enabled && (c.owner_uuid.is_empty() || c.owner_uuid == account_uuid)) {
+            let file = format!("{}.png", c.id);
+            if fs::copy(capes_dir().join(&c.file_name), lib_dir.join(&file)).is_ok() {
+                library.push(serde_json::json!({
+                    "id": c.id, "name": c.name, "file": format!("capes/{file}"), "sha1": c.sha1, "source": c.source,
+                }));
+            }
+        }
+    }
+
     // 3. Cache (von der API geladene Capes) bereitstellen
     let cache_dest = dir.join("cache");
     fs::create_dir_all(&cache_dest).ok();
@@ -319,6 +340,8 @@ pub fn export_for_instance(
             "remoteId": c.remote_id, "remoteUrl": c.remote_url,
         })),
         "visibility": profile.map(|p| p.visibility.clone()).unwrap_or_else(|| "everyone".to_string()),
+        "activeCapeId": active.as_ref().map(|c| c.id.clone()).unwrap_or_default(),
+        "library": library,
         "players": players,
         "exportedAt": now_millis(),
     });
@@ -328,4 +351,82 @@ pub fn export_for_instance(
     )
     .map_err(|e| format!("config.json: {e}"))?;
     Ok(())
+}
+
+/* ---------- Ingame-Sync (Chaos Client → Launcher) ---------- */
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct IngameState {
+    #[serde(default)]
+    active_cape_id: String,
+    #[serde(default)]
+    owner_uuid: String,
+    #[serde(default)]
+    state_at: i64,
+}
+
+/// Liest `<home>/chaos-cosmetics/ingame-state.json` und übernimmt einen
+/// ingame vorgenommenen Cape-Wechsel, wenn er neuer ist als der Stand im
+/// Launcher. Liefert den Namen des übernommenen Capes.
+pub fn import_ingame_state(home: &Path, account_uuid: &str) -> Result<Option<String>, String> {
+    let path = home.join("chaos-cosmetics").join("ingame-state.json");
+    if !path.exists() {
+        return Ok(None);
+    }
+    let txt = fs::read_to_string(&path).map_err(|e| format!("lesen: {e}"))?;
+    let st: IngameState = serde_json::from_str(&txt).map_err(|e| format!("parsen: {e}"))?;
+    let norm = |u: &str| u.replace('-', "").to_lowercase();
+    if !st.owner_uuid.is_empty() && norm(&st.owner_uuid) != norm(account_uuid) {
+        return Ok(None);
+    }
+    let mut state = load()?;
+    let current = state.profiles.iter().find(|p| p.account_uuid == account_uuid);
+    let updated_at = current.map(|p| p.updated_at).unwrap_or(0);
+    if st.state_at <= updated_at {
+        return Ok(None);
+    }
+    let current_id = current.map(|p| p.active_cape_id.clone()).unwrap_or_default();
+    if st.active_cape_id == current_id {
+        // nur Zeitstempel angleichen
+        profile_mut(&mut state, account_uuid).updated_at = st.state_at;
+        save(&state)?;
+        return Ok(None);
+    }
+    let name = if st.active_cape_id.is_empty() {
+        "kein Cape".to_string()
+    } else {
+        match state.capes.iter().find(|c| c.id == st.active_cape_id) {
+            Some(c) => c.name.clone(),
+            None => return Ok(None), // unbekanntes Cape ignorieren
+        }
+    };
+    let p = profile_mut(&mut state, account_uuid);
+    p.active_cape_id = st.active_cape_id.clone();
+    p.updated_at = st.state_at;
+    save(&state)?;
+    Ok(Some(name))
+}
+
+/// Durchsucht alle Profile nach ingame-state.json und übernimmt Änderungen
+/// für den jeweils im Zustand genannten Account.
+pub fn sync_ingame_state_all() -> Result<Vec<String>, String> {
+    let mut out = Vec::new();
+    let instances = storage::load_instances().unwrap_or_default();
+    let accounts = storage::load_accounts().unwrap_or_default();
+    for inst in &instances {
+        let Ok(home) = storage::instance_home(inst) else { continue };
+        let path = home.join("chaos-cosmetics").join("ingame-state.json");
+        if !path.exists() {
+            continue;
+        }
+        let Ok(txt) = fs::read_to_string(&path) else { continue };
+        let Ok(st) = serde_json::from_str::<IngameState>(&txt) else { continue };
+        let owner = st.owner_uuid.replace('-', "").to_lowercase();
+        let Some(acc) = accounts.iter().find(|a| a.uuid.replace('-', "").to_lowercase() == owner) else { continue };
+        if let Ok(Some(name)) = import_ingame_state(&home, &acc.uuid) {
+            out.push(name);
+        }
+    }
+    Ok(out)
 }

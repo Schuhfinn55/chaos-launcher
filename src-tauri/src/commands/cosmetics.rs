@@ -7,7 +7,16 @@ use serde::Serialize;
 /// Kompletter Cosmetics-Zustand (Capes + Profile) für das Frontend.
 #[tauri::command]
 pub fn get_cosmetics() -> Result<CosmeticsState, String> {
+    // Ingame-Änderungen (Cape im Chaos-Client gewechselt) zuerst übernehmen
+    let _ = cosmetics::sync_ingame_state_all();
     cosmetics::load()
+}
+
+/// Übernimmt Cape-Wechsel aus dem Chaos Client (ingame-state.json aller Profile).
+/// Liefert die Namen der übernommenen Capes.
+#[tauri::command]
+pub fn sync_ingame_state() -> Result<Vec<String>, String> {
+    cosmetics::sync_ingame_state_all()
 }
 
 /// Importiert ein Cape aus Base64/Data-URL.

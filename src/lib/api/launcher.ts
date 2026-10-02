@@ -14,6 +14,7 @@ import type {
   PreflightReport,
   RepairReport,
   UpdateInfo,
+  ClientUpdateInfo,
   VersionInfo,
 } from "@/types";
 
@@ -55,6 +56,13 @@ export const runningInstances = () => invoke<string[]>("running_instances");
 
 export const checkForUpdates = (channel?: string) => invoke<UpdateInfo | null>("check_for_updates", { channel: channel ?? null });
 export const installUpdate = (info: UpdateInfo) => invoke<string>("install_update", { info });
+
+// Chaos Client (Fabric-Mod)
+export const checkClientUpdate = (channel?: string) => invoke<ClientUpdateInfo | null>("check_client_update", { channel: channel ?? null });
+export const installClientUpdate = (info: ClientUpdateInfo) => invoke<string>("install_client_update", { info });
+export const removeDownloadedClient = () => invoke<boolean>("remove_downloaded_client");
+export const syncIngameState = () => invoke<string[]>("sync_ingame_state");
+export const saveServers = (servers: unknown[]) => invoke<boolean>("save_servers", { servers });
 
 /** Formatiert Bytes lesbar. */
 export function formatBytes(bytes: number): string {

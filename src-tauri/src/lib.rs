@@ -17,6 +17,7 @@
 //! - `commands/*`    alle Tauri-Befehle
 
 pub mod auth;
+pub mod client_update;
 pub mod commands;
 pub mod cosmetics;
 pub mod cosmetics_api;
@@ -31,6 +32,7 @@ pub mod models;
 pub mod news;
 pub mod secure;
 pub mod servers;
+pub mod shared;
 pub mod storage;
 pub mod system;
 pub mod updater;
@@ -171,6 +173,12 @@ pub fn run() {
             commands::system::get_app_info,
             commands::system::check_for_updates,
             commands::system::install_update,
+            commands::system::check_client_update,
+            commands::system::install_client_update,
+            commands::system::remove_downloaded_client,
+            commands::system::get_servers,
+            commands::system::save_servers,
+            commands::cosmetics::sync_ingame_state,
             commands::system::discord_set_state,
             // Launch
             commands::launching::preflight_check,

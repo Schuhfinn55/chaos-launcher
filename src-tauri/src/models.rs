@@ -285,6 +285,12 @@ pub struct Settings {
     /// Externe News-Quelle (JSON). Leer = eingebaute News.
     #[serde(default)]
     pub news_url: String,
+    /// GLFW-Keycode der Chaos-Client-Menütaste (-1 = Standard RIGHT SHIFT).
+    #[serde(default = "default_menu_key")]
+    pub client_menu_key: i32,
+    /// Chaos-Client-Mod beim Start automatisch auf Updates prüfen.
+    #[serde(default = "default_true")]
+    pub client_auto_update: bool,
 }
 
 fn default_true() -> bool {
@@ -301,6 +307,9 @@ fn default_scale() -> u32 {
 }
 fn default_min_ram() -> u32 {
     2048
+}
+fn default_menu_key() -> i32 {
+    -1
 }
 fn default_channel() -> String {
     "stable".to_string()
@@ -348,6 +357,8 @@ impl Default for Settings {
             discord_app_id: String::new(),
             chaoscraft_server: String::new(),
             news_url: String::new(),
+            client_menu_key: -1,
+            client_auto_update: true,
         }
     }
 }

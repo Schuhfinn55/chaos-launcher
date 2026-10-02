@@ -292,6 +292,8 @@ pub fn clear_cache(kind: String) -> Result<u64, String> {
 pub struct AppInfo {
     pub version: String,
     pub client_mod_version: Option<String>,
+    /// "bundled" | "downloaded" – Herkunft der aktiven Chaos-Client-JAR.
+    pub client_mod_source: String,
     pub data_dir: String,
     pub migrated_from_onyx: bool,
     pub os: String,
@@ -307,6 +309,7 @@ pub fn get_app_info() -> AppInfo {
     AppInfo {
         version: env!("CARGO_PKG_VERSION").to_string(),
         client_mod_version: crate::launch::chaos_client_version(),
+        client_mod_source: crate::client_update::active_source(),
         data_dir: storage::data_dir().to_string_lossy().to_string(),
         migrated_from_onyx: *MIGRATED.get().unwrap_or(&false),
         os: std::env::consts::OS.to_string(),
@@ -328,6 +331,41 @@ pub async fn install_update(info: crate::updater::UpdateInfo, app: tauri::AppHan
         let _ = app.emit("update://progress", serde_json::json!({ "message": msg, "done": done, "total": total }));
     };
     crate::updater::download_and_install_update(&info, &progress).await
+}
+
+/* ---------- Chaos-Client-Updates ---------- */
+
+#[tauri::command]
+pub async fn check_client_update(channel: Option<String>) -> Result<Option<crate::client_update::ClientUpdateInfo>, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    let ch = channel.unwrap_or(settings.update_channel);
+    crate::client_update::check_for_update(&ch).await
+}
+
+#[tauri::command]
+pub async fn install_client_update(info: crate::client_update::ClientUpdateInfo, app: tauri::AppHandle) -> Result<String, String> {
+    let progress = move |msg: String, done: u64, total: u64| {
+        let _ = app.emit("client-update://progress", serde_json::json!({ "message": msg, "done": done, "total": total }));
+    };
+    crate::client_update::download_and_install(&info, &progress).await
+}
+
+#[tauri::command]
+pub fn remove_downloaded_client() -> Result<bool, String> {
+    crate::client_update::remove_downloaded()
+}
+
+/* ---------- Server-Liste (für Chaos-Client shared.json) ---------- */
+
+#[tauri::command]
+pub fn get_servers() -> Result<serde_json::Value, String> {
+    storage::load_or_default::<serde_json::Value>("servers")
+}
+
+#[tauri::command]
+pub fn save_servers(servers: serde_json::Value) -> Result<bool, String> {
+    storage::save("servers", &servers)?;
+    Ok(true)
 }
 
 /* ---------- Discord ---------- */

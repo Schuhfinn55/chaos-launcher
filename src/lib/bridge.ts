@@ -239,6 +239,24 @@ const mocks: Record<string, MockHandler> = {
   async clear_cache() {
     return 0;
   },
+  async check_client_update() {
+    return null;
+  },
+  async install_client_update() {
+    return "Mock: Client-Update installiert";
+  },
+  async remove_downloaded_client() {
+    return true;
+  },
+  async sync_ingame_state() {
+    return [];
+  },
+  async get_servers() {
+    return [];
+  },
+  async save_servers() {
+    return true;
+  },
   async check_for_updates() {
     return null;
   },
