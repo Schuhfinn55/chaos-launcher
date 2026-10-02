@@ -8,7 +8,7 @@
  * ============================================================ */
 
 import { invoke } from "@/lib/bridge";
-import type { Cape, CosmeticsApiInfo, CosmeticsProfile, CosmeticsState } from "@/types";
+import type { Cape, CosmeticsApiInfo, CosmeticsProfile, CosmeticsState, PlayerSkin } from "@/types";
 
 export interface CosmeticKind {
   id: "skin" | "cape" | "hat" | "effect";
@@ -23,8 +23,8 @@ export interface CosmeticKind {
 export const COSMETIC_KINDS: CosmeticKind[] = [
   { id: "skin", label: "Skins", icon: "🧍", description: "Skins verwalten und auf deinen Account anwenden.", available: true },
   { id: "cape", label: "Meine Capes", icon: "🧥", description: "Eigene Capes hochladen, aktivieren und ingame tragen.", available: true },
-  { id: "hat", label: "Hüte", icon: "🎩", description: "Kopf-Cosmetics – folgt mit einem Chaos-Client-Update.", available: false },
-  { id: "effect", label: "Effekte", icon: "✨", description: "Partikel- und Aura-Effekte – folgt mit einem Chaos-Client-Update.", available: false },
+  { id: "hat", label: "Hüte", icon: "🎩", description: "Vorgefertigte Hüte, die der Chaos Client am Kopf rendert.", available: true },
+  { id: "effect", label: "Effekte", icon: "✨", description: "Partikel- und Aura-Effekte um deinen Spieler.", available: true },
 ];
 
 /** Erlaubte Cape-Formate (wie im Backend). */
@@ -61,6 +61,17 @@ export async function setCapeEnabled(capeId: string, enabled: boolean): Promise<
 }
 export async function setActiveCape(accountUuid: string, capeId: string): Promise<CosmeticsProfile> {
   return invoke<CosmeticsProfile>("set_active_cape", { accountUuid, capeId });
+}
+export async function setCosmetic(accountUuid: string, kind: "hat" | "effect", id: string): Promise<CosmeticsProfile> {
+  return invoke<CosmeticsProfile>("set_cosmetic", { accountUuid, kind, id });
+}
+export async function getPlayerSkin(uuid: string): Promise<PlayerSkin> {
+  return invoke<PlayerSkin>("get_player_skin", { uuid });
+}
+/** Cosmetics-Profil (Cape/Hut/Effekt) eines Accounts. */
+export function profileFor(state: CosmeticsState | null, accountUuid: string | undefined): CosmeticsProfile | null {
+  if (!state || !accountUuid) return null;
+  return state.profiles.find((p) => p.accountUuid === accountUuid) ?? null;
 }
 export async function setVisibility(accountUuid: string, visibility: string): Promise<void> {
   await invoke("set_cosmetics_visibility", { accountUuid, visibility });

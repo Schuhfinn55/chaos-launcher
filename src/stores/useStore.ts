@@ -20,6 +20,7 @@ import type {
   Settings,
   SkinEntry,
   UpdateInfo,
+  PlayerSkin,
   ClientUpdateInfo,
 } from "@/types";
 
@@ -238,6 +239,33 @@ export const useSkinStore = create<SkinStore>((set, get) => ({
     set({ activeSkinId: id });
     if (id) localStorage.setItem(SKIN_KEY, id);
     else localStorage.removeItem(SKIN_KEY);
+  },
+}));
+
+/* -------------------- Echte Account-Skins -------------------- */
+interface ProfileSkinStore {
+  byUuid: Record<string, PlayerSkin>;
+  loading: Record<string, boolean>;
+  load: (uuid: string, force?: boolean) => Promise<void>;
+}
+
+export const useProfileSkinStore = create<ProfileSkinStore>((set, get) => ({
+  byUuid: {},
+  loading: {},
+  async load(uuid, force = false) {
+    if (!uuid) return;
+    const have = get().byUuid[uuid];
+    if (!force && have && Date.now() - have.fetchedAt < 10 * 60 * 1000) return;
+    if (get().loading[uuid]) return;
+    set((s) => ({ loading: { ...s.loading, [uuid]: true } }));
+    try {
+      const skin = await invoke<PlayerSkin>("get_player_skin", { uuid });
+      set((s) => ({ byUuid: { ...s.byUuid, [uuid]: skin } }));
+    } catch (e) {
+      console.warn("[Chaos] Skin konnte nicht geladen werden:", e);
+    } finally {
+      set((s) => ({ loading: { ...s.loading, [uuid]: false } }));
+    }
   },
 }));
 

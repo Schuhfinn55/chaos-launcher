@@ -270,6 +270,15 @@ export interface Cape {
   sha1: string;
 }
 
+/** Echter Account-Skin (vom Backend über den Mojang-Sessionserver geladen). */
+export interface PlayerSkin {
+  uuid: string;
+  dataUrl: string;
+  model: "classic" | "slim";
+  capeUrl: string | null;
+  fetchedAt: number;
+}
+
 export interface CosmeticsProfile {
   accountUuid: string;
   activeCapeId: string;

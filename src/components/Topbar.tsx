@@ -1,5 +1,6 @@
 /* Chaos Launcher - obere Leiste (Wortmarke, Status, Account) */
 import { useNavigate } from "react-router-dom";
+import Avatar from "@/components/Avatar";
 import { useAccountStore, useInstanceStore, useStatusStore } from "@/stores/useStore";
 import { useT } from "@/lib/i18n/useT";
 import { APP_VERSION } from "@/lib/config/branding";
@@ -47,7 +48,7 @@ export default function Topbar() {
       <button className="chaos-topbar-account" onClick={() => navigate("/accounts")}>
         {account ? (
           <>
-            <img src={`https://crafatar.com/avatars/${account.uuid}?size=32&overlay`} alt="" className="chaos-topbar-avatar" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+            <Avatar uuid={account.uuid} size={26} className="chaos-topbar-avatar" />
             <span className="chaos-topbar-username">{account.username}</span>
           </>
         ) : (

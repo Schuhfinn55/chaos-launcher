@@ -62,7 +62,7 @@ export default function ModsPage() {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<ProjectType>("mod");
   const [category, setCategory] = useState("");
-  const [source, setSource] = useState<"modrinth" | "curseforge" | "all">("modrinth");
+  const [source, setSource] = useState<"modrinth" | "curseforge" | "all">("all");
   const [sort, setSort] = useState("relevance");
   const [onlyCompatible, setOnlyCompatible] = useState(true);
   const [results, setResults] = useState<Mod[] | null>(null);
@@ -331,15 +331,14 @@ export default function ModsPage() {
                   ))}
                 </select>
                 <select className="onyx-select" value={source} onChange={(e) => setSource(e.target.value as "modrinth")}>
-                  <option value="modrinth">Modrinth</option>
-                  <option value="curseforge">CurseForge</option>
-                  <option value="all">Beide</option>
+                  <option value="all">Modrinth + CurseForge</option>
+                  <option value="modrinth">Nur Modrinth</option>
+                  <option value="curseforge">Nur CurseForge</option>
                 </select>
                 <label className="chaos-row" style={{ gap: 8, fontSize: 12, whiteSpace: "nowrap" }}>
                   <Toggle checked={onlyCompatible} onChange={setOnlyCompatible} /> nur passend zu {instance.mcVersion}
                 </label>
               </div>
-              {source !== "modrinth" && !settings?.curseforgeApiKey && <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>Für CurseForge wird ein API-Key benötigt (Einstellungen → Launcher). Modrinth funktioniert ohne Key.</div>}
               {error && <div className="onyx-toast onyx-toast-warn" style={{ marginBottom: 14 }}>{error}</div>}
               {results === null ? (
                 <div className="onyx-grid">

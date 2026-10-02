@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
+import Avatar from "@/components/Avatar";
 import { useAccountStore, useStatusStore } from "@/stores/useStore";
 import { useT } from "@/lib/i18n/useT";
 import { APP_VERSION, DISCORD_URL, YOUTUBE_URL } from "@/lib/config/branding";
@@ -199,11 +200,7 @@ export default function Sidebar() {
       <div className="chaos-sidebar-footer">
         <NavLink to="/accounts" className={({ isActive }) => "chaos-sidebar-account" + (isActive ? " active" : "")} title={account ? account.username : t("nav.notLoggedIn")}>
           {account ? (
-            <img
-              src={`https://crafatar.com/avatars/${account.uuid}?size=40&overlay`}
-              alt=""
-              onError={(e) => ((e.target as HTMLImageElement).style.visibility = "hidden")}
-            />
+            <Avatar uuid={account.uuid} size={32} />
           ) : (
             <span className="chaos-sidebar-account-empty">?</span>
           )}

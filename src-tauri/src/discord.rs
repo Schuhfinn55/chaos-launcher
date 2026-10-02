@@ -41,6 +41,9 @@ fn connect(app_id: &str) -> bool {
     true
 }
 
+const LAUNCHER_URL: &str = "https://github.com/Schuhfinn55/chaos-launcher";
+static STARTED_AT: LazyLock<i64> = LazyLock::new(|| crate::system::now_secs());
+
 /// Setzt den Status "Im Launcher".
 pub fn set_idle(app_id: &str) {
     if !connect(app_id) {
@@ -49,27 +52,46 @@ pub fn set_idle(app_id: &str) {
     if let Ok(mut guard) = CLIENT.lock() {
         if let Some(c) = guard.as_mut() {
             let act = activity::Activity::new()
-                .state("Im Chaos Launcher")
-                .details("Wählt ein Profil …")
-                .assets(activity::Assets::new().large_image("logo").large_text("Chaos Launcher"));
+                .details("Im Chaos Launcher")
+                .state("Wählt ein Profil …")
+                .assets(activity::Assets::new().large_image("logo").large_text("Chaos Launcher · ChaoscraftSMP"))
+                .timestamps(activity::Timestamps::new().start(*STARTED_AT))
+                .buttons(vec![activity::Button::new("Chaos Launcher holen", LAUNCHER_URL)]);
             let _ = c.set_activity(act);
         }
     }
 }
 
-/// Setzt den Status "Spielt <Profil>".
-pub fn set_playing(app_id: &str, profile: &str, mc_version: &str, show_state: bool) {
+/// Setzt den Status "Spielt <Profil>" bzw. "Spielt auf ChaoscraftSMP".
+pub fn set_playing(app_id: &str, profile: &str, mc_version: &str, server: Option<&str>, chaoscraft: bool, show_state: bool) {
     if !connect(app_id) {
         return;
     }
     if let Ok(mut guard) = CLIENT.lock() {
         if let Some(c) = guard.as_mut() {
-            let details = format!("Spielt {profile}");
-            let state = format!("Minecraft {mc_version}");
+            let details = if chaoscraft {
+                "Spielt auf ChaoscraftSMP".to_string()
+            } else if let Some(s) = server.filter(|s| !s.trim().is_empty()) {
+                format!("Spielt auf {s}")
+            } else {
+                format!("Spielt {profile}")
+            };
+            let state = if chaoscraft || server.is_some() {
+                format!("{profile} · Minecraft {mc_version}")
+            } else {
+                format!("Minecraft {mc_version} · Chaos Client")
+            };
             let mut act = activity::Activity::new()
                 .details(&details)
-                .assets(activity::Assets::new().large_image("logo").large_text("Chaos Launcher"))
-                .timestamps(activity::Timestamps::new().start(crate::system::now_secs()));
+                .assets(
+                    activity::Assets::new()
+                        .large_image("logo")
+                        .large_text("Chaos Launcher · ChaoscraftSMP")
+                        .small_image("play")
+                        .small_text("Im Spiel"),
+                )
+                .timestamps(activity::Timestamps::new().start(crate::system::now_secs()))
+                .buttons(vec![activity::Button::new("Chaos Launcher holen", LAUNCHER_URL)]);
             if show_state {
                 act = act.state(&state);
             }

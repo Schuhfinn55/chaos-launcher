@@ -15,7 +15,7 @@ import { invoke, listen } from "@/lib/bridge";
 import { BUILTIN_THEMES } from "@/lib/themes";
 import { uid } from "@/lib/utils";
 import { CHAOSCRAFT } from "@/lib/config/chaoscraft";
-import { checkForUpdates, clearCache, detectJava, downloadJava, getCacheInfo, getMemoryInfo, getVersionsDetailed, installUpdate, openPath, repairInstance, formatBytes } from "@/lib/api/launcher";
+import { checkForUpdates, clearCache, detectJava, downloadJava, getCacheInfo, getMemoryInfo, getVersionsDetailed, installUpdate, openPath, openUrl, repairInstance, formatBytes } from "@/lib/api/launcher";
 import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize } from "@/lib/api/cosmetics";
 import type { CacheInfo, CustomTheme, JavaInfo, MemoryInfo, Settings, UpdateInfo, VersionInfo } from "@/types";
 import "./SettingsPage.css";
@@ -617,13 +617,26 @@ function Launcher({ s, set }: P) {
 function Discord({ s, set }: P) {
   return (
     <>
-      <Section title="Discord Rich Presence" desc="Zeigt in Discord an, dass du den Chaos Launcher nutzt bzw. welches Profil du spielst.">
+      <Section title="Discord Rich Presence" desc="Zeigt deinen Freunden in Discord: „Spielt Chaos Launcher“ – im Launcher „Wählt ein Profil …“, im Spiel „Spielt auf ChaoscraftSMP“ bzw. das Profil, Minecraft-Version, Spielzeit und einen Button zum Launcher.">
         <Toggle checked={s.discordRpc !== false} onChange={(v) => set({ discordRpc: v })} label="Rich Presence aktivieren" />
-        <Toggle checked={s.discordShowState !== false} onChange={(v) => set({ discordShowState: v })} label="Spielstatus anzeigen" description="Profilname und Minecraft-Version in Discord anzeigen." />
+        <Toggle checked={s.discordShowState !== false} onChange={(v) => set({ discordShowState: v })} label="Spielstatus anzeigen" description="Profilname, Server und Minecraft-Version in Discord anzeigen." />
+        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10 }}>
+          <span className={"chaos-badge " + (s.discordAppId ? "chaos-badge-success" : "chaos-badge-warning")}>{s.discordAppId ? "Verbunden mit Application-ID" : "Application-ID fehlt – Anzeige noch inaktiv"}</span>
+        </div>
       </Section>
-      <Section title="Profil verbinden" desc="Rich Presence braucht eine Discord-Application-ID (discord.com/developers → New Application). Lade dort ein Bild mit dem Namen „logo“ hoch.">
+      <Section title="Discord-App einrichten (einmalig, 2 Minuten)" desc="Discord zeigt den Namen der App an, die du dort anlegst – dadurch steht in deinem Profil „Spielt Chaos Launcher“.">
+        <ol className="chaos-faint" style={{ fontSize: 12.5, lineHeight: 1.8, paddingLeft: 18, margin: "0 0 10px" }}>
+          <li>Developer Portal öffnen → <strong>New Application</strong> → Name <strong>Chaos Launcher</strong>.</li>
+          <li>Unter <strong>Rich Presence → Art Assets</strong> zwei Bilder hochladen: <code>logo</code> (Chaos-Logo, 512×512) und <code>play</code> (kleines Icon).</li>
+          <li>Auf <strong>General Information</strong> die <strong>Application ID</strong> kopieren und unten einfügen.</li>
+          <li>Launcher neu starten – fertig. Discord muss auf demselben PC laufen.</li>
+        </ol>
+        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginBottom: 10 }}>
+          <button className="chaos-btn chaos-btn-sm" onClick={() => openUrl("https://discord.com/developers/applications")}>
+            Developer Portal öffnen ↗
+          </button>
+        </div>
         <input className="chaos-input chaos-mono" value={s.discordAppId ?? ""} onChange={(e) => set({ discordAppId: e.target.value.trim() })} placeholder="Application ID, z.B. 1234567890123456789" />
-        {!s.discordAppId && <p className="chaos-faint" style={{ fontSize: 12, marginTop: 6 }}>Ohne ID bleibt Rich Presence deaktiviert.</p>}
       </Section>
     </>
   );

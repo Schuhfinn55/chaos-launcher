@@ -239,6 +239,12 @@ const mocks: Record<string, MockHandler> = {
   async clear_cache() {
     return 0;
   },
+  async get_player_skin() {
+    throw new Error("Mock: kein Sessionserver");
+  },
+  async set_cosmetic(args) {
+    return { accountUuid: args.accountUuid, activeCapeId: "", hatId: args.kind === "hat" ? args.id : "", effectId: args.kind === "effect" ? args.id : "", visibility: "everyone", updatedAt: Date.now() };
+  },
   async check_client_update() {
     return null;
   },

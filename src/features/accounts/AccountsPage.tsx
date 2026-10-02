@@ -6,10 +6,11 @@
  * bleiben verschlüsselt im Backend.
  * ============================================================ */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfirmDialog, Empty, PageHead } from "@/components/ui";
+import Avatar from "@/components/Avatar";
 import SkinViewer3D from "@/features/cosmetics/SkinViewer3D";
-import { useAccountStore } from "@/stores/useStore";
+import { useAccountStore, useProfileSkinStore } from "@/stores/useStore";
 import { invoke } from "@/lib/bridge";
 import { openUrl } from "@/lib/api/launcher";
 import { toast } from "@/stores/toastStore";
@@ -28,6 +29,11 @@ interface DeviceCode {
 export default function AccountsPage() {
   const accounts = useAccountStore((s) => s.accounts);
   const active = useAccountStore((s) => s.active);
+  const activeSkin = useProfileSkinStore((s) => (active ? s.byUuid[active.uuid] : undefined));
+  const loadProfileSkin = useProfileSkinStore((s) => s.load);
+  useEffect(() => {
+    if (active?.uuid) loadProfileSkin(active.uuid);
+  }, [active?.uuid, loadProfileSkin]);
   const reload = useAccountStore((s) => s.load);
   const setActive = useAccountStore((s) => s.setActive);
   const remove = useAccountStore((s) => s.remove);
@@ -131,7 +137,7 @@ export default function AccountsPage() {
               const isActive = acc.uuid === active?.uuid;
               return (
                 <div key={acc.uuid} className={"chaos-card chaos-acc" + (isActive ? " active" : "")}>
-                  <img src={`https://crafatar.com/avatars/${acc.uuid}?size=64&overlay`} alt="" className="chaos-acc-avatar" onError={(e) => ((e.target as HTMLImageElement).style.visibility = "hidden")} />
+                  <Avatar uuid={acc.uuid} size={48} className="chaos-acc-avatar" />
                   <div className="chaos-col" style={{ gap: 3, flex: 1, minWidth: 0 }}>
                     <div className="chaos-row" style={{ gap: 8 }}>
                       <strong style={{ fontSize: 15 }}>{acc.username}</strong>
@@ -166,7 +172,7 @@ export default function AccountsPage() {
 
         {active && (
           <aside className="chaos-card chaos-acc-preview">
-            <SkinViewer3D skinUrl={`https://crafatar.com/skins/${active.uuid}`} width={240} height={320} zoom={0.9} />
+            <SkinViewer3D skinUrl={activeSkin?.dataUrl ?? `https://crafatar.com/skins/${active.uuid}`} model={activeSkin?.model} width={240} height={320} zoom={0.9} />
             <strong>{active.username}</strong>
             <span className="chaos-faint" style={{ fontSize: 12 }}>
               Aktiver Minecraft-Account

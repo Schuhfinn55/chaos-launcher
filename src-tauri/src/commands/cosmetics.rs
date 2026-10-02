@@ -12,6 +12,19 @@ pub fn get_cosmetics() -> Result<CosmeticsState, String> {
     cosmetics::load()
 }
 
+/// Echter Account-Skin vom Mojang-Sessionserver (Data-URL + Modell).
+#[tauri::command]
+pub async fn get_player_skin(uuid: String) -> Result<cosmetics::PlayerSkin, String> {
+    cosmetics::fetch_player_skin(&uuid).await
+}
+
+/// Setzt Hut oder Effekt eines Accounts (leer = keins).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn set_cosmetic(accountUuid: String, kind: String, id: String) -> Result<CosmeticsProfile, String> {
+    cosmetics::set_cosmetic(&accountUuid, &kind, &id)
+}
+
 /// Übernimmt Cape-Wechsel aus dem Chaos Client (ingame-state.json aller Profile).
 /// Liefert die Namen der übernommenen Capes.
 #[tauri::command]

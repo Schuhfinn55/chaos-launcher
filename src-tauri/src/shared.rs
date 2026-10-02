@@ -20,7 +20,7 @@ use std::path::Path;
 
 /// Standard-Adresse des ChaoscraftSMP-Servers (Platzhalter, in den
 /// Einstellungen überschreibbar).
-pub const CHAOSCRAFT_DEFAULT: &str = "play.chaoscraftsmp.de";
+pub const CHAOSCRAFT_DEFAULT: &str = "chaoscraftsmp.duckdns.org";
 
 pub fn export_shared(home: &Path, instance: &Instance, account_name: &str, account_uuid: &str, settings: &Settings) -> Result<(), String> {
     let dir = home.join("chaos-client");

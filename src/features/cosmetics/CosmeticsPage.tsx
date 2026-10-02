@@ -10,12 +10,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SkinViewer3D, { type ViewerAnimation } from "./SkinViewer3D";
 import { ConfirmDialog, Empty, Modal, PageHead, Tabs, Toggle } from "@/components/ui";
-import { useAccountStore, useCosmeticsStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
+import { useAccountStore, useCosmeticsStore, useProfileSkinStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import { invoke } from "@/lib/bridge";
 import { uid, formatDate } from "@/lib/utils";
-import { CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, deleteCape, fileToBase64, getCapeDataUrl, imageSize, importCape, isAllowedCapeSize, renameCape, setActiveCape, setCapeEnabled, setVisibility, syncCosmetics, type CosmeticKind } from "@/lib/api/cosmetics";
+import { CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, deleteCape, fileToBase64, getCapeDataUrl, imageSize, importCape, isAllowedCapeSize, renameCape, profileFor, setActiveCape, setCapeEnabled, setCosmetic, setVisibility, syncCosmetics, type CosmeticKind } from "@/lib/api/cosmetics";
 import { CHAOS_CAPES } from "@/lib/builtinCapes";
+import { hatById } from "@/lib/builtinHats";
+import { effectById } from "@/lib/builtinEffects";
+import { HatsSection, EffectsSection } from "./HatsEffectsSections";
+import EffectPreview from "./EffectPreview";
 import type { Cape, CosmeticsApiInfo, SkinEntry } from "@/types";
 import "./CosmeticsPage.css";
 
@@ -57,8 +61,36 @@ export default function CosmeticsPage() {
   }, [previewCape?.id, previewCape]);
 
   const activeSkin = skins.find((s) => s.id === activeSkinId);
-  const skinUrl = activeSkin ? activeSkin.dataUrl : account ? `https://crafatar.com/skins/${account.uuid}` : null;
-  const skinModel = activeSkin?.model ?? model;
+  const profileSkin = useProfileSkinStore((s) => (account ? s.byUuid[account.uuid] : undefined));
+  const loadProfileSkin = useProfileSkinStore((s) => s.load);
+  useEffect(() => {
+    if (account?.uuid) loadProfileSkin(account.uuid);
+  }, [account?.uuid, loadProfileSkin]);
+  const skinUrl = activeSkin ? activeSkin.dataUrl : profileSkin?.dataUrl ?? (account ? `https://crafatar.com/skins/${account.uuid}` : null);
+  const skinModel = activeSkin?.model ?? profileSkin?.model ?? model;
+
+  // Hüte & Effekte
+  const profile = profileFor(cosmetics, account?.uuid);
+  const [previewHatId, setPreviewHatId] = useState<string | null>(null);
+  const [previewEffectId, setPreviewEffectId] = useState<string | null>(null);
+  const [cosBusy, setCosBusy] = useState(false);
+  const shownHat = hatById(previewHatId ?? profile?.hatId);
+  const shownEffect = effectById(previewEffectId ?? profile?.effectId);
+  const selectCosmetic = async (kind: "hat" | "effect", id: string) => {
+    if (!account) return;
+    setCosBusy(true);
+    try {
+      await setCosmetic(account.uuid, kind, id);
+      await reloadCosmetics();
+      if (kind === "hat") setPreviewHatId(null); else setPreviewEffectId(null);
+      const name = kind === "hat" ? hatById(id)?.name : effectById(id)?.name;
+      toast.success(id ? `${kind === "hat" ? "Hut" : "Effekt"} aktiviert` : `${kind === "hat" ? "Hut" : "Effekt"} entfernt`, id ? `${name} wird ingame vom Chaos Client gerendert.` : undefined);
+    } catch (e) {
+      toast.error("Speichern fehlgeschlagen", String(e));
+    } finally {
+      setCosBusy(false);
+    }
+  };
 
   return (
     <div className="onyx-content">
@@ -68,13 +100,16 @@ export default function CosmeticsPage() {
         {/* ---------- 3D-Vorschau ---------- */}
         <aside className="chaos-card chaos-cos-preview">
           <div className="chaos-cos-preview-canvas">
-            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} model={skinModel} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
+            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} model={skinModel} hat={showCosmetics ? shownHat : null} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
+            {showCosmetics && <EffectPreview effect={shownEffect} width={300} height={400} />}
           </div>
           <div className="chaos-cos-preview-info">
             <strong>{account?.username ?? "Nicht angemeldet"}</strong>
             <span className="chaos-faint" style={{ fontSize: 12 }}>
-              {activeSkin ? `Skin: ${activeSkin.name}` : account ? "Account-Skin" : "Melde dich an oder lade einen Skin hoch."}
+              {activeSkin ? `Skin: ${activeSkin.name}` : account ? (profileSkin ? `Account-Skin (${profileSkin.model === "slim" ? "Alex-Modell" : "Steve-Modell"})` : "Account-Skin wird geladen …") : "Melde dich an oder lade einen Skin hoch."}
               {previewCape ? ` · Cape: ${previewCape.name}${previewCape.id === activeCape?.id ? " (aktiv)" : " (Vorschau)"}` : " · kein Cape"}
+              {shownHat ? ` · ${shownHat.name}` : ""}
+              {shownEffect ? ` · ${shownEffect.name}` : ""}
             </span>
           </div>
           <div className="chaos-cos-controls">
@@ -119,7 +154,8 @@ export default function CosmeticsPage() {
               onLogin={() => navigate("/accounts")}
             />
           )}
-          {(kind === "hat" || kind === "effect") && <ComingSection kind={COSMETIC_KINDS.find((k) => k.id === kind)!} />}
+          {kind === "hat" && <HatsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("hat", id)} onPreview={setPreviewHatId} previewId={previewHatId} onLogin={() => navigate("/accounts")} />}
+          {kind === "effect" && <EffectsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("effect", id)} onPreview={setPreviewEffectId} previewId={previewEffectId} onLogin={() => navigate("/accounts")} />}
         </section>
       </div>
     </div>
@@ -550,14 +586,6 @@ function CapesSection({
         }}
         onCancel={() => setDel(null)}
       />
-    </div>
-  );
-}
-
-function ComingSection({ kind }: { kind: CosmeticKind }) {
-  return (
-    <div className="chaos-cos-section">
-      <Empty icon={kind.icon} title={`${kind.label} – bald verfügbar`} hint={`${kind.description} Das Cosmetics-System ist modular aufgebaut: ${kind.label} werden über dieselbe Chaos-Cosmetics-API und den Chaos-Client ausgeliefert wie Capes.`} />
     </div>
   );
 }

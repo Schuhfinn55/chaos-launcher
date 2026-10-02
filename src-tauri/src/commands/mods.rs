@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub async fn search_mods(params: SearchParams) -> Result<Vec<ModEntry>, String> {
     let settings = storage::load_settings().unwrap_or_default();
     let key = settings.curseforge_api_key.trim();
-    let cf_key = if key.is_empty() { None } else { Some(key) };
+    let cf_key = if key.is_empty() { Some(crate::models::DEFAULT_CURSEFORGE_KEY) } else { Some(key) };
     mod_search::search(params, cf_key).await
 }
 
@@ -34,10 +34,8 @@ pub async fn get_mod_versions(
     match source.as_deref().unwrap_or("modrinth") {
         "curseforge" => {
             let settings = storage::load_settings().unwrap_or_default();
-            if settings.curseforge_api_key.trim().is_empty() {
-                return Err("Für CurseForge-Downloads wird ein API-Key benötigt (Einstellungen).".to_string());
-            }
-            mod_search::get_curseforge_files(&projectId, &mcVersion, &loader, settings.curseforge_api_key.trim()).await
+            let key = if settings.curseforge_api_key.trim().is_empty() { crate::models::DEFAULT_CURSEFORGE_KEY } else { settings.curseforge_api_key.trim() };
+            mod_search::get_curseforge_files(&projectId, &mcVersion, &loader, key).await
         }
         _ => mod_search::get_modrinth_files(&projectId, &mcVersion, &loader).await,
     }

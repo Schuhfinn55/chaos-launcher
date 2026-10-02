@@ -179,6 +179,8 @@ pub fn run() {
             commands::system::get_servers,
             commands::system::save_servers,
             commands::cosmetics::sync_ingame_state,
+            commands::cosmetics::get_player_skin,
+            commands::cosmetics::set_cosmetic,
             commands::system::discord_set_state,
             // Launch
             commands::launching::preflight_check,

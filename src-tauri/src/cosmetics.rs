@@ -281,7 +281,7 @@ pub fn export_for_instance(
         }
     }
 
-    // 2. Lokal bekannte Capes anderer Accounts dieses Launchers
+    // 2. Lokal bekannte Cosmetics anderer Accounts dieses Launchers (Cape, Hut, Effekt)
     let players_dir = dir.join("players");
     let _ = fs::remove_dir_all(&players_dir);
     fs::create_dir_all(&players_dir).ok();
@@ -290,12 +290,23 @@ pub fn export_for_instance(
         if p.account_uuid == account_uuid || p.visibility == "none" {
             continue;
         }
+        let uuid = p.account_uuid.replace('-', "").to_lowercase();
+        let mut entry = serde_json::Map::new();
         if let Some(c) = active_cape(&state, &p.account_uuid) {
-            let uuid = p.account_uuid.replace('-', "").to_lowercase();
             let dest = players_dir.join(format!("{uuid}.png"));
             if fs::copy(capes_dir().join(&c.file_name), &dest).is_ok() {
-                players.insert(uuid, serde_json::json!({ "cape": format!("players/{}.png", p.account_uuid.replace('-', "").to_lowercase()), "sha1": c.sha1 }));
+                entry.insert("cape".into(), serde_json::json!(format!("players/{uuid}.png")));
+                entry.insert("sha1".into(), serde_json::json!(c.sha1));
             }
+        }
+        if !p.hat_id.is_empty() {
+            entry.insert("hat".into(), serde_json::json!(p.hat_id));
+        }
+        if !p.effect_id.is_empty() {
+            entry.insert("effect".into(), serde_json::json!(p.effect_id));
+        }
+        if !entry.is_empty() {
+            players.insert(uuid, serde_json::Value::Object(entry));
         }
     }
 
@@ -341,6 +352,8 @@ pub fn export_for_instance(
         })),
         "visibility": profile.map(|p| p.visibility.clone()).unwrap_or_else(|| "everyone".to_string()),
         "activeCapeId": active.as_ref().map(|c| c.id.clone()).unwrap_or_default(),
+        "hat": if settings.cosmetics_enabled { profile.map(|p| p.hat_id.clone()).unwrap_or_default() } else { String::new() },
+        "effect": if settings.cosmetics_enabled { profile.map(|p| p.effect_id.clone()).unwrap_or_default() } else { String::new() },
         "library": library,
         "players": players,
         "exportedAt": now_millis(),
@@ -360,6 +373,10 @@ pub fn export_for_instance(
 struct IngameState {
     #[serde(default)]
     active_cape_id: String,
+    #[serde(default)]
+    hat_id: Option<String>,
+    #[serde(default)]
+    effect_id: Option<String>,
     #[serde(default)]
     owner_uuid: String,
     #[serde(default)]
@@ -387,25 +404,34 @@ pub fn import_ingame_state(home: &Path, account_uuid: &str) -> Result<Option<Str
         return Ok(None);
     }
     let current_id = current.map(|p| p.active_cape_id.clone()).unwrap_or_default();
-    if st.active_cape_id == current_id {
-        // nur Zeitstempel angleichen
-        profile_mut(&mut state, account_uuid).updated_at = st.state_at;
-        save(&state)?;
-        return Ok(None);
-    }
-    let name = if st.active_cape_id.is_empty() {
-        "kein Cape".to_string()
-    } else {
-        match state.capes.iter().find(|c| c.id == st.active_cape_id) {
-            Some(c) => c.name.clone(),
-            None => return Ok(None), // unbekanntes Cape ignorieren
+    let current_hat = current.map(|p| p.hat_id.clone()).unwrap_or_default();
+    let current_effect = current.map(|p| p.effect_id.clone()).unwrap_or_default();
+    let new_hat = st.hat_id.clone().unwrap_or_else(|| current_hat.clone());
+    let new_effect = st.effect_id.clone().unwrap_or_else(|| current_effect.clone());
+    let mut changes: Vec<String> = Vec::new();
+    if st.active_cape_id != current_id {
+        if st.active_cape_id.is_empty() {
+            changes.push("kein Cape".to_string());
+        } else if let Some(c) = state.capes.iter().find(|c| c.id == st.active_cape_id) {
+            changes.push(format!("Cape {}", c.name));
         }
-    };
+    }
+    if new_hat != current_hat {
+        changes.push(if new_hat.is_empty() { "kein Hut".to_string() } else { format!("Hut {new_hat}") });
+    }
+    if new_effect != current_effect {
+        changes.push(if new_effect.is_empty() { "kein Effekt".to_string() } else { format!("Effekt {new_effect}") });
+    }
+    let cape_ok = st.active_cape_id.is_empty() || state.capes.iter().any(|c| c.id == st.active_cape_id);
     let p = profile_mut(&mut state, account_uuid);
-    p.active_cape_id = st.active_cape_id.clone();
+    if cape_ok {
+        p.active_cape_id = st.active_cape_id.clone();
+    }
+    p.hat_id = sanitize_id(&new_hat);
+    p.effect_id = sanitize_id(&new_effect);
     p.updated_at = st.state_at;
     save(&state)?;
-    Ok(Some(name))
+    if changes.is_empty() { Ok(None) } else { Ok(Some(changes.join(", "))) }
 }
 
 /// Durchsucht alle Profile nach ingame-state.json und übernimmt Änderungen
@@ -427,6 +453,114 @@ pub fn sync_ingame_state_all() -> Result<Vec<String>, String> {
         if let Ok(Some(name)) = import_ingame_state(&home, &acc.uuid) {
             out.push(name);
         }
+    }
+    Ok(out)
+}
+
+/* ---------- Hüte & Effekte ---------- */
+
+/// Erlaubt nur harmlose IDs (a-z, 0-9, Bindestrich), max. 40 Zeichen.
+pub fn sanitize_id(id: &str) -> String {
+    id.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_').take(40).collect::<String>().to_lowercase()
+}
+
+/// Setzt Hut ("hat") oder Effekt ("effect") eines Accounts.
+pub fn set_cosmetic(account_uuid: &str, kind: &str, id: &str) -> Result<CosmeticsProfile, String> {
+    let mut state = load()?;
+    let clean = sanitize_id(id);
+    let profile = profile_mut(&mut state, account_uuid);
+    match kind {
+        "hat" => profile.hat_id = clean,
+        "effect" => profile.effect_id = clean,
+        _ => return Err(format!("Unbekannte Cosmetic-Art: {kind}")),
+    }
+    profile.updated_at = now_millis();
+    let out = profile.clone();
+    save(&state)?;
+    Ok(out)
+}
+
+/* ---------- Echter Account-Skin (Mojang-Sessionserver) ---------- */
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayerSkin {
+    pub uuid: String,
+    pub data_url: String,
+    /// "classic" | "slim"
+    pub model: String,
+    pub cape_url: Option<String>,
+    pub fetched_at: i64,
+}
+
+static SKIN_CACHE: std::sync::LazyLock<std::sync::Mutex<std::collections::HashMap<String, PlayerSkin>>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+const SKIN_CACHE_MS: i64 = 10 * 60 * 1000;
+
+/// Lädt Skin-Textur und Modell eines Spielers. Ergebnis 10 Minuten gecacht.
+pub async fn fetch_player_skin(uuid: &str) -> Result<PlayerSkin, String> {
+    let id = uuid.replace('-', "").to_lowercase();
+    if id.len() != 32 || !id.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err("Ungültige UUID".to_string());
+    }
+    if let Ok(cache) = SKIN_CACHE.lock() {
+        if let Some(s) = cache.get(&id) {
+            if now_millis() - s.fetched_at < SKIN_CACHE_MS {
+                return Ok(s.clone());
+            }
+        }
+    }
+    let client = crate::mod_search::http_client()?;
+    let url = format!("https://sessionserver.mojang.com/session/minecraft/profile/{id}");
+    let resp = client.get(&url).send().await.map_err(|e| format!("Sessionserver: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Sessionserver HTTP {}", resp.status()));
+    }
+    let v: serde_json::Value = resp.json().await.map_err(|e| format!("Sessionserver-Antwort: {e}"))?;
+    let prop = v
+        .get("properties")
+        .and_then(|p| p.as_array())
+        .and_then(|a| a.iter().find(|p| p.get("name").and_then(|n| n.as_str()) == Some("textures")))
+        .and_then(|p| p.get("value"))
+        .and_then(|x| x.as_str())
+        .ok_or_else(|| "Keine Texturen im Profil".to_string())?;
+    let decoded = B64.decode(prop).map_err(|e| format!("Texturen dekodieren: {e}"))?;
+    let tex: serde_json::Value = serde_json::from_slice(&decoded).map_err(|e| format!("Texturen parsen: {e}"))?;
+    let skin = tex.get("textures").and_then(|t| t.get("SKIN"));
+    let skin_url = skin
+        .and_then(|s| s.get("url"))
+        .and_then(|u| u.as_str())
+        .ok_or_else(|| "Kein Skin hinterlegt".to_string())?
+        .replacen("http://", "https://", 1);
+    if !skin_url.starts_with("https://textures.minecraft.net/") {
+        return Err("Unerwartete Skin-URL abgelehnt".to_string());
+    }
+    let model = if skin.and_then(|s| s.get("metadata")).and_then(|m| m.get("model")).and_then(|m| m.as_str()) == Some("slim") { "slim" } else { "classic" };
+    let cape_url = tex
+        .get("textures")
+        .and_then(|t| t.get("CAPE"))
+        .and_then(|c| c.get("url"))
+        .and_then(|u| u.as_str())
+        .map(|u| u.replacen("http://", "https://", 1));
+    let png = client.get(&skin_url).send().await.map_err(|e| format!("Skin laden: {e}"))?;
+    if !png.status().is_success() {
+        return Err(format!("Skin HTTP {}", png.status()));
+    }
+    let bytes = png.bytes().await.map_err(|e| format!("Skin bytes: {e}"))?;
+    // Datei prüfen: PNG-Signatur + plausible Größe (64×32 oder 64×64, HD-Vielfache)
+    let (w, h) = png_dimensions(&bytes)?;
+    if w < 64 || h < 32 || w > 1024 || h > 1024 || (w != h && w != h * 2) {
+        return Err(format!("Ungültiges Skin-Format {w}×{h}"));
+    }
+    let out = PlayerSkin {
+        uuid: id.clone(),
+        data_url: format!("data:image/png;base64,{}", B64.encode(&bytes)),
+        model: model.to_string(),
+        cape_url,
+        fetched_at: now_millis(),
+    };
+    if let Ok(mut cache) = SKIN_CACHE.lock() {
+        cache.insert(id, out.clone());
     }
     Ok(out)
 }

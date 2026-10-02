@@ -195,6 +195,7 @@ fn default_instance_mod_type() -> String {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub instances_dir: String,
+    #[serde(default = "default_cf_key")]
     pub curseforge_api_key: String,
     pub default_ram_mb: u32,
     pub java_installations: Vec<JavaInstallation>,
@@ -308,6 +309,12 @@ fn default_scale() -> u32 {
 fn default_min_ram() -> u32 {
     2048
 }
+/// Standard-CurseForge-API-Key des Chaos Launchers (in den Einstellungen überschreibbar).
+pub const DEFAULT_CURSEFORGE_KEY: &str = "$2a$10$bAv3oW6KGFJEBYopqG.0H.hgPmo4N5qkOQtAYvAULU6g/v2Qc2x3y";
+
+fn default_cf_key() -> String {
+    DEFAULT_CURSEFORGE_KEY.to_string()
+}
 fn default_menu_key() -> i32 {
     -1
 }
@@ -322,7 +329,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             instances_dir: String::new(),
-            curseforge_api_key: String::new(),
+            curseforge_api_key: DEFAULT_CURSEFORGE_KEY.to_string(),
             default_ram_mb: 4096,
             java_installations: Vec::new(),
             theme: "chaos".to_string(),

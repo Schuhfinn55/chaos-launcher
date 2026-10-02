@@ -16,7 +16,7 @@ export const CHAOSCRAFT = {
   name: "ChaoscraftSMP",
   shortName: "Chaoscraft",
   /** Standard-Server-Adresse (in den Einstellungen änderbar). */
-  defaultAddress: "play.chaoscraftsmp.de",
+  defaultAddress: "chaoscraftsmp.duckdns.org",
   defaultPort: 25565,
   /** Empfohlene Minecraft-Version und Loader für das Chaoscraft-Profil. */
   mcVersion: "1.21.11",

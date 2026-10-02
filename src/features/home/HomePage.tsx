@@ -10,13 +10,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LaunchPanel from "@/components/LaunchPanel";
 import SkinViewer3D from "@/features/cosmetics/SkinViewer3D";
+import { hatById } from "@/lib/builtinHats";
 import { Skeleton, StatusDot } from "@/components/ui";
-import { useAccountStore, useCosmeticsStore, useInstanceStore, useStatusStore } from "@/stores/useStore";
+import { useAccountStore, useCosmeticsStore, useInstanceStore, useStatusStore, useProfileSkinStore } from "@/stores/useStore";
 import { useT } from "@/lib/i18n/useT";
 import { CHAOSCRAFT } from "@/lib/config/chaoscraft";
 import { chaoscraftAddress, pingServer } from "@/lib/api/servers";
 import { loadNews, formatNewsDate, NEWS_CATEGORY_META } from "@/lib/api/news";
-import { activeCapeFor, getCapeDataUrl } from "@/lib/api/cosmetics";
+import { activeCapeFor, getCapeDataUrl, profileFor } from "@/lib/api/cosmetics";
 import { checkInstance, repairInstance, formatBytes } from "@/lib/api/launcher";
 import { formatPlaytime } from "@/lib/utils";
 import { toast } from "@/stores/toastStore";
@@ -70,6 +71,13 @@ export default function HomePage() {
     loadNews().then((r) => setNews(r.items.slice(0, 4))).catch(() => setNews([]));
   }, []);
 
+  // Echter Account-Skin (Mojang-Sessionserver, über das Backend)
+  const profileSkin = useProfileSkinStore((s) => (account ? s.byUuid[account.uuid] : undefined));
+  const loadProfileSkin = useProfileSkinStore((s) => s.load);
+  useEffect(() => {
+    if (account?.uuid) loadProfileSkin(account.uuid);
+  }, [account?.uuid, loadProfileSkin]);
+
   // Cape des aktiven Accounts für die 3D-Vorschau
   const cape = activeCapeFor(cosmetics, account?.uuid);
   useEffect(() => {
@@ -115,8 +123,10 @@ export default function HomePage() {
       <section className="chaos-home-player chaos-card">
         <div className="chaos-home-player-3d">
           <SkinViewer3D
-            skinUrl={account ? `https://crafatar.com/skins/${account.uuid}` : null}
+            skinUrl={profileSkin?.dataUrl ?? (account ? `https://crafatar.com/skins/${account.uuid}` : null)}
+            model={profileSkin?.model}
             capeUrl={capeUrl}
+            hat={hatById(profileFor(cosmetics, account?.uuid)?.hatId)}
             width={240}
             height={330}
             zoom={0.9}
