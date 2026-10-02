@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Synchronisiert die frisch gebaute Onyx-Visuals-JAR in den Launcher-Resource-Ordner.
+# Synchronisiert die frisch gebaute Chaos-Client-JAR in den Launcher-Resource-Ordner.
 # Aufruf:  bash sync-client.sh        (aus dem onyx-launcher Ordner)
 set -e
-SRC="/d/ZCodeProject/onyx-visuals/build/libs/onyx-visuals-1.0.0.jar"
-DST="$(dirname "$0")/src-tauri/resources/onyx-visuals.jar"
+SRC=$(ls -t /d/ZCodeProject/onyx-visuals/build/libs/chaos-client-*.jar 2>/dev/null | grep -v sources | head -1)
+DST="$(dirname "$0")/src-tauri/resources/chaos-client.jar"
 
-if [ ! -f "$SRC" ]; then
-    echo "FEHLER: Visuals-JAR nicht gefunden: $SRC"
+if [ -z "$SRC" ] || [ ! -f "$SRC" ]; then
+    echo "FEHLER: Chaos-Client-JAR nicht gefunden in onyx-visuals/build/libs"
     echo "Erst bauen:  cd /d/ZCodeProject/onyx-visuals && ./gradlew build"
     exit 1
 fi

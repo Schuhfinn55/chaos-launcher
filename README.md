@@ -1,131 +1,109 @@
-# 💎 Onyx Launcher
+# 🔥 Chaos Launcher
 
-Ein eigener **Minecraft-Launcher** mit Fokus auf Performance, gebaut mit **Tauri (Rust) + React + TypeScript**. Im Onyx-SMP-Branding (animierter Cyan-Kristall-Gradient auf dunklem Hintergrund).
+Der **Minecraft-Client-Launcher für ChaoscraftSMP** – gebaut mit **Tauri 2 (Rust) + React + TypeScript**. Rot/Schwarz, schnell, mit Profilen, Mod-Manager, Cosmetics (eigene Capes ingame), Serverstatus, News, Updates und Microsoft-Login.
 
-![Onyx Launcher](src-tauri/icons/icon.png)
+![Chaos Launcher](src-tauri/icons/icon.png)
 
-## ✨ Features
+## ✨ Funktionen
 
-| Feature | Status |
+| Bereich | Umfang |
 |---|---|
-| 🔍 **Mod-Suche** (Modrinth live + CurseForge mit API-Key) | ✅ |
-| 📦 **Eigene Mods** per Drag&Drop / Datei-Auswahl | ✅ |
-| 🎮 **Minecraft herunterladen & starten** (Vanilla-Versionen) | ⚙️ Versionen & Launch-Stub |
-| 🧩 **Modloader**: Fabric / Forge / NeoForge / Quilt (Auswahl) | ⚙️ UI fertig, Auto-Install folgt |
-| 🗂️ **Instanz-/Modpack-Verwaltung** (Profile, Mods pro Instanz) | ✅ |
-| 👤 **Microsoft-/Minecraft-Account-Login** | ⚙️ UI fertig, OAuth-Flow folgt |
-| 🛠️ **Einstellungen** (RAM, Java, CurseForge-Key, Pfade) | ✅ |
-| 👥 **Freunde-Liste** (lokal) | ✅ |
-| 🎯 **Ingame-Mod-Menu** (kuratierte, **faire** PVP-Mods) | ✅ |
+| **Home** | Spielerprofil mit 3D-Skin + Cape, ausgewähltes Profil, großer SPIELEN-Button, zuletzt verwendete Profile, Serverstatus, News, Chaoscraft-Bereich, Download-/Update-Status, Launcher- & Client-Version |
+| **Startprüfung** | Launcher-Version → Client-Version → Profil → fehlende Dateien, mit Fortschrittsanzeige |
+| **Microsoft-Login** | Device-Code-Flow (kein Passwortfeld), mehrere Accounts: hinzufügen, wechseln, entfernen, Sitzung erneuern. Tokens werden mit Windows DPAPI verschlüsselt gespeichert und nie ans Frontend gegeben |
+| **Profile** | Wizard: Version → Loader → Details. Vanilla, Fabric, Forge, NeoForge, Quilt. Eigene RAM-Min/Max, JVM-/Spiel-Argumente, Auflösung, Vollbild, Java-Pfad, Spielverzeichnis, Direktverbindung. Erstellen, bearbeiten, duplizieren, löschen, exportieren/importieren. Vorlagen: Vanilla, PvP, SMP, Modded, Lunar-style PvP, Shaders, Bauen |
+| **Versionen** | Alle Releases gruppiert (1.21.x, 1.20.x …), Snapshots optional. Loader-Versionen pro MC-Version mit Verfügbarkeitsprüfung. Forge/NeoForge werden headless über den Installer eingerichtet |
+| **Mod-Manager** | Tabs Installiert · Durchsuchen · Updates. Modrinth + CurseForge, Kategorien, Sortierung, Versionsauswahl mit Release/Beta, MC-Version, Loader, Abhängigkeiten (werden automatisch mitinstalliert), inkompatible Mods markiert, aktivieren/deaktivieren/entfernen, Update-Prüfung, eigene .jar/.zip |
+| **Cosmetics** | Skins (Upload, Vorschau, auf Mojang-Account anwenden), **Meine Capes** (hochladen, Format-Prüfung 64×32 & Vielfache, umbenennen, aktivieren/deaktivieren, löschen, Chaos-Vorlagen), Hüte & Effekte als vorbereitete Kategorien. 3D-Vorschau: drehen, zoomen, Cape an/aus, Idle/Geh-/Laufanimation |
+| **Capes ingame** | Der gebündelte **Chaos Client** (Fabric-Mod) rendert das aktive Cape am Spieler (Mixin auf `PlayerListEntry.getSkinTextures`). Andere Chaos-Spieler sehen es über die Chaos-Cosmetics-API; Spieler ohne Chaos-Client sehen normales Minecraft |
+| **Server** | ChaoscraftSMP-Status (Server List Ping: online, Spieler, Max, Ping, Version, MOTD), eigene Server, Direktverbindung beim Start |
+| **Chaoscraft** | Eigener Bereich mit Status, Profil, News, Events und **CHAOSCRAFT SPIELEN**: legt das Profil an, installiert die Mods und startet |
+| **News** | Eingebaute News + externe JSON-Quelle (konfigurierbar), Kategorien, Detailansicht |
+| **Einstellungen** | Allgemein (Sprache, Startverhalten, Animationen, Benachrichtigungen), Darstellung (Dark/Light, Akzentfarbe, Transparenz, UI-Skalierung, Hintergründe), Minecraft (Standardversion/-profil, RAM mit System-RAM-Anzeige, JVM, Java-Erkennung & -Download, Vollbild, Auflösung), Cosmetics, Launcher (Auto-Update, Kanal, Download-Limit, Cache, Reparatur, Logs), Discord Rich Presence, Chaoscraft (Server-Adresse, News-URL) |
+| **Fehlerbehandlung** | Strukturierte Fehler mit Grund, Aktionen (Reparieren, Java installieren, Anmelden, Logs, Profil zurücksetzen) und ausklappbaren Details. ErrorBoundary im UI. Crash-Analyse |
+| **Extras (aus dem Onyx Launcher erhalten)** | Client-Module (Ingame-Menü), Welten (Backup/Löschen), Freunde, Musik, Kino |
 
-### Über das Ingame-Mod-Menu (wichtig!)
+## 🚀 Entwicklung
 
-Der Onyx Launcher enthält **bewusst keine Cheats** wie KillAura, Reach, Anti-Knockback etc. (wie NoRisk/Wurst). Solche Mods verletzen die Regeln praktisch aller Server und führen zu Account-Banns. Stattdessen findest du hier kuratierte, **legitime** Mods, mit denen du dein Können fair verbesserst:
-
-- ⚡ **Performance**: Sodium, Lithium, FerriteCore, EntityCulling, ImmediatelyFast
-- 📊 **HUD-Anzeigen**: CPS, FPS, Koordinaten, Rüstung (rein informativ)
-- ✨ **Shader**: Iris + Complementary
-- 🎨 **Resourcepacks**: Fresh Animations u. a.
-- 🛠️ **Werkzeuge**: Mod Menu, Replay Mod, WorldEdit CUI
-
-## 🚀 Installation (als Nutzer)
-
-Lade den Installer herunter und führe ihn aus:
-
-```
-src-tauri\target\release\bundle\nsis\Onyx Launcher_1.0.0_x64-setup.exe
-```
-
-Oder starte die App direkt ohne Installation:
-
-```
-src-tauri\target\release\onyx-launcher.exe
-```
-
-> **Hinweis:** Auf Windows wird **WebView2** (Runtime) benötigt – ist auf Windows 10/11 normalerweise vorinstalliert.
-
-## 🛠️ Entwicklung
-
-### Voraussetzungen
-
-- **Node.js** ≥ 20 (getestet mit v24)
-- **Rust** ≥ 1.77 (`rustup`)
-- **Visual Studio C++ Build Tools** (MSVC) – für das Rust-Linking unter Windows
-
-### Dev-Modus (Frontend mit Hot-Reload)
+Voraussetzungen: Node.js ≥ 20, Rust ≥ 1.77, MSVC Build Tools, Java 21 (für die Mod).
 
 ```bash
-cd onyx-launcher
 npm install
-npm run tauri dev
+npm run tauri dev      # Launcher mit Hot-Reload
+npm run tauri build    # Installer unter src-tauri/target/release/bundle/nsis/
 ```
 
-> Tipp: Auch ohne Rust startet das reine Frontend mit `npm run dev` – dann laufen Mock-Daten, sodass du das UI sofort im Browser unter `http://localhost:1420` siehst.
+Nur Frontend (Mock-Daten): `npm run dev` → http://localhost:1420
 
-### Produktions-Build
+### Chaos Client (Fabric-Mod)
+
+Quelle: `../onyx-visuals` (Package `com.onyx.visuals`, Mod-ID `chaosclient`).
 
 ```bash
-npm run tauri build
+cd ../onyx-visuals && ./gradlew build
+cd ../onyx-launcher && bash sync-client.sh   # kopiert die JAR nach src-tauri/resources/chaos-client.jar
 ```
 
-Erzeugt:
-- `src-tauri/target/release/onyx-launcher.exe` (die App, ~15 MB)
-- `src-tauri/target/release/bundle/nsis/Onyx Launcher_1.0.0_x64-setup.exe` (Installer)
+Die JAR wird beim Start jedes Fabric-/Quilt-Profils automatisch in `mods/` gelegt, wenn die MC-Version zur Mod passt (laut `fabric.mod.json`).
 
-## ⚙️ Einrichtung als Nutzer
-
-1. **Mods suchen**: Reiter *Mods* → Suchbegriff eingeben (Modrinth läuft sofort).
-2. **CurseForge aktivieren**: Reiter *Einstellungen* → CurseForge-API-Key eintragen (kostenlos unter [console.curseforge.com](https://console.curseforge.com) beantragen).
-3. **Instanz erstellen**: Reiter *Instanzen* → *+ Neue Instanz* (Name, MC-Version, Modloader).
-4. **Account**: Reiter *Accounts* → *Mit Microsoft anmelden*.
-5. **Spielen**: Reiter *Spielen* → großen Button drücken.
-
-## 📁 Projektstruktur
+## 📁 Struktur
 
 ```
-onyx-launcher/
-├─ src/                       # React-Frontend
-│  ├─ components/             # Sidebar, Topbar, ModCard, ...
-│  ├─ features/               # play, instances, mods, ingame, friends, accounts, settings
-│  ├─ stores/                 # Zustand-State
-│  ├─ lib/                    # bridge (Tauri), curated (Mod-Katalog), utils
-│  ├─ styles/theme.css        # Onyx-Cyan-Theme
-│  └─ types/                  # TS-Typen
-└─ src-tauri/                 # Rust-Backend
-   └─ src/
-      ├─ models.rs            # Geteilte Datenstrukturen
-      ├─ mod_search.rs        # Modrinth- & CurseForge-API
-      ├─ versions.rs          # Minecraft-Versionsmanifest
-      ├─ storage.rs           # JSON-Persistenz
-      ├─ commands.rs          # Tauri-Commands (vom Frontend aufrufbar)
-      └─ lib.rs / main.rs     # Einstiegspunkte
+src/
+├─ app.css, App.tsx            Shell, Routing, Theme-Anwendung, Startprüfung
+├─ components/                 Sidebar, Topbar, Logo, LaunchPanel, ErrorDialog, StartupOverlay, ui/
+├─ features/
+│  ├─ home/ play/ profiles/ mods/ cosmetics/ servers/ chaoscraft/ news/ settings/ accounts/
+│  └─ ingame/ worlds/ friends/ music/ cinema/      (Extras)
+├─ lib/
+│  ├─ api/        launcher.ts, mods.ts, cosmetics.ts, servers.ts, news.ts
+│  ├─ config/     branding.ts, chaoscraft.ts
+│  ├─ i18n/       t(), de/en
+│  └─ bridge.ts, useLauncher.ts, themes.ts, utils.ts
+├─ stores/        useStore.ts (Profile, Accounts, Settings, Cosmetics, Status), toastStore.ts
+└─ types/         index.ts (spiegelt models.rs)
+
+src-tauri/src/
+├─ lib.rs                      Einstieg, Datenmigration, Command-Registrierung
+├─ models.rs                   Datenmodelle inkl. LaunchError
+├─ storage.rs / secure.rs      JSON-Persistenz, DPAPI-Verschlüsselung
+├─ auth.rs                     Microsoft → Xbox → XSTS → Minecraft
+├─ launch.rs                   Download-/Start-Pipeline
+├─ forge.rs / modloader.rs     Forge, NeoForge, Fabric, Quilt
+├─ integrity.rs                Prüfung & Reparatur
+├─ mod_search.rs               Modrinth & CurseForge
+├─ cosmetics.rs / cosmetics_api.rs
+├─ servers.rs / news.rs / discord.rs / system.rs / java.rs / updater.rs / versions.rs
+└─ commands/                   accounts, instances, mods, cosmetics, media, worlds, servers_news, system, launching
 ```
 
-## 🗺️ Roadmap (noch nicht implementiert)
+## 🔌 Chaos-Cosmetics-API (Schnittstelle)
 
-Diese Teile haben eine fertige UI, aber das Backend muss noch vervollständigt werden:
+Optional; Basis-URL in den Einstellungen. Ohne API funktionieren Capes lokal (eigener PC, alle Accounts).
 
-- [ ] **Vollständiger Launch**: Download-Pipeline (Libraries, Assets, client.jar), Java-Start mit JVM-Args
-- [ ] **Microsoft-OAuth-Flow** (Azure-App-Registrierung nötig) → Xbox Live → XSTS → Mojang-Token
-- [ ] **Modloader-Auto-Installation** (Fabric/Quilt via meta-Server, Forge via installer.jar)
-- [ ] **Java-Auto-Download** (Adoptium Temurin)
-- [ ] **Mod-Version-Auswahl & Download** (konkrete Datei je nach MC-Version/Loader)
+| Endpunkt | Zweck |
+|---|---|
+| `GET /v1/version` | `{ apiVersion, cosmeticsVersion }` |
+| `POST /v1/auth/challenge` `{uuid,name}` → `{serverId}` | Start des Mojang-Join-Handshakes |
+| `POST /v1/auth/verify` `{uuid,name,serverId}` → `{token,expiresAt}` | API prüft `hasJoined` bei Mojang |
+| `GET /v1/cosmetics/{uuid}` | `{ uuid, name, activeCape:{id,url,sha1,version,kind}, visibility, cosmeticsVersion }` |
+| `PUT /v1/cosmetics/{uuid}` (Bearer) `{activeCape, visibility}` | Aktives Cape setzen |
+| `POST /v1/capes` (Bearer, multipart `file`, `name`) → `RemoteCape` | Cape hochladen |
 
-Die relevanten API-Endpunkte sind im Code dokumentiert (`mod_search.rs`, `versions.rs`).
+Der Microsoft-/Minecraft-Token wird ausschließlich an `sessionserver.mojang.com` gesendet.
+
+## 🗂 Daten
+
+`%APPDATA%\chaos-launcher\` – `instances.json`, `accounts.json` (Tokens verschlüsselt), `settings.json`, `cosmetics.json`, `cosmetics/capes/`, `mod-cache/`, `java/`, `logs/`, `instances/<Profil>/`. Ein vorhandener `onyx-launcher`-Ordner wird beim ersten Start automatisch übernommen.
 
 ## 🎨 Branding
 
-Übernommen aus dem Onyx-SMP (`onyx-tabboard/AnimationManager.java`):
-
 | Farbe | Hex | Verwendung |
 |---|---|---|
-| tiefster Hintergrund | `#06141A` | App-Hintergrund |
-| Onyx-Cyan | `#22D3EE` | Hauptfarbe / Akzent |
-| Cyan-Glow | `#7DD3FC` → `#CFFAFE` | Hover / Highlights |
-| Struktur | `#143447` | Rahmen, Trennlinien |
+| Hintergrund | `#09090b` / `#111114` | App / Panels |
+| Dunkelrot | `#8f1b22` | Hauptfarbe |
+| Chaos-Rot | `#e11d2e` | Akzent |
+| Glow | `#ff5c6c` | Hover, Highlights |
+| Schrift | `#f4f1f2` / `#a69fa2` | Text / gedimmt |
 
-Logo: animierter Cyan-zu-Weiß-Gradient (CSS `background-clip: text`), Prefix `[Onyx]`.
-
----
-
-**Onyx SMP** · v1.0.0 ·公平 spielen, fair gewinnen. 💎
+Logo: aufgebrochener roter Ring („C“) mit Riss auf schwarzer Kachel (`src/components/Logo.tsx`, `src-tauri/icons/`).
