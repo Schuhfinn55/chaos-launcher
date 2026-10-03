@@ -410,6 +410,7 @@ export interface ClientUpdateInfo {
   verifiable: boolean;
   publishedAt: string;
   prerelease: boolean;
+  sha256?: string;
 }
 
 export interface UpdateInfo {
@@ -424,6 +425,7 @@ export interface UpdateInfo {
   verifiable: boolean;
   publishedAt: string;
   prerelease: boolean;
+  sha256?: string;
 }
 
 export interface VersionInfo {

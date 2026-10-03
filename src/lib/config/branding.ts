@@ -7,6 +7,8 @@ import packageJson from "../../../package.json";
 export const APP_NAME = "Chaos Launcher";
 export const APP_SHORT = "CHAOS";
 export const APP_VERSION: string = packageJson.version;
+/** Offizielle Website (Downloads, News, Release-Feed). */
+export const WEBSITE_URL = "https://chaoslauncher.duckdns.org";
 /** Prefix im Chat-Stil, z.B. "[Chaos] Nachricht". */
 export const APP_PREFIX = "[Chaos]";
 

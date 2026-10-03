@@ -1,7 +1,7 @@
 //! Chaos Launcher - Update-System für die Chaos-Client-Mod
 //!
-//! Der Launcher bündelt eine chaos-client.jar. Zusätzlich kann er aus den
-//! GitHub-Releases eine neuere `chaos-client-<version>.jar` laden. Diese
+//! Der Launcher bündelt eine chaos-client.jar. Zusätzlich kann er über den
+//! Release-Feed der Website eine neuere `chaos-client-<version>.jar` laden. Diese
 //! wird nur übernommen, wenn
 //!   1. die Release-Prüfsumme (`<name>.sha256` oder `SHA256SUMS`) passt,
 //!   2. die JAR eine fabric.mod.json mit id `chaosclient` enthält und
@@ -31,6 +31,8 @@ pub struct ClientUpdateInfo {
     pub verifiable: bool,
     pub published_at: String,
     pub prerelease: bool,
+    #[serde(default)]
+    pub sha256: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -85,46 +87,30 @@ pub fn remove_downloaded() -> Result<bool, String> {
     Ok(true)
 }
 
-/// Prüft die GitHub-Releases auf eine neuere Chaos-Client-JAR.
+/// Prüft den Release-Feed der Website auf eine neuere Chaos-Client-JAR.
 pub async fn check_for_update(channel: &str) -> Result<Option<ClientUpdateInfo>, String> {
     let current = crate::launch::chaos_client_version().unwrap_or_else(|| "0.0.0".to_string());
-    let releases = crate::updater::fetch_releases(channel).await?;
-    for release in releases {
-        let Some(asset) = release
-            .assets
-            .iter()
-            .find(|a| a.name.to_lowercase().starts_with("chaos-client-") && a.name.to_lowercase().ends_with(".jar") && !a.name.to_lowercase().contains("sources"))
-        else {
-            continue;
-        };
-        // Version aus dem Dateinamen: chaos-client-2.1.0.jar
-        let version = asset
-            .name
-            .trim_start_matches("chaos-client-")
-            .trim_end_matches(".jar")
-            .to_string();
-        if !crate::updater::is_version_newer(&version, &current) {
-            return Ok(None);
-        }
-        let verifiable = release
-            .assets
-            .iter()
-            .any(|x| x.name.eq_ignore_ascii_case(&format!("{}.sha256", asset.name)) || x.name.eq_ignore_ascii_case("SHA256SUMS"));
-        return Ok(Some(ClientUpdateInfo {
-            version,
-            current_version: current,
-            current_source: active_source(),
-            release_url: release.html_url.clone(),
-            release_notes: release.body.clone().unwrap_or_default(),
-            download_url: asset.browser_download_url.clone(),
-            file_name: asset.name.clone(),
-            file_size: asset.size,
-            verifiable,
-            published_at: release.published_at.clone(),
-            prerelease: release.prerelease,
-        }));
+    let feed = crate::updater::fetch_feed().await?;
+    let Some(ch) = crate::updater::pick_channel(&feed, channel) else { return Ok(None) };
+    let Some(c) = ch.client else { return Ok(None) };
+    let version = c.version.trim_start_matches('v').to_string();
+    if version.is_empty() || !crate::updater::is_version_newer(&version, &current) {
+        return Ok(None);
     }
-    Ok(None)
+    Ok(Some(ClientUpdateInfo {
+        version: version.clone(),
+        current_version: current,
+        current_source: active_source(),
+        release_url: format!("{}/#client", crate::updater::WEBSITE_URL),
+        release_notes: c.notes.clone(),
+        download_url: c.url.clone(),
+        file_name: if c.file_name.is_empty() { format!("chaos-client-{version}.jar") } else { c.file_name.clone() },
+        file_size: c.size,
+        verifiable: c.sha256.len() == 64 && c.url.starts_with("https://"),
+        published_at: c.published_at.clone(),
+        prerelease: channel == "beta" && feed.channels.contains_key("beta"),
+        sha256: c.sha256.to_lowercase(),
+    }))
 }
 
 /// Lädt die Client-JAR, prüft SHA-256 + fabric.mod.json und aktiviert sie.
@@ -137,8 +123,10 @@ pub async fn download_and_install(info: &ClientUpdateInfo, progress: &(dyn Fn(St
     }
     let client = crate::mod_search::download_client()?;
 
-    progress("Lade Prüfsumme …".to_string(), 0, 0);
-    let expected = fetch_sha256(&client, &info.download_url, &info.file_name).await?;
+    let expected = if info.sha256.len() == 64 { info.sha256.clone() } else {
+        progress("Lade Prüfsumme …".to_string(), 0, 0);
+        fetch_sha256(&client, &info.download_url, &info.file_name).await?
+    };
 
     progress(format!("Lade {} …", info.file_name), 0, info.file_size);
     let resp = client.get(&info.download_url).send().await.map_err(|e| format!("Download: {e}"))?;

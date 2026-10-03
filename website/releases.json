@@ -1,0 +1,34 @@
+{
+  "channels": {
+    "stable": {
+      "launcher": {
+        "version": "2.1.1",
+        "fileName": "ChaosLauncher-2.1.1-setup.exe",
+        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.1-setup.exe",
+        "sha256": "7b2291e9ed0088bd8ca978c06be26f03625cae0cc1399f2fd9923ca3a0f54435",
+        "size": 5649055,
+        "publishedAt": "2026-10-03",
+        "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert",
+        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.1.msi",
+        "msiSha256": "64fa5a27cccc07e25c49de53a722d9a2a43fdb3bea44da687604927cd6e8beb5"
+      },
+      "client": {
+        "version": "2.1.0",
+        "fileName": "chaos-client-2.1.0.jar",
+        "url": "https://chaoslauncher.duckdns.org/download/chaos-client-2.1.0.jar",
+        "sha256": "b30b4157a147f93d6794d3ffdb613406039b040ac17b46e9326a6bd48f467098",
+        "size": 392455,
+        "publishedAt": "2026-10-03",
+        "notes": "- Hüte und Partikel-Effekte anderer Spieler über die Cosmetics-API\n- Fix: Absturz beim Start durch Hilfsklasse im Mixin-Paket"
+      }
+    }
+  },
+  "history": [
+    {
+      "version": "2.1.1",
+      "date": "2026-10-03",
+      "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
+    }
+  ],
+  "updatedAt": "2026-10-03"
+}
