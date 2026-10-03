@@ -7,6 +7,11 @@
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
   }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
   document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+  // Fallback: Elemente im sichtbaren Bereich sofort zeigen (falls der Observer nicht feuert)
+  const revealVisible = () => document.querySelectorAll(".reveal:not(.in)").forEach((el) => { const r = el.getBoundingClientRect(); if (r.top < innerHeight - 20 && r.bottom > 0) el.classList.add("in"); });
+  addEventListener("scroll", revealVisible, { passive: true });
+  setTimeout(revealVisible, 400);
+  setTimeout(revealVisible, 2500);
   // dynamisch eingefügte Karten (News/Changelog) ebenfalls animieren
   for (const id of ["news-list", "changelog-list"]) {
     const host = document.getElementById(id);
