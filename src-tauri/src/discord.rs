@@ -71,7 +71,7 @@ fn connect(app_id: &str) -> bool {
     true
 }
 
-const LAUNCHER_URL: &str = "https://github.com/Schuhfinn55/chaos-launcher";
+const LAUNCHER_URL: &str = crate::updater::WEBSITE_URL;
 static STARTED_AT: LazyLock<i64> = LazyLock::new(|| crate::system::now_secs());
 
 /// Setzt den Status "Im Launcher".
