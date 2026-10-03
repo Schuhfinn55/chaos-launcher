@@ -368,8 +368,8 @@ pub fn export_for_instance(
         "showCapes": settings.show_capes,
         "showOtherCapes": settings.show_other_capes,
         "autoLoadCapes": settings.auto_load_capes,
-        "apiUrl": settings.cosmetics_api_url.trim(),
-        "allowHttp": settings.cosmetics_api_allow_http,
+        "apiUrl": crate::cosmetics_api::effective_url(settings),
+        "allowHttp": settings.cosmetics_api_allow_http || crate::cosmetics_api::effective_url(settings).starts_with(crate::cosmetics_api::DEFAULT_API),
         "ownerUuid": account_uuid.replace('-', "").to_lowercase(),
         "ownerName": account_name,
         "activeCape": active.as_ref().map(|c| serde_json::json!({

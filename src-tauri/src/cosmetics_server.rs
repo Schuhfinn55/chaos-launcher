@@ -95,6 +95,62 @@ pub struct ServerStatus {
     pub capes: usize,
     pub started_at: i64,
     pub error: String,
+    /// "ok" | "pending" | "failed: …" | "" (Server aus)
+    pub upnp: String,
+    pub external_ip: String,
+    pub domain_ip: String,
+    /// Zeigt die öffentliche Adresse auf diesen Anschluss? None = unbekannt.
+    pub domain_ok: Option<bool>,
+}
+
+static UPNP: LazyLock<Mutex<(String, String)>> = LazyLock::new(|| Mutex::new((String::new(), String::new())));
+
+/// Versucht, den Port per UPnP (IGD) im Router freizugeben. Ergebnis in UPNP.
+fn upnp_map(port: u16) {
+    if let Ok(mut u) = UPNP.lock() {
+        u.0 = "pending".into();
+    }
+    let result: Result<String, String> = (|| {
+        let local = match local_ip_address::local_ip() {
+            Ok(std::net::IpAddr::V4(v4)) => v4,
+            _ => return Err("Keine lokale IPv4-Adresse".into()),
+        };
+        let gw = igd::search_gateway(igd::SearchOptions { timeout: Some(std::time::Duration::from_secs(4)), ..Default::default() }).map_err(|e| format!("Kein UPnP-Router gefunden ({e})"))?;
+        gw.add_port(igd::PortMappingProtocol::TCP, port, std::net::SocketAddrV4::new(local, port), 0, "Chaos Cosmetics")
+            .map_err(|e| format!("Router lehnt Portfreigabe ab ({e})"))?;
+        let ext = gw.get_external_ip().map(|ip| ip.to_string()).unwrap_or_default();
+        Ok(ext)
+    })();
+    if let Ok(mut u) = UPNP.lock() {
+        match result {
+            Ok(ext) => { u.0 = "ok".into(); u.1 = ext; log::info!("[CosmeticsServer] UPnP-Portfreigabe {port} eingerichtet (extern {})", u.1); }
+            Err(e) => { u.0 = format!("failed: {e}"); log::warn!("[CosmeticsServer] UPnP: {e}"); }
+        }
+    }
+}
+
+fn upnp_unmap(port: u16) {
+    std::thread::spawn(move || {
+        if let Ok(gw) = igd::search_gateway(igd::SearchOptions { timeout: Some(std::time::Duration::from_secs(3)), ..Default::default() }) {
+            let _ = gw.remove_port(igd::PortMappingProtocol::TCP, port);
+        }
+        if let Ok(mut u) = UPNP.lock() {
+            u.0.clear();
+        }
+    });
+}
+
+/// Löst den Host der öffentlichen Adresse auf (z.B. DuckDNS).
+fn resolve_host(url: &str) -> String {
+    let host = url.trim_start_matches("http://").trim_start_matches("https://").split(['/', ':']).next().unwrap_or("").to_string();
+    if host.is_empty() {
+        return String::new();
+    }
+    use std::net::ToSocketAddrs;
+    match format!("{host}:80").to_socket_addrs() {
+        Ok(mut it) => it.find(|a| a.is_ipv4()).map(|a| a.ip().to_string()).unwrap_or_default(),
+        Err(_) => String::new(),
+    }
 }
 
 pub fn data_dir() -> PathBuf {
@@ -152,16 +208,24 @@ pub fn status() -> ServerStatus {
         let st = STATE.lock().unwrap();
         (st.players.len(), st.capes.len())
     };
+    let (upnp, external_ip) = UPNP.lock().map(|u| u.clone()).unwrap_or_default();
+    let pub_url = public_url(&settings);
+    let domain_ip = if running { resolve_host(&pub_url) } else { String::new() };
+    let domain_ok = if !running || domain_ip.is_empty() || external_ip.is_empty() { None } else { Some(domain_ip == external_ip) };
     ServerStatus {
         running,
         port,
         local_url: format!("http://{local_ip}:{port}"),
         local_ip,
-        public_url: public_url(&settings),
+        public_url: pub_url,
         players,
         capes,
         started_at,
         error: LAST_ERROR.lock().map(|e| e.clone()).unwrap_or_default(),
+        upnp: if running { upnp } else { String::new() },
+        external_ip,
+        domain_ip,
+        domain_ok,
     }
 }
 
@@ -193,6 +257,7 @@ pub fn start(port: u16) -> Result<ServerStatus, String> {
         e.clear();
     }
     log::info!("[CosmeticsServer] läuft auf Port {port}");
+    std::thread::spawn(move || upnp_map(port));
     Ok(status())
 }
 
@@ -200,6 +265,7 @@ pub fn stop() -> ServerStatus {
     if let Ok(mut g) = RUNNING.lock() {
         if let Some(r) = g.take() {
             r.server.unblock();
+            upnp_unmap(r.port);
         }
     }
     status()

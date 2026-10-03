@@ -96,6 +96,13 @@ export interface RemoteCosmetics {
 export async function getRemoteCosmetics(uuid: string): Promise<RemoteCosmetics | null> {
   return invoke<RemoteCosmetics | null>("get_remote_cosmetics", { uuid });
 }
+/** Standard-Cosmetics-API der Chaoscraft-Community (leer in den Einstellungen = dieser Wert). */
+export const DEFAULT_COSMETICS_API = "http://chaoscraftsmp.duckdns.org:8787";
+export function effectiveApiUrl(settings: { cosmeticsApiUrl?: string } | null | undefined): string {
+  const u = settings?.cosmeticsApiUrl?.trim().replace(/\/+$/, "");
+  return u && u.length > 0 ? u : DEFAULT_COSMETICS_API;
+}
+
 export interface CosmeticsServerStatus {
   running: boolean;
   port: number;
@@ -106,6 +113,10 @@ export interface CosmeticsServerStatus {
   capes: number;
   startedAt: number;
   error: string;
+  upnp: string;
+  externalIp: string;
+  domainIp: string;
+  domainOk: boolean | null;
 }
 export const cosmeticsServerStatus = () => invoke<CosmeticsServerStatus>("cosmetics_server_status");
 export const cosmeticsServerStart = (port?: number) => invoke<CosmeticsServerStatus>("cosmetics_server_start", { port: port ?? null });

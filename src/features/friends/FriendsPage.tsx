@@ -16,7 +16,7 @@ import { uid, formatDate } from "@/lib/utils";
 import { fetchUuid, avatarUrl } from "@/lib/mojang";
 import { invoke } from "@/lib/bridge";
 import type { Friend } from "@/types";
-import { getRemoteCosmetics, type RemoteCosmetics } from "@/lib/api/cosmetics";
+import { effectiveApiUrl, getRemoteCosmetics, type RemoteCosmetics } from "@/lib/api/cosmetics";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
 import { useSettingsStore } from "@/stores/useStore";
@@ -29,7 +29,7 @@ const STATUS_META: Record<Friend["status"], { label: string; color: string; orde
 };
 
 function FriendCosmetics({ uuid }: { uuid?: string }) {
-  const apiUrl = useSettingsStore((s) => s.settings?.cosmeticsApiUrl?.trim() ?? "");
+  const apiUrl = useSettingsStore((s) => effectiveApiUrl(s.settings));
   const [data, setData] = useState<RemoteCosmetics | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
@@ -39,7 +39,7 @@ function FriendCosmetics({ uuid }: { uuid?: string }) {
   }, [uuid, apiUrl]);
   if (!apiUrl) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics anderer: Chaos-Cosmetics-API in den Einstellungen eintragen.</span>;
   if (data === undefined) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics werden geladen …</span>;
-  if (!data) return <span className="chaos-faint" style={{ fontSize: 11 }}>Nutzt keinen Chaos Launcher (oder Cosmetics verborgen).</span>;
+  if (!data) return <span className="chaos-faint" style={{ fontSize: 11 }}>Noch keine Chaos-Cosmetics bekannt (nutzt keinen Chaos Launcher, Cosmetics verborgen oder Server offline).</span>;
   const hat = hatById(data.hat), effect = effectById(data.effect);
   return (
     <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>

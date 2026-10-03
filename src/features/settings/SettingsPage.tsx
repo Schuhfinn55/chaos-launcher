@@ -16,7 +16,7 @@ import { BUILTIN_THEMES } from "@/lib/themes";
 import { uid } from "@/lib/utils";
 import { CHAOSCRAFT } from "@/lib/config/chaoscraft";
 import { checkForUpdates, clearCache, detectJava, downloadJava, getCacheInfo, getMemoryInfo, getVersionsDetailed, installUpdate, openPath, openUrl, repairInstance, formatBytes } from "@/lib/api/launcher";
-import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize, apiInfo, cosmeticsServerStart, cosmeticsServerStatus, cosmeticsServerStop, type CosmeticsServerStatus } from "@/lib/api/cosmetics";
+import { clearCache as clearCosmeticsCache, cacheSize as cosmeticsCacheSize, apiInfo, cosmeticsServerStart, cosmeticsServerStatus, cosmeticsServerStop, DEFAULT_COSMETICS_API, type CosmeticsServerStatus } from "@/lib/api/cosmetics";
 import { curseforgeStatus, CURSEFORGE_CONSOLE_URL, type CfStatus } from "@/lib/api/mods";
 import type { CacheInfo, CustomTheme, JavaInfo, MemoryInfo, Settings, UpdateInfo, VersionInfo, CosmeticsApiInfo } from "@/types";
 import "./SettingsPage.css";
@@ -399,7 +399,7 @@ function Cosmetics({ s, set }: P) {
         <Toggle checked={s.showOtherCapes !== false} onChange={(v) => set({ showOtherCapes: v })} label="Fremde Capes anzeigen" description="Capes anderer Chaos-Launcher-Spieler über die Cosmetics-API laden." />
         <Toggle checked={s.autoLoadCapes !== false} onChange={(v) => set({ autoLoadCapes: v })} label="Eigene Capes automatisch laden" description="Aktives Cape beim Start automatisch bereitstellen." />
       </Section>
-      <Section title="Cosmetics anderer Spieler sehen" desc="Damit sich Chaos-Spieler gegenseitig Capes, Hüte und Effekte sehen, braucht es eine gemeinsame Cosmetics-API. Entweder startet EIN Spieler (z. B. du als Server-Betreiber) den eingebauten Server hier im Launcher, oder ihr nutzt einen gehosteten Server (chaos-cosmetics-api). Alle anderen tragen nur die Adresse ein.">
+      <Section title="Cosmetics anderer Spieler sehen" desc={`Alle Chaos Launcher nutzen automatisch die Community-Adresse ${DEFAULT_COSMETICS_API}. Der Server-Betreiber schaltet hier einmal den eingebauten Server ein – Portfreigabe und Prüfung der Adresse erledigt der Launcher selbst. Deine Freunde müssen nichts einstellen.`}>
         <Toggle
           checked={!!s.cosmeticsServerEnabled}
           onChange={async (v) => {
@@ -446,14 +446,22 @@ function Cosmetics({ s, set }: P) {
           </button>
         </div>
         {srv?.error && <p className="chaos-faint" style={{ fontSize: 12, marginTop: 6, color: "var(--chaos-danger)" }}>{srv.error}</p>}
-        <ol className="chaos-faint" style={{ fontSize: 12, lineHeight: 1.8, paddingLeft: 18, margin: "10px 0 0" }}>
-          <li>Schalter oben einschalten – dein Launcher nutzt den Server sofort selbst.</li>
-          <li>Im Router Port {s.cosmeticsServerPort ?? 8787} (TCP) auf diesen PC weiterleiten (wie beim Minecraft-Server).</li>
-          <li>Freunde tragen unten bei „Adresse der Cosmetics-API“ die öffentliche Adresse ein und schalten „HTTP erlauben“ ein. Fertig – Cape, Hut und Effekt werden vor jedem Spielstart automatisch abgeglichen.</li>
-        </ol>
+        {srv?.running && (
+          <ul className="chaos-faint" style={{ fontSize: 12, lineHeight: 1.9, paddingLeft: 18, margin: "10px 0 0" }}>
+            <li>
+              Portfreigabe im Router (UPnP):{" "}
+              {srv.upnp === "ok" ? <strong style={{ color: "var(--chaos-success)" }}>automatisch eingerichtet ✓</strong> : srv.upnp === "pending" || !srv.upnp ? <span>wird eingerichtet …</span> : <span style={{ color: "var(--chaos-warning)" }}>nicht möglich – bitte Port {srv.port} (TCP) im Router manuell auf {srv.localIp} weiterleiten. ({srv.upnp.replace("failed: ", "")})</span>}
+            </li>
+            <li>
+              Öffentliche Adresse {srv.publicUrl}:{" "}
+              {srv.domainOk === true ? <strong style={{ color: "var(--chaos-success)" }}>zeigt auf diesen Anschluss ✓</strong> : srv.domainOk === false ? <span style={{ color: "var(--chaos-warning)" }}>zeigt auf {srv.domainIp}, dein Anschluss ist {srv.externalIp}. Trage oben die passende Adresse ein (z. B. eine eigene DynDNS für diesen PC) oder starte den Server dort, wo die Domain hinzeigt.</span> : <span>Prüfung läuft … ({srv.domainIp || "Domain wird aufgelöst"}{srv.externalIp ? ` · extern ${srv.externalIp}` : ""})</span>}
+            </li>
+            <li>Freunde: einfach Chaos Launcher 2.1+ nutzen – Cape, Hut und Effekt werden vor jedem Spielstart automatisch abgeglichen.</li>
+          </ul>
+        )}
       </Section>
-      <Section title="Adresse der Cosmetics-API" desc="Die Adresse des gemeinsamen Servers (eingebaut oder gehostet). Die Anmeldung läuft über den Mojang-Session-Handshake – dein Microsoft-Token wird nie an die API gesendet.">
-        <input className="chaos-input chaos-mono" value={s.cosmeticsApiUrl ?? ""} onChange={(e) => set({ cosmeticsApiUrl: e.target.value.trim() })} placeholder="http://chaoscraftsmp.duckdns.org:8787" />
+      <Section title="Adresse der Cosmetics-API" desc={`Leer lassen = Community-Standard (${DEFAULT_COSMETICS_API}). Nur ändern, wenn ihr einen eigenen Server nutzt. Die Anmeldung läuft über den Mojang-Session-Handshake – dein Microsoft-Token wird nie an die API gesendet.`}>
+        <input className="chaos-input chaos-mono" value={s.cosmeticsApiUrl ?? ""} onChange={(e) => set({ cosmeticsApiUrl: e.target.value.trim() })} placeholder={`Standard: ${DEFAULT_COSMETICS_API}`} />
         <Toggle checked={!!s.cosmeticsApiAllowHttp} onChange={(v) => set({ cosmeticsApiAllowHttp: v })} label="HTTP erlauben (ohne Verschlüsselung)" description="Nur für den eingebauten oder einen eigenen, vertrauten Server. Es werden nur Cosmetic-Daten und Cape-Bilder übertragen, keine Zugangsdaten." />
         <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10 }}>
           <button className="chaos-btn chaos-btn-sm" disabled={apiTesting} onClick={async () => { setApiTesting(true); try { const i = await apiInfo(); setApiState(i); toast[i.reachable ? "success" : "error"](i.reachable ? "Cosmetics-API erreichbar" : "Cosmetics-API nicht erreichbar", i.reachable ? `API ${i.apiVersion}` : i.message); } finally { setApiTesting(false); } }}>

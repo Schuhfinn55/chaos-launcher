@@ -2,7 +2,19 @@
 
 Kleiner Server (Node.js ≥ 18, keine Abhängigkeiten), über den sich Chaos-Spieler gegenseitig **Capes, Hüte und Effekte** sehen. Launcher und Chaos Client nutzen dieselbe Schnittstelle.
 
-## Starten
+## Auf dem Minecraft-Server installieren (Ubuntu/Debian, z. B. Oracle Cloud) – 1 Befehl
+
+Den Ordner `chaos-cosmetics-api` per SCP/SFTP auf den Server kopieren, dann:
+
+```bash
+cd chaos-cosmetics-api && sudo bash install.sh
+```
+
+Das Skript installiert Node.js (falls nötig), richtet den systemd-Dienst `chaos-cosmetics` ein, öffnet Port 8787 in der lokalen Firewall und startet den Dienst. Bei Cloud-Anbietern zusätzlich in der Web-Konsole eine Ingress-Regel für **TCP 8787** anlegen (Oracle Cloud: VCN → Security List → Ingress Rules; genauso wie für 25565). Prüfen: `curl http://chaoscraftsmp.duckdns.org:8787/v1/version`.
+
+Alle Chaos Launcher ab 2.1.0 nutzen diese Adresse automatisch – niemand muss etwas eintragen.
+
+## Manuell starten
 
 ```bash
 cd chaos-cosmetics-api

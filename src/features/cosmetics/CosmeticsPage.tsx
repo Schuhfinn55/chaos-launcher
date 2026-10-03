@@ -82,7 +82,7 @@ export default function CosmeticsPage() {
     try {
       await setCosmetic(account.uuid, kind, id);
       await reloadCosmetics();
-      if (settings?.cosmeticsApiUrl?.trim()) syncCosmetics(account.uuid).catch(() => {});
+      syncCosmetics(account.uuid).catch(() => {});
       if (kind === "hat") setPreviewHatId(null); else setPreviewEffectId(null);
       const name = kind === "hat" ? hatById(id)?.name : effectById(id)?.name;
       toast.success(id ? `${kind === "hat" ? "Hut" : "Effekt"} aktiviert` : `${kind === "hat" ? "Hut" : "Effekt"} entfernt`, id ? `${name} wird ingame vom Chaos Client gerendert.` : undefined);
@@ -411,7 +411,7 @@ function CapesSection({
     setBusy(true);
     try {
       await setActiveCape(account.uuid, cape?.id ?? "");
-      if (useSettingsStore.getState().settings?.cosmeticsApiUrl?.trim()) syncCosmetics(account.uuid).catch(() => {});
+      syncCosmetics(account.uuid).catch(() => {});
       await reload();
       onPreview(null);
       toast.success(cape ? "Cape aktiviert" : "Cape entfernt", cape ? `${cape.name} wird beim nächsten Start ingame getragen.` : undefined);

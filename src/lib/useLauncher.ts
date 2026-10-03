@@ -141,8 +141,8 @@ export function useLauncher(instanceId: string | null | undefined) {
       setState((s) => ({ ...s, message: pre.needsDownload ? "Lade fehlende Dateien …" : "Starte Minecraft …" }));
       // Cosmetics (Cape, Hut, Effekt) vor dem Start veröffentlichen, damit andere sie sehen
       const acc = useAccountStore.getState().active;
-      if (acc && settings?.cosmeticsApiUrl?.trim()) {
-        await Promise.race([syncCosmetics(acc.uuid), new Promise((r) => setTimeout(r, 8000))]).catch(() => {});
+      if (acc) {
+        await Promise.race([syncCosmetics(acc.uuid), new Promise((r) => setTimeout(r, 5000))]).catch(() => {});
       }
       await launchInstance(id);
       setState((s) => ({

@@ -74,6 +74,43 @@ pub struct ApiInfo {
     pub message: String,
 }
 
+/// Standard-Cosmetics-API der Chaoscraft-Community (eingebauter Server beim Betreiber).
+pub const DEFAULT_API: &str = "http://chaoscraftsmp.duckdns.org:8787";
+
+/// Konfigurierte Adresse oder Standard.
+pub fn effective_url(settings: &crate::models::Settings) -> String {
+    let u = settings.cosmetics_api_url.trim().trim_end_matches('/');
+    if u.is_empty() { DEFAULT_API.to_string() } else { u.to_string() }
+}
+
+/// Merkt sich, dass die API gerade nicht erreichbar ist (2 Minuten), damit
+/// Spielstart und Menüs nicht auf Timeouts warten.
+static DOWN_UNTIL: LazyLock<Mutex<i64>> = LazyLock::new(|| Mutex::new(0));
+fn mark_down() {
+    if let Ok(mut d) = DOWN_UNTIL.lock() {
+        *d = crate::system::now_secs() + 120;
+    }
+}
+fn mark_up() {
+    if let Ok(mut d) = DOWN_UNTIL.lock() {
+        *d = 0;
+    }
+}
+fn check_down() -> Result<(), String> {
+    let until = DOWN_UNTIL.lock().map(|d| *d).unwrap_or(0);
+    if until > crate::system::now_secs() {
+        Err("Cosmetics-API gerade nicht erreichbar – nächster Versuch in Kürze.".to_string())
+    } else {
+        Ok(())
+    }
+}
+fn net_err(what: &str, e: reqwest::Error) -> String {
+    if e.is_connect() || e.is_timeout() {
+        mark_down();
+    }
+    format!("{what}: {e}")
+}
+
 struct CachedToken {
     token: String,
     expires_at: i64,
@@ -85,7 +122,7 @@ fn base(url: &str) -> Result<String, String> {
     if u.is_empty() {
         return Err("Keine Cosmetics-API konfiguriert.".to_string());
     }
-    if !u.starts_with("https://") && !is_local_http(u) && !http_allowed() {
+    if !u.starts_with("https://") && !is_local_http(u) && !http_allowed() && !u.starts_with(DEFAULT_API) {
         return Err("Die Cosmetics-API muss über HTTPS erreichbar sein. Für einen eigenen Server kannst du HTTP in den Einstellungen ausdrücklich erlauben.".to_string());
     }
     Ok(u.to_string())
@@ -98,7 +135,7 @@ fn http_allowed() -> bool {
 
 /// Ist eine Cape-URL zulässig? HTTPS immer; HTTP nur lokal oder mit Opt-in.
 pub fn url_allowed(url: &str) -> bool {
-    url.starts_with("https://") || is_local_http(url) || (url.starts_with("http://") && http_allowed())
+    url.starts_with("https://") || is_local_http(url) || url.starts_with(DEFAULT_API) || (url.starts_with("http://") && http_allowed())
 }
 
 /// HTTP ist nur für lokale Tests erlaubt (localhost, private Netze).
@@ -121,8 +158,9 @@ pub async fn info(api_url: &str) -> ApiInfo {
         Ok(c) => c,
         Err(e) => return ApiInfo { reachable: false, message: e, ..Default::default() },
     };
-    match client.get(format!("{b}/v1/version")).send().await {
+    match client.get(format!("{b}/v1/version")).timeout(std::time::Duration::from_secs(5)).send().await {
         Ok(resp) if resp.status().is_success() => {
+            mark_up();
             let v: serde_json::Value = resp.json().await.unwrap_or_default();
             ApiInfo {
                 reachable: true,
@@ -132,19 +170,27 @@ pub async fn info(api_url: &str) -> ApiInfo {
             }
         }
         Ok(resp) => ApiInfo { reachable: false, message: format!("HTTP {}", resp.status()), ..Default::default() },
-        Err(e) => ApiInfo { reachable: false, message: e.to_string(), ..Default::default() },
+        Err(e) => {
+            if e.is_connect() || e.is_timeout() {
+                mark_down();
+            }
+            ApiInfo { reachable: false, message: e.to_string(), ..Default::default() }
+        }
     }
 }
 
 /// Lädt die Cosmetics eines Spielers.
 pub async fn fetch_player(api_url: &str, uuid: &str) -> Result<Option<RemoteCosmetics>, String> {
     let b = base(api_url)?;
+    check_down()?;
     let client = http_client()?;
     let resp = client
         .get(format!("{b}/v1/cosmetics/{}", uuid.replace('-', "")))
+        .timeout(std::time::Duration::from_secs(6))
         .send()
         .await
-        .map_err(|e| format!("Cosmetics-API: {e}"))?;
+        .map_err(|e| net_err("Cosmetics-API", e))?;
+    mark_up();
     if resp.status().as_u16() == 404 {
         return Ok(None);
     }
@@ -160,6 +206,7 @@ pub async fn fetch_player(api_url: &str, uuid: &str) -> Result<Option<RemoteCosm
 /// Holt (oder erneuert) ein API-Token über den Mojang-Join-Handshake.
 pub async fn authenticate(api_url: &str, account: &Account) -> Result<String, String> {
     let b = base(api_url)?;
+    check_down()?;
     let key = account.uuid.clone();
     let now = crate::system::now_secs();
     if let Ok(map) = TOKENS.lock() {
@@ -180,9 +227,10 @@ pub async fn authenticate(api_url: &str, account: &Account) -> Result<String, St
     let ch: serde_json::Value = client
         .post(format!("{b}/v1/auth/challenge"))
         .json(&serde_json::json!({ "uuid": account.uuid.replace('-', ""), "name": account.username }))
+        .timeout(std::time::Duration::from_secs(6))
         .send()
         .await
-        .map_err(|e| format!("Auth-Challenge: {e}"))?
+        .map_err(|e| net_err("Auth-Challenge", e))?
         .json()
         .await
         .map_err(|e| format!("Auth-Challenge JSON: {e}"))?;

@@ -240,13 +240,13 @@ const mocks: Record<string, MockHandler> = {
     return 0;
   },
   async cosmetics_server_status() {
-    return { running: false, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: 0, error: "" };
+    return { running: false, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: 0, error: "", upnp: "", externalIp: "", domainIp: "", domainOk: null };
   },
   async cosmetics_server_start() {
-    return { running: true, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: Date.now(), error: "" };
+    return { running: true, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: Date.now(), error: "", upnp: "ok", externalIp: "1.2.3.4", domainIp: "1.2.3.4", domainOk: true };
   },
   async cosmetics_server_stop() {
-    return { running: false, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: 0, error: "" };
+    return { running: false, port: 8787, localIp: "192.168.0.10", localUrl: "http://192.168.0.10:8787", publicUrl: "http://chaoscraftsmp.duckdns.org:8787", players: 0, capes: 0, startedAt: 0, error: "", upnp: "", externalIp: "", domainIp: "", domainOk: null };
   },
   async get_remote_cosmetics() {
     return null;

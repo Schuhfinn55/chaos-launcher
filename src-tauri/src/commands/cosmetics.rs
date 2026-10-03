@@ -127,7 +127,7 @@ pub fn cosmetics_cache_size() -> Result<u64, String> {
 #[tauri::command]
 pub async fn cosmetics_api_info() -> Result<cosmetics_api::ApiInfo, String> {
     let settings = storage::load_settings().unwrap_or_default();
-    Ok(cosmetics_api::info(&settings.cosmetics_api_url).await)
+    Ok(cosmetics_api::info(&cosmetics_api::effective_url(&settings)).await)
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -144,16 +144,14 @@ pub struct SyncResult {
 #[allow(non_snake_case)]
 pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     let settings = storage::load_settings().unwrap_or_default();
-    if settings.cosmetics_api_url.trim().is_empty() {
-        return Ok(SyncResult { synced: false, message: "Keine Cosmetics-API konfiguriert – Cape bleibt lokal.".to_string(), ..Default::default() });
-    }
+    let api = cosmetics_api::effective_url(&settings);
     let account = storage::load_accounts()?
         .into_iter()
         .find(|a| a.uuid == accountUuid)
         .ok_or("Account nicht gefunden")?;
     let mut state = cosmetics::load()?;
     let active = cosmetics::active_cape(&state, &accountUuid);
-    let token = cosmetics_api::authenticate(&settings.cosmetics_api_url, &account).await?;
+    let token = cosmetics_api::authenticate(&api, &account).await?;
     let (visibility, hat, effect) = state
         .profiles
         .iter()
@@ -165,7 +163,7 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     if let Some(cape) = active {
         let bytes = std::fs::read(cosmetics::capes_dir().join(&cape.file_name)).map_err(|e| format!("Cape lesen: {e}"))?;
         let remote = if cape.remote_id.is_empty() {
-            let r = cosmetics_api::upload_cape(&settings.cosmetics_api_url, &token, &cape.name, bytes).await?;
+            let r = cosmetics_api::upload_cape(&api, &token, &cape.name, bytes).await?;
             if let Some(c) = state.capes.iter_mut().find(|c| c.id == cape.id) {
                 c.remote_id = r.id.clone();
                 c.remote_url = r.url.clone();
@@ -176,9 +174,9 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
             cosmetics_api::RemoteCape { id: cape.remote_id.clone(), url: cape.remote_url.clone(), ..Default::default() }
         };
         remote_id = remote.id.clone();
-        cosmetics_api::set_active(&settings.cosmetics_api_url, &token, &accountUuid, Some(&remote.id), &hat, &effect, &visibility).await?;
+        cosmetics_api::set_active(&api, &token, &accountUuid, Some(&remote.id), &hat, &effect, &visibility).await?;
     } else {
-        cosmetics_api::set_active(&settings.cosmetics_api_url, &token, &accountUuid, None, &hat, &effect, &visibility).await?;
+        cosmetics_api::set_active(&api, &token, &accountUuid, None, &hat, &effect, &visibility).await?;
     }
     Ok(SyncResult { synced: true, message: "Cape, Hut und Effekt synchronisiert – andere Chaos-Spieler sehen sie jetzt.".to_string(), remote_cape_id: remote_id })
 }
@@ -187,12 +185,10 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
 #[tauri::command]
 pub async fn get_remote_cosmetics(uuid: String) -> Result<Option<cosmetics_api::RemoteCosmetics>, String> {
     let settings = storage::load_settings().unwrap_or_default();
-    if settings.cosmetics_api_url.trim().is_empty() {
-        return Ok(None);
-    }
-    let r = cosmetics_api::fetch_player(&settings.cosmetics_api_url, &uuid).await?;
+    let api = cosmetics_api::effective_url(&settings);
+    let r = cosmetics_api::fetch_player(&api, &uuid).await?;
     if r.is_some() {
-        let _ = cosmetics_api::cache_player_cape(&settings.cosmetics_api_url, &uuid).await;
+        let _ = cosmetics_api::cache_player_cape(&api, &uuid).await;
     }
     Ok(r)
 }
@@ -201,12 +197,10 @@ pub async fn get_remote_cosmetics(uuid: String) -> Result<Option<cosmetics_api::
 #[tauri::command]
 pub async fn prefetch_player_capes(uuids: Vec<String>) -> Result<u32, String> {
     let settings = storage::load_settings().unwrap_or_default();
-    if settings.cosmetics_api_url.trim().is_empty() {
-        return Ok(0);
-    }
+    let api = cosmetics_api::effective_url(&settings);
     let mut count = 0;
     for u in uuids.iter().take(50) {
-        if cosmetics_api::cache_player_cape(&settings.cosmetics_api_url, u).await.ok().flatten().is_some() {
+        if cosmetics_api::cache_player_cape(&api, u).await.ok().flatten().is_some() {
             count += 1;
         }
     }
