@@ -13,12 +13,15 @@
   <link rel="icon" href="/assets/icon.png" />
   <link rel="apple-touch-icon" href="/assets/icon.png" />
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/animations.css" />
 </head>
 <body>
+  <canvas id="embers" class="embers" aria-hidden="true"></canvas>
   <div class="bg-noise" aria-hidden="true"></div>
   <div class="bg-glow" aria-hidden="true"></div>
+  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 
-  <header class="nav">
+  <header class="nav" id="nav">
     <a class="brand" href="#top">
       <img src="/assets/icon.png" alt="" width="36" height="36" />
       <span>CHAOS <b>LAUNCHER</b></span>
@@ -29,63 +32,75 @@
       <a href="#cosmetics">Cosmetics</a>
       <a href="#news">News</a>
       <a href="#changelog">Changelog</a>
+      <a href="#social">Community</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-primary btn-sm" href="#download" id="nav-download">Download</a>
+    <div class="nav-social">
+      <a class="soc soc-dc" href="https://discord.gg/un8uxrhx9S" target="_blank" rel="noopener" title="Discord" aria-label="Discord">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3c-.2.36-.43.84-.59 1.23-1.85-.28-3.68-.28-5.49 0-.16-.39-.4-.87-.59-1.23a19.7 19.7 0 0 0-3.76 1.37C2.99 8.7 2.22 12.93 2.6 17.1a19.9 19.9 0 0 0 5.99 3.03c.48-.66.91-1.36 1.28-2.09-.7-.26-1.37-.59-2-.98.17-.12.33-.25.49-.38 3.86 1.8 8.03 1.8 11.84 0 .16.13.32.26.49.38-.63.39-1.3.72-2 .98.37.73.8 1.43 1.28 2.09a19.8 19.8 0 0 0 5.99-3.03c.46-4.84-.78-9.04-3.39-12.73zM9.03 14.66c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.2 0 2.17 1.09 2.15 2.4 0 1.32-.95 2.4-2.15 2.4zm5.94 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.2 0 2.17 1.09 2.15 2.4 0 1.32-.94 2.4-2.15 2.4z"/></svg>
+      </a>
+      <a class="soc soc-yt" href="https://www.youtube.com/@Chaosfabi44" target="_blank" rel="noopener" title="YouTube" aria-label="YouTube">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>
+      </a>
+    </div>
+    <a class="btn btn-primary btn-sm btn-shine" href="#download" id="nav-download">Download</a>
   </header>
 
   <main id="top">
     <!-- ===== Hero ===== -->
     <section class="hero">
       <div class="hero-text">
-        <div class="pill" id="status-pill"><span class="dot"></span> <span id="status-text">ChaoscraftSMP · Status wird geladen …</span></div>
-        <h1>Dein Minecraft.<br /><span class="accent">Dein Chaos.</span></h1>
-        <p class="lead">
+        <div class="pill hero-in" id="status-pill" style="--d:0"><span class="dot"></span> <span id="status-text">ChaoscraftSMP · Status wird geladen …</span></div>
+        <h1 class="hero-in" style="--d:1">Dein Minecraft.<br /><span class="accent glitch" data-text="Dein Chaos.">Dein Chaos.</span></h1>
+        <p class="lead hero-in" style="--d:2">
           Der Launcher für ChaoscraftSMP: Profile mit Fabric, Forge &amp; NeoForge, Mod-Manager mit Modrinth und CurseForge,
           eigene Capes, Hüte und Effekte, die alle Chaos-Spieler ingame sehen – und der <b>Chaos Client</b> mit Ingame-Menü auf RIGHT SHIFT.
         </p>
-        <div class="hero-actions" id="download">
-          <a class="btn btn-primary btn-lg" id="btn-download" href="#" download>
+        <div class="hero-actions hero-in" id="download" style="--d:3">
+          <a class="btn btn-primary btn-lg btn-shine pulse" id="btn-download" href="#" download>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span><span class="btn-title">Download für Windows</span><span class="btn-sub" id="btn-sub">Version wird geladen …</span></span>
           </a>
           <a class="btn btn-ghost" id="btn-msi" href="#" download>MSI-Installer</a>
         </div>
-        <ul class="hero-meta">
+        <ul class="hero-meta hero-in" style="--d:4">
           <li>Windows 10/11 · 64-bit</li>
           <li>Kostenlos &amp; werbefrei</li>
           <li>Microsoft-Login, kein Passwortfeld</li>
           <li>Auto-Updates mit SHA-256-Prüfung</li>
         </ul>
       </div>
-      <div class="hero-shot">
+      <div class="hero-shot hero-in tilt" id="hero-shot" style="--d:2">
         <img src="/assets/shot-home.jpg" alt="Chaos Launcher – Startseite mit 3D-Skin, Profil und SPIELEN-Button" loading="eager" />
+        <div class="float-badge fb1">🧥 Capes</div>
+        <div class="float-badge fb2">🎩 Hüte</div>
+        <div class="float-badge fb3">✨ Effekte</div>
       </div>
     </section>
 
     <!-- ===== Stats ===== -->
     <section class="stats" id="stats">
-      <div class="stat"><b id="stat-version">–</b><span>Aktuelle Version</span></div>
-      <div class="stat"><b id="stat-client">–</b><span>Chaos Client</span></div>
-      <div class="stat"><b id="stat-players">–</b><span>Spieler mit Cosmetics</span></div>
-      <div class="stat"><b id="stat-online">–</b><span>Online auf ChaoscraftSMP</span></div>
+      <div class="stat reveal" style="--d:0"><b id="stat-version">–</b><span>Aktuelle Version</span></div>
+      <div class="stat reveal" style="--d:1"><b id="stat-client">–</b><span>Chaos Client</span></div>
+      <div class="stat reveal" style="--d:2"><b id="stat-players" data-count>–</b><span>Spieler mit Cosmetics</span></div>
+      <div class="stat reveal" style="--d:3"><b id="stat-online" data-count>–</b><span>Online auf ChaoscraftSMP</span></div>
     </section>
 
     <!-- ===== Features ===== -->
     <section class="section" id="features">
-      <h2>Alles drin, was ein Launcher können muss.</h2>
-      <p class="section-lead">Gebaut mit Tauri und Rust – klein, schnell, sicher. Deine Tokens werden mit Windows DPAPI verschlüsselt und verlassen den Launcher nur Richtung Microsoft und Mojang.</p>
+      <h2 class="reveal">Alles drin, was ein Launcher können muss.</h2>
+      <p class="section-lead reveal">Gebaut mit Tauri und Rust – klein, schnell, sicher. Deine Tokens werden mit Windows DPAPI verschlüsselt und verlassen den Launcher nur Richtung Microsoft und Mojang.</p>
       <div class="grid">
-        <article class="card"><div class="ic">🧩</div><h3>Profile &amp; Loader</h3><p>Vanilla, Fabric, Forge, NeoForge, Quilt. Eigene RAM-, JVM- und Auflösungseinstellungen pro Profil, Vorlagen für PvP, SMP, Shader und Chaoscraft.</p></article>
-        <article class="card"><div class="ic">📦</div><h3>Mod-Manager</h3><p>Modrinth und CurseForge in einer Suche. Kategorien, Versionen, Abhängigkeiten automatisch, Update-Prüfung, Shader &amp; Resourcepacks.</p></article>
-        <article class="card"><div class="ic">🧥</div><h3>Capes, Hüte &amp; Effekte</h3><p>Eigene Capes hochladen oder aus 16 HD-Vorlagen wählen, 12 Hüte, 14 Partikel-Effekte – mit 3D-Vorschau und sichtbar für alle Chaos-Spieler.</p></article>
-        <article class="card"><div class="ic">✸</div><h3>Chaos Client</h3><p>Wird bei jedem Fabric-Profil automatisch geladen: Ingame-Menü, HUD-Editor, 44 Module, Keybinds, Profile. Kein Cheat, keine Server-Regel-Verstöße.</p></article>
-        <article class="card"><div class="ic">🔥</div><h3>Chaoscraft-Integration</h3><p>Serverstatus live, „CHAOSCRAFT SPIELEN“ richtet das passende Profil mit allen Mods ein und verbindet direkt.</p></article>
-        <article class="card"><div class="ic">🛡</div><h3>Sicher &amp; transparent</h3><p>Downloads nur über HTTPS mit Prüfsummen, Dateiprüfung vor Verwendung, Open Source-Lizenzen im Launcher einsehbar.</p></article>
+        <article class="card reveal" style="--d:0"><div class="ic">🧩</div><h3>Profile &amp; Loader</h3><p>Vanilla, Fabric, Forge, NeoForge, Quilt. Eigene RAM-, JVM- und Auflösungseinstellungen pro Profil, Vorlagen für PvP, SMP, Shader und Chaoscraft.</p></article>
+        <article class="card reveal" style="--d:1"><div class="ic">📦</div><h3>Mod-Manager</h3><p>Modrinth und CurseForge in einer Suche. Kategorien, Versionen, Abhängigkeiten automatisch, Update-Prüfung, Shader &amp; Resourcepacks.</p></article>
+        <article class="card reveal" style="--d:2"><div class="ic">🧥</div><h3>Capes, Hüte &amp; Effekte</h3><p>Eigene Capes hochladen oder aus 16 HD-Vorlagen wählen, 12 Hüte, 14 Partikel-Effekte – mit 3D-Vorschau und sichtbar für alle Chaos-Spieler.</p></article>
+        <article class="card reveal" style="--d:3"><div class="ic">✸</div><h3>Chaos Client</h3><p>Wird bei jedem Fabric-Profil automatisch geladen: Ingame-Menü, HUD-Editor, 44 Module, Keybinds, Profile. Kein Cheat, keine Server-Regel-Verstöße.</p></article>
+        <article class="card reveal" style="--d:4"><div class="ic">🔥</div><h3>Chaoscraft-Integration</h3><p>Serverstatus live, „CHAOSCRAFT SPIELEN“ richtet das passende Profil mit allen Mods ein und verbindet direkt.</p></article>
+        <article class="card reveal" style="--d:5"><div class="ic">🛡</div><h3>Sicher &amp; transparent</h3><p>Downloads nur über HTTPS mit Prüfsummen, Dateiprüfung vor Verwendung, Open Source-Lizenzen im Launcher einsehbar.</p></article>
       </div>
       <div class="shots">
-        <figure><img src="/assets/shot-mods.jpg" alt="Mod-Manager" loading="lazy" /><figcaption>Mod-Manager mit Modrinth + CurseForge</figcaption></figure>
-        <figure><img src="/assets/shot-cosmetics.jpg" alt="Cosmetics mit Hüten" loading="lazy" /><figcaption>Cosmetics: Hüte mit 3D-Vorschau</figcaption></figure>
+        <figure class="reveal tilt" style="--d:0"><img src="/assets/shot-mods.jpg" alt="Mod-Manager" loading="lazy" /><figcaption>Mod-Manager mit Modrinth + CurseForge</figcaption></figure>
+        <figure class="reveal tilt" style="--d:1"><img src="/assets/shot-cosmetics.jpg" alt="Cosmetics mit Hüten" loading="lazy" /><figcaption>Cosmetics: Hüte mit 3D-Vorschau</figcaption></figure>
       </div>
     </section>
 
@@ -93,69 +108,92 @@
     <section class="section section-alt" id="client">
       <div class="split">
         <div>
-          <h2>Chaos Client. <span class="accent">RIGHT SHIFT</span> drücken, fertig.</h2>
-          <p class="section-lead">Der Chaos Client ist eine Fabric-Mod, die der Launcher in jedes Fabric-Profil legt. Im Spiel öffnet RIGHT SHIFT ein modernes Menü mit Suche, 15 Kategorien und Modul-Kacheln – alles per Klick konfigurierbar und pro Client-Profil gespeichert.</p>
+          <h2 class="reveal">Chaos Client. <span class="accent key">RIGHT SHIFT</span> drücken, fertig.</h2>
+          <p class="section-lead reveal">Der Chaos Client ist eine Fabric-Mod, die der Launcher in jedes Fabric-Profil legt. Im Spiel öffnet RIGHT SHIFT ein modernes Menü mit Suche, 15 Kategorien und Modul-Kacheln – alles per Klick konfigurierbar und pro Client-Profil gespeichert.</p>
           <ul class="checks">
-            <li>HUD-Editor mit Snap-Raster: FPS, CPS, Keystrokes, Koordinaten, Armor, Effekte, Scoreboard, Tablist</li>
-            <li>Crosshair-Editor, Damage Indicator, Player Info, Waypoints, Zoom, Fullbright, Free Look</li>
-            <li>Performance Center (LOW / BALANCED / HIGH / CUSTOM) – nur Render-Optionen, nichts Spielrelevantes</li>
-            <li>Cosmetics ingame wechseln, Emotes, Server-Schnellmenü, Chat-Filter, Music Player, Notifications</li>
-            <li>Client-Profile (PvP, SMP, Chaoscraft, Recording) mit Import/Export, Keybind-Manager, Chaos Theme</li>
-            <li>Updates kommen über den Launcher – installierte Einstellungen bleiben erhalten</li>
+            <li class="reveal" style="--d:0">HUD-Editor mit Snap-Raster: FPS, CPS, Keystrokes, Koordinaten, Armor, Effekte, Scoreboard, Tablist</li>
+            <li class="reveal" style="--d:1">Crosshair-Editor, Damage Indicator, Player Info, Waypoints, Zoom, Fullbright, Free Look</li>
+            <li class="reveal" style="--d:2">Performance Center (LOW / BALANCED / HIGH / CUSTOM) – nur Render-Optionen, nichts Spielrelevantes</li>
+            <li class="reveal" style="--d:3">Cosmetics ingame wechseln, Emotes, Server-Schnellmenü, Chat-Filter, Music Player, Notifications</li>
+            <li class="reveal" style="--d:4">Client-Profile (PvP, SMP, Chaoscraft, Recording) mit Import/Export, Keybind-Manager, Chaos Theme</li>
+            <li class="reveal" style="--d:5">Updates kommen über den Launcher – installierte Einstellungen bleiben erhalten</li>
           </ul>
-          <p class="muted">Aktuelle Client-Version: <b id="client-version">–</b> · Minecraft <b>1.21.11</b> · Fabric</p>
+          <p class="muted reveal">Aktuelle Client-Version: <b id="client-version">–</b> · Minecraft <b>1.21.11</b> · Fabric</p>
         </div>
-        <div class="shot-frame"><img src="/assets/shot-client.jpg" alt="Einstellungen › Chaos Client" loading="lazy" /></div>
+        <div class="shot-frame reveal tilt" style="--d:1"><img src="/assets/shot-client.jpg" alt="Einstellungen › Chaos Client" loading="lazy" /></div>
       </div>
     </section>
 
     <!-- ===== Cosmetics ===== -->
     <section class="section" id="cosmetics">
-      <h2>Zeig, wer du bist.</h2>
-      <p class="section-lead">Cape, Hut und Effekt werden vor jedem Spielstart automatisch mit der Chaos-Cosmetics-API abgeglichen. Jeder mit Chaos Launcher sieht dich so, wie du dich eingestellt hast – Spieler ohne Launcher sehen normales Minecraft.</p>
+      <h2 class="reveal">Zeig, wer du bist.</h2>
+      <p class="section-lead reveal">Cape, Hut und Effekt werden vor jedem Spielstart automatisch mit der Chaos-Cosmetics-API abgeglichen. Jeder mit Chaos Launcher sieht dich so, wie du dich eingestellt hast – Spieler ohne Launcher sehen normales Minecraft.</p>
       <div class="cos-row">
-        <div class="cos"><span>🧥</span><b>16 HD-Capes</b><small>Chaos Cape, Inferno, Galaxy, Blood Moon, Neon Grid … oder dein eigenes PNG</small></div>
-        <div class="cos"><span>🎩</span><b>12 Hüte</b><small>Zylinder, Chaos-Krone, Heiligenschein, Hörner, Zaubererhut, Kopfhörer …</small></div>
-        <div class="cos"><span>✨</span><b>14 Effekte</b><small>Chaos-Aura, Flammenschritte, Seelenfeuer, Verzauberung, Kirschblüten …</small></div>
+        <div class="cos reveal" style="--d:0"><span class="bob">🧥</span><b>16 HD-Capes</b><small>Chaos Cape, Inferno, Galaxy, Blood Moon, Neon Grid … oder dein eigenes PNG</small></div>
+        <div class="cos reveal" style="--d:1"><span class="bob" style="animation-delay:.4s">🎩</span><b>12 Hüte</b><small>Zylinder, Chaos-Krone, Heiligenschein, Hörner, Zaubererhut, Kopfhörer …</small></div>
+        <div class="cos reveal" style="--d:2"><span class="bob" style="animation-delay:.8s">✨</span><b>14 Effekte</b><small>Chaos-Aura, Flammenschritte, Seelenfeuer, Verzauberung, Kirschblüten …</small></div>
       </div>
     </section>
 
     <!-- ===== News ===== -->
     <section class="section section-alt" id="news">
-      <h2>News &amp; Updates</h2>
-      <p class="section-lead">Dieselben News erscheinen auch im Launcher auf der Startseite.</p>
+      <h2 class="reveal">News &amp; Updates</h2>
+      <p class="section-lead reveal">Dieselben News erscheinen auch im Launcher auf der Startseite.</p>
       <div class="news" id="news-list"><div class="skeleton"></div><div class="skeleton"></div></div>
     </section>
 
     <!-- ===== Changelog ===== -->
     <section class="section" id="changelog">
-      <h2>Changelog</h2>
+      <h2 class="reveal">Changelog</h2>
       <div class="timeline" id="changelog-list"><div class="skeleton"></div></div>
     </section>
 
+    <!-- ===== Community ===== -->
+    <section class="section section-alt" id="social">
+      <h2 class="reveal">Werde Teil der Community.</h2>
+      <p class="section-lead reveal">Fragen, Bugs, Ideen, Events – alles läuft über Discord. Auf YouTube gibt es Videos zu ChaoscraftSMP und zum Launcher.</p>
+      <div class="social-grid">
+        <a class="social-card dc reveal" style="--d:0" href="https://discord.gg/un8uxrhx9S" target="_blank" rel="noopener">
+          <div class="social-ic"><svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3c-.2.36-.43.84-.59 1.23-1.85-.28-3.68-.28-5.49 0-.16-.39-.4-.87-.59-1.23a19.7 19.7 0 0 0-3.76 1.37C2.99 8.7 2.22 12.93 2.6 17.1a19.9 19.9 0 0 0 5.99 3.03c.48-.66.91-1.36 1.28-2.09-.7-.26-1.37-.59-2-.98.17-.12.33-.25.49-.38 3.86 1.8 8.03 1.8 11.84 0 .16.13.32.26.49.38-.63.39-1.3.72-2 .98.37.73.8 1.43 1.28 2.09a19.8 19.8 0 0 0 5.99-3.03c.46-4.84-.78-9.04-3.39-12.73zM9.03 14.66c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.2 0 2.17 1.09 2.15 2.4 0 1.32-.95 2.4-2.15 2.4zm5.94 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.2 0 2.17 1.09 2.15 2.4 0 1.32-.94 2.4-2.15 2.4z"/></svg></div>
+          <div><b>Discord</b><small>Support, Ankündigungen, Events, Chaos-Community</small></div>
+          <span class="social-cta">Beitreten →</span>
+        </a>
+        <a class="social-card yt reveal" style="--d:1" href="https://www.youtube.com/@Chaosfabi44" target="_blank" rel="noopener">
+          <div class="social-ic"><svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg></div>
+          <div><b>YouTube · @Chaosfabi44</b><small>Videos, Trailer, Updates zu Launcher und Server</small></div>
+          <span class="social-cta">Abonnieren →</span>
+        </a>
+        <a class="social-card mc reveal" style="--d:2" href="https://chaoscraftsmp.duckdns.org" target="_blank" rel="noopener">
+          <div class="social-ic">⛏️</div>
+          <div><b>ChaoscraftSMP</b><small>Server-Website, Shop &amp; Status · <code>chaoscraftsmp.duckdns.org</code></small></div>
+          <span class="social-cta">Zur Website →</span>
+        </a>
+      </div>
+    </section>
+
     <!-- ===== FAQ ===== -->
-    <section class="section section-alt" id="faq">
-      <h2>Häufige Fragen</h2>
+    <section class="section" id="faq">
+      <h2 class="reveal">Häufige Fragen</h2>
       <div class="faq">
-        <details open><summary>Windows warnt beim Installieren („Unbekannter Herausgeber“)</summary><p>Der Installer ist noch nicht signiert. Klicke auf „Weitere Informationen“ → „Trotzdem ausführen“. Die Datei kannst du mit der SHA-256-Prüfsumme unten vergleichen.</p></details>
-        <details><summary>Brauche ich Java?</summary><p>Nein. Der Launcher erkennt die benötigte Java-Version und lädt Temurin automatisch herunter.</p></details>
-        <details><summary>Wie melde ich mich an?</summary><p>Über Microsoft mit dem Device-Code: Du bestätigst die Anmeldung im Browser, der Launcher fragt nie nach deinem Passwort. Mehrere Accounts sind möglich.</p></details>
-        <details><summary>Ist der Chaos Client auf Servern erlaubt?</summary><p>Der Chaos Client enthält ausschließlich Anzeige-, Komfort- und Kosmetikfunktionen (HUD, Zoom, Fullbright, Cosmetics). Keine Funktion verschafft Spielvorteile oder greift in das Gameplay ein. Prüfe trotzdem die Regeln des jeweiligen Servers.</p></details>
-        <details><summary>Sehen andere mein Cape?</summary><p>Ja, alle Spieler mit Chaos Launcher sehen Cape, Hut und Effekt. Dafür lädt der Launcher deine Auswahl automatisch zur Chaos-Cosmetics-API hoch – dein Microsoft-Token wird dabei nie übertragen.</p></details>
-        <details><summary>Wo liegen meine Daten?</summary><p>Unter <code>%APPDATA%\chaos-launcher</code>. Tokens werden mit Windows DPAPI verschlüsselt. Logs findest du im Ordner <code>logs</code>.</p></details>
+        <details class="reveal" open><summary>Windows warnt beim Installieren („Unbekannter Herausgeber“)</summary><p>Der Installer ist noch nicht signiert. Klicke auf „Weitere Informationen“ → „Trotzdem ausführen“. Die Datei kannst du mit der SHA-256-Prüfsumme unten vergleichen.</p></details>
+        <details class="reveal"><summary>Brauche ich Java?</summary><p>Nein. Der Launcher erkennt die benötigte Java-Version und lädt Temurin automatisch herunter.</p></details>
+        <details class="reveal"><summary>Wie melde ich mich an?</summary><p>Über Microsoft mit dem Device-Code: Du bestätigst die Anmeldung im Browser, der Launcher fragt nie nach deinem Passwort. Mehrere Accounts sind möglich.</p></details>
+        <details class="reveal"><summary>Ist der Chaos Client auf Servern erlaubt?</summary><p>Der Chaos Client enthält ausschließlich Anzeige-, Komfort- und Kosmetikfunktionen (HUD, Zoom, Fullbright, Cosmetics). Keine Funktion verschafft Spielvorteile oder greift in das Gameplay ein. Prüfe trotzdem die Regeln des jeweiligen Servers.</p></details>
+        <details class="reveal"><summary>Sehen andere mein Cape?</summary><p>Ja, alle Spieler mit Chaos Launcher sehen Cape, Hut und Effekt. Dafür lädt der Launcher deine Auswahl automatisch zur Chaos-Cosmetics-API hoch – dein Microsoft-Token wird dabei nie übertragen.</p></details>
+        <details class="reveal"><summary>Wo liegen meine Daten?</summary><p>Unter <code>%APPDATA%\chaos-launcher</code>. Tokens werden mit Windows DPAPI verschlüsselt. Logs findest du im Ordner <code>logs</code>.</p></details>
       </div>
     </section>
 
     <!-- ===== Download-Box ===== -->
     <section class="section" id="download-box">
-      <div class="dl-box">
+      <div class="dl-box reveal">
         <div>
           <h2>Jetzt herunterladen</h2>
           <p class="muted" id="dl-meta">Version wird geladen …</p>
           <p class="muted small">SHA-256: <code id="dl-sha">–</code></p>
         </div>
         <div class="dl-actions">
-          <a class="btn btn-primary btn-lg" id="btn-download-2" href="#" download>Setup (.exe)</a>
+          <a class="btn btn-primary btn-lg btn-shine" id="btn-download-2" href="#" download>Setup (.exe)</a>
           <a class="btn btn-ghost" id="btn-msi-2" href="#" download>MSI</a>
           <a class="btn btn-ghost" id="btn-client" href="#" download>Chaos Client (.jar)</a>
         </div>
@@ -167,9 +205,15 @@
     <div>
       <img src="/assets/icon.png" alt="" width="28" height="28" />
       <span>Chaos Launcher · ChaoscraftSMP</span>
+      <span class="footer-social">
+        <a class="soc soc-dc" href="https://discord.gg/un8uxrhx9S" target="_blank" rel="noopener" aria-label="Discord"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3c-.2.36-.43.84-.59 1.23-1.85-.28-3.68-.28-5.49 0-.16-.39-.4-.87-.59-1.23a19.7 19.7 0 0 0-3.76 1.37C2.99 8.7 2.22 12.93 2.6 17.1a19.9 19.9 0 0 0 5.99 3.03c.48-.66.91-1.36 1.28-2.09-.7-.26-1.37-.59-2-.98.17-.12.33-.25.49-.38 3.86 1.8 8.03 1.8 11.84 0 .16.13.32.26.49.38-.63.39-1.3.72-2 .98.37.73.8 1.43 1.28 2.09a19.8 19.8 0 0 0 5.99-3.03c.46-4.84-.78-9.04-3.39-12.73zM9.03 14.66c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.2 0 2.17 1.09 2.15 2.4 0 1.32-.95 2.4-2.15 2.4zm5.94 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.2 0 2.17 1.09 2.15 2.4 0 1.32-.94 2.4-2.15 2.4z"/></svg></a>
+        <a class="soc soc-yt" href="https://www.youtube.com/@Chaosfabi44" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg></a>
+      </span>
     </div>
     <div class="footer-links">
       <a href="https://chaoscraftsmp.duckdns.org" target="_blank" rel="noopener">ChaoscraftSMP</a>
+      <a href="https://discord.gg/un8uxrhx9S" target="_blank" rel="noopener">Discord</a>
+      <a href="https://www.youtube.com/@Chaosfabi44" target="_blank" rel="noopener">YouTube</a>
       <a href="/releases.json">Release-Feed</a>
       <a href="/news.json">News-Feed</a>
       <a href="/licenses.html">Lizenzen</a>
@@ -177,6 +221,8 @@
     <p class="muted small">Minecraft ist eine Marke von Mojang Studios / Microsoft. Chaos Launcher und Chaos Client sind inoffizielle, eigenständige Projekte und stehen in keiner Verbindung zu Mojang oder Microsoft.</p>
   </footer>
 
+  <a class="totop" id="totop" href="#top" aria-label="Nach oben">↑</a>
   <script src="/app.js" defer></script>
+  <script src="/animations.js" defer></script>
 </body>
 </html>

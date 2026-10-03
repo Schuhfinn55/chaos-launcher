@@ -88,7 +88,7 @@ def main():
         print(f"releases.json aktualisiert: Launcher {version}" + (f", Client {feed['channels']['stable']['client']['version']}" if 'client' in feed['channels']['stable'] else ""))
 
     # Website-Dateien
-    for name in ["index.html", "style.css", "app.js", "licenses.html", "releases.json", "news.json", "SHA256SUMS"]:
+    for name in ["index.html", "style.css", "animations.css", "app.js", "animations.js", "licenses.html", "releases.json", "news.json", "SHA256SUMS"]:
         p = os.path.join(SITE, name)
         if os.path.exists(p):
             uploads.append((p, name))
