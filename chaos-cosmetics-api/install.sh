@@ -84,7 +84,9 @@ systemctl restart chaos-cosmetics
 if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
   ufw allow "$PORT"/tcp >/dev/null && echo "-- ufw: Port $PORT freigegeben"
 fi
-if command -v iptables >/dev/null 2>&1; then
+if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+  firewall-cmd --permanent --add-port="$PORT"/tcp >/dev/null && firewall-cmd --reload >/dev/null && echo "-- firewalld: Port $PORT freigegeben"
+elif command -v iptables >/dev/null 2>&1; then
   if ! iptables -C INPUT -p tcp --dport "$PORT" -j ACCEPT >/dev/null 2>&1; then
     iptables -I INPUT 5 -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp --dport "$PORT" -j ACCEPT
     echo "-- iptables: Port $PORT freigegeben"
