@@ -104,7 +104,7 @@ def main():
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             shutil.copy2(local, dest)
         subprocess.run(["scp", "-q", "-o", "BatchMode=yes", "-r", tmp + "/.", f"{SSH_HOST}:{staging}/"], check=True)
-    ssh(f"sudo mkdir -p {REMOTE_ROOT}/download {REMOTE_ROOT}/assets && sudo cp -r {staging}/. {REMOTE_ROOT}/ && sudo chown -R nginx:nginx {REMOTE_ROOT} && sudo chmod -R a+rX {REMOTE_ROOT} && rm -rf {staging}")
+    ssh(f"sudo mkdir -p {REMOTE_ROOT}/download {REMOTE_ROOT}/assets && sudo cp -r {staging}/. {REMOTE_ROOT}/ && sudo chown -R nginx:nginx {REMOTE_ROOT} && sudo chmod -R a+rX {REMOTE_ROOT} && (command -v restorecon >/dev/null && sudo restorecon -R {REMOTE_ROOT} || true) && rm -rf {staging}")
     r = subprocess.run(["curl", "-s", "-m", "8", f"{PUBLIC}/releases.json"], capture_output=True, text=True)
     print("Veröffentlicht." if r.returncode == 0 and '"channels"' in r.stdout else "Hochgeladen – von außen (noch) nicht erreichbar; prüfe Zertifikat/Ports.")
 

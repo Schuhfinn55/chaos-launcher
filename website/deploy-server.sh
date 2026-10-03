@@ -8,6 +8,10 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p "$ROOT/download" "$ROOT/assets" /var/www/certbot
 chown -R nginx:nginx "$ROOT"
+if command -v semanage >/dev/null 2>&1; then
+  semanage fcontext -a -t httpd_sys_content_t "$ROOT(/.*)?" 2>/dev/null || true
+  restorecon -R "$ROOT"
+fi
 cp "$HERE/nginx-chaoslauncher.conf" /etc/nginx/conf.d/chaoslauncher.conf
 nginx -t && systemctl reload nginx
 echo "-- nginx: $DOMAIN eingerichtet (HTTP)"
