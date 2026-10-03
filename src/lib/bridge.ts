@@ -251,6 +251,26 @@ const mocks: Record<string, MockHandler> = {
   async get_remote_cosmetics() {
     return null;
   },
+  async scan_foreign_launchers() {
+    return [
+      { id: "norisk", name: "NoRisk Client", path: "C:\\Users\\Mock\\AppData\\Roaming\\norisk", note: "", profiles: [
+        { id: "norisk:1", launcher: "norisk", launcherName: "NoRisk Client", name: "PVP Mods", gameDir: "C:\\mock\\pvp", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "0.19.2", mods: Array.from({ length: 23 }, (_, i) => ({ fileName: `mod-${i}.jar`, displayName: `Mod ${i}`, source: "modrinth", projectId: "P" + i, versionId: "V" + i, version: "1.0", url: "https://cdn.modrinth.com/x.jar", enabled: true, localPath: "", gameVersions: ["1.21.11"] })), hasOptions: true, hasServers: true, saves: 2, resourcepacks: 3, shaderpacks: 1, screenshots: 40, configFiles: 31, sizeMb: 180, ramMb: 4096, playtimeSeconds: 52230, lastPlayed: Date.now() - 86400000, note: "MODPACKS", sharedDir: false },
+        { id: "norisk:2", launcher: "norisk", launcherName: "NoRisk Client", name: "MC-Helden", gameDir: "C:\\mock\\helden", mcVersion: "1.20.1", loader: "forge", loaderVersion: "47.3.22", mods: Array.from({ length: 28 }, (_, i) => ({ fileName: `h-${i}.jar`, displayName: `Helden Mod ${i}`, source: "curseforge", projectId: "" + i, versionId: "" + i, version: "1.0", url: "https://edge.forgecdn.net/x.jar", enabled: true, localPath: "", gameVersions: [] })), hasOptions: true, hasServers: false, saves: 0, resourcepacks: 0, shaderpacks: 0, screenshots: 0, configFiles: 12, sizeMb: 420, ramMb: 6144, playtimeSeconds: 0, lastPlayed: 0, note: "", sharedDir: false },
+      ] },
+      { id: "official", name: "Minecraft Launcher", path: "C:\\Users\\Mock\\AppData\\Roaming\\.minecraft", note: "LabyMod nutzt ebenfalls diesen Ordner.", profiles: [
+        { id: "official:a", launcher: "official", launcherName: "Minecraft Launcher", name: "fabric-loader-26.1", gameDir: "C:\\mock\\.minecraft", mcVersion: "26.1", loader: "fabric", loaderVersion: "0.18.5", mods: [], hasOptions: true, hasServers: true, saves: 2, resourcepacks: 4, shaderpacks: 0, screenshots: 12, configFiles: 8, sizeMb: 30, ramMb: 2048, playtimeSeconds: 0, lastPlayed: 0, note: "nutzt den gemeinsamen .minecraft-Ordner", sharedDir: true },
+      ] },
+    ];
+  },
+  async import_foreign_profile(args) {
+    await new Promise((r) => setTimeout(r, 800));
+    const p = args.profile as { name: string; mcVersion: string; loader: string; loaderVersion: string; ramMb: number; mods: unknown[] };
+    const o = (args.options ?? {}) as { name?: string | null };
+    const inst = { id: "imp_" + Date.now(), name: o.name || p.name, mcVersion: p.mcVersion, loader: p.loader, loaderVersion: p.loaderVersion || null, iconColor: "#e11d2e", mods: [], createdAt: Date.now(), ramMb: p.ramMb || 4096, javaVersion: 21, description: "Importiert (Mock)" };
+    const list = ls<unknown[]>("chaos.instances", []);
+    lsSet("chaos.instances", [...list, inst]);
+    return { instance: inst, modsImported: p.mods.length, modsIdentified: 0, filesCopied: 42, warnings: [] };
+  },
   async discord_status() {
     return "verbunden (App Mock)";
   },

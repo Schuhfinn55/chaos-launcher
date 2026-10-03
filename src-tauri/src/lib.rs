@@ -24,6 +24,7 @@ pub mod cosmetics_api;
 pub mod cosmetics_server;
 pub mod discord;
 pub mod forge;
+pub mod import;
 pub mod integrity;
 pub mod java;
 pub mod launch;
@@ -118,6 +119,8 @@ pub fn run() {
             commands::instances::delete_instance_files,
             commands::instances::open_instance_folder,
             commands::instances::duplicate_instance,
+            commands::instances::scan_foreign_launchers,
+            commands::instances::import_foreign_profile,
             commands::instances::export_profile,
             commands::instances::import_profile,
             commands::instances::instance_size,

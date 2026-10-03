@@ -10,11 +10,12 @@ use serde::{Deserialize, Serialize};
 /* ======================= Mods ======================= */
 
 /// Quelle eines Mods.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ModSource {
     Modrinth,
     Curseforge,
+    #[default]
     Local,
 }
 
@@ -89,7 +90,7 @@ fn default_project_type() -> String {
 /// Ein Launcher-Profil (Instanz). Jedes Profil hat ein eigenes
 /// Spielverzeichnis mit eigenen Mods, Resourcepacks, Shadern und
 /// Einstellungen - vollständig voneinander getrennt.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Instance {
     pub id: String,
@@ -145,7 +146,7 @@ pub struct Instance {
 }
 
 /// Ein Mod/Shader/Resourcepack, der einem Profil zugeordnet ist.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct InstanceMod {
     pub id: String,

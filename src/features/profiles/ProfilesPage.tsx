@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConfirmDialog, Empty, Modal, PageHead, Tabs, Toggle } from "@/components/ui";
 import LaunchPanel from "@/components/LaunchPanel";
+import ImportLaunchersDialog from "./ImportLaunchersDialog";
 import { useInstanceStore, useSettingsStore, useStatusStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import { uid, formatDate, formatPlaytime } from "@/lib/utils";
@@ -46,6 +47,7 @@ export default function ProfilesPage() {
   const setStatus = useStatusStore((s) => s.setInstanceStatus);
 
   const [wizard, setWizard] = useState(false);
+  const [importLaunchers, setImportLaunchers] = useState(false);
   const [edit, setEdit] = useState<Instance | null>(null);
   const [del, setDel] = useState<Instance | null>(null);
   const [delFiles, setDelFiles] = useState(false);
@@ -153,7 +155,10 @@ export default function ProfilesPage() {
         actions={
           <>
             <input className="chaos-input" style={{ width: 200 }} placeholder="Profile filtern …" value={filter} onChange={(e) => setFilter(e.target.value)} />
-            <button className="chaos-btn" onClick={importProfile}>
+            <button className="chaos-btn" onClick={() => setImportLaunchers(true)} title="Profile aus NoRisk, Minecraft Launcher, Prism, CurseForge, Modrinth … übernehmen">
+              ⇄ Aus anderem Launcher
+            </button>
+            <button className="chaos-btn" onClick={importProfile} title="Chaos-/Onyx-Profil (JSON) importieren">
               ⬇ Import
             </button>
             <button className="chaos-btn chaos-btn-primary" onClick={() => setWizard(true)}>
@@ -343,6 +348,7 @@ export default function ProfilesPage() {
           }}
         />
       )}
+      <ImportLaunchersDialog open={importLaunchers} onClose={() => setImportLaunchers(false)} onImported={async (id) => { await reload(); if (id) setActive(id); }} />
     </div>
   );
 }

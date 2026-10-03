@@ -15,6 +15,10 @@ import type {
   RepairReport,
   UpdateInfo,
   ClientUpdateInfo,
+  ForeignLauncher,
+  ForeignProfile,
+  ImportOptions,
+  ImportResult,
   VersionInfo,
 } from "@/types";
 
@@ -56,6 +60,10 @@ export const runningInstances = () => invoke<string[]>("running_instances");
 
 export const checkForUpdates = (channel?: string) => invoke<UpdateInfo | null>("check_for_updates", { channel: channel ?? null });
 export const installUpdate = (info: UpdateInfo) => invoke<string>("install_update", { info });
+
+// Import aus anderen Launchern
+export const scanForeignLaunchers = () => invoke<ForeignLauncher[]>("scan_foreign_launchers");
+export const importForeignProfile = (profile: ForeignProfile, options: ImportOptions) => invoke<ImportResult>("import_foreign_profile", { profile, options });
 
 // Chaos Client (Fabric-Mod)
 export const checkClientUpdate = (channel?: string) => invoke<ClientUpdateInfo | null>("check_client_update", { channel: channel ?? null });

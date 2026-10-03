@@ -263,3 +263,27 @@ pub fn instance_size(instanceId: String) -> Result<InstanceSize, String> {
         home: home.to_string_lossy().to_string(),
     })
 }
+
+/* ---------- Import aus anderen Launchern ---------- */
+
+/// Findet installierte Launcher (NoRisk, Minecraft Launcher, Prism, CurseForge, Modrinth, GDLauncher, ATLauncher) und ihre Profile.
+#[tauri::command]
+pub async fn scan_foreign_launchers() -> Result<Vec<crate::import::ForeignLauncher>, String> {
+    tauri::async_runtime::spawn_blocking(crate::import::scan_launchers)
+        .await
+        .map_err(|e| format!("Scan: {e}"))
+}
+
+/// Importiert ein fremdes Profil als Chaos-Profil (Mods, Konfigs, Einstellungen, Server, Welten …).
+#[tauri::command]
+pub async fn import_foreign_profile(
+    profile: crate::import::ForeignProfile,
+    options: crate::import::ImportOptions,
+    app: tauri::AppHandle,
+) -> Result<crate::import::ImportResult, String> {
+    use tauri::Emitter;
+    let progress = move |msg: String, step: u32, total: u32| {
+        let _ = app.emit("import://progress", serde_json::json!({ "message": msg, "step": step, "total": total }));
+    };
+    crate::import::import_profile(profile, options, &progress).await
+}

@@ -413,6 +413,69 @@ export interface ClientUpdateInfo {
   sha256?: string;
 }
 
+/* ---------- Import aus anderen Launchern ---------- */
+export interface ForeignMod {
+  fileName: string;
+  displayName: string;
+  source: "modrinth" | "curseforge" | "local" | string;
+  projectId: string;
+  versionId: string;
+  version: string;
+  url: string;
+  enabled: boolean;
+  localPath: string;
+  gameVersions: string[];
+}
+export interface ForeignProfile {
+  id: string;
+  launcher: string;
+  launcherName: string;
+  name: string;
+  gameDir: string;
+  mcVersion: string;
+  loader: string;
+  loaderVersion: string;
+  mods: ForeignMod[];
+  hasOptions: boolean;
+  hasServers: boolean;
+  saves: number;
+  resourcepacks: number;
+  shaderpacks: number;
+  screenshots: number;
+  configFiles: number;
+  sizeMb: number;
+  ramMb: number;
+  playtimeSeconds: number;
+  lastPlayed: number;
+  note: string;
+  sharedDir: boolean;
+}
+export interface ForeignLauncher {
+  id: string;
+  name: string;
+  path: string;
+  profiles: ForeignProfile[];
+  note: string;
+}
+export interface ImportOptions {
+  mods: boolean;
+  config: boolean;
+  options: boolean;
+  servers: boolean;
+  saves: boolean;
+  resourcepacks: boolean;
+  shaderpacks: boolean;
+  screenshots: boolean;
+  name?: string | null;
+}
+export interface ImportResult {
+  instance: Instance | null;
+  modsImported: number;
+  modsIdentified: number;
+  filesCopied: number;
+  warnings: string[];
+}
+
 export interface UpdateInfo {
   version: string;
   currentVersion: string;
