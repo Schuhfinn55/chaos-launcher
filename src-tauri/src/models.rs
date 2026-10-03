@@ -379,7 +379,7 @@ impl Default for Settings {
             download_limit: 32,
             discord_rpc: true,
             discord_show_state: true,
-            discord_app_id: String::new(),
+            discord_app_id: "1555834341794512966".to_string(),
             chaoscraft_server: String::new(),
             news_url: String::new(),
             client_menu_key: -1,
