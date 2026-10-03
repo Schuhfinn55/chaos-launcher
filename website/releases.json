@@ -2,15 +2,15 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.1",
-        "fileName": "ChaosLauncher-2.1.1-setup.exe",
-        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.1-setup.exe",
-        "sha256": "7b2291e9ed0088bd8ca978c06be26f03625cae0cc1399f2fd9923ca3a0f54435",
-        "size": 5649055,
+        "version": "2.1.2",
+        "fileName": "ChaosLauncher-2.1.2-setup.exe",
+        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.2-setup.exe",
+        "sha256": "65b1cb7b3974b37f28e1fb6d2335f3aded3156b029129c3224fc9054da61ce0d",
+        "size": 5651685,
         "publishedAt": "2026-10-03",
-        "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert",
-        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.1.msi",
-        "msiSha256": "64fa5a27cccc07e25c49de53a722d9a2a43fdb3bea44da687604927cd6e8beb5"
+        "notes": "- Discord Rich Presence funktioniert jetzt ohne Einrichtung: Chaos-Launcher-App ist Standard\n- Discord-Verbindungsstatus in den Einstellungen, Diagnose im Launcher-Log\n- Website chaoslauncher.duckdns.org mit Animationen und Community-Bereich",
+        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.2.msi",
+        "msiSha256": "88f891e8c48e35f572a554a39c8625611b244bacb71997609688efefeb93fcd0"
       },
       "client": {
         "version": "2.1.0",
@@ -24,6 +24,11 @@
     }
   },
   "history": [
+    {
+      "version": "2.1.2",
+      "date": "2026-10-03",
+      "notes": "- Discord Rich Presence funktioniert jetzt ohne Einrichtung: Chaos-Launcher-App ist Standard\n- Discord-Verbindungsstatus in den Einstellungen, Diagnose im Launcher-Log\n- Website chaoslauncher.duckdns.org mit Animationen und Community-Bereich"
+    },
     {
       "version": "2.1.1",
       "date": "2026-10-03",
