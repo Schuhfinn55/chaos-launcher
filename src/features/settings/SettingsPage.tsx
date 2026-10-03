@@ -703,16 +703,26 @@ function Launcher({ s, set }: P) {
 
 /* ---------------- Discord ---------------- */
 function Discord({ s, set }: P) {
+  const [dcStatus, setDcStatus] = useState("");
+  useEffect(() => {
+    invoke<string>("discord_status").then(setDcStatus).catch(() => {});
+    const t = setInterval(() => invoke<string>("discord_status").then(setDcStatus).catch(() => {}), 5000);
+    return () => clearInterval(t);
+  }, []);
   return (
     <>
       <Section title="Discord Rich Presence" desc="Zeigt deinen Freunden in Discord: „Spielt Chaos Launcher“ – im Launcher „Wählt ein Profil …“, im Spiel „Spielt auf ChaoscraftSMP“ bzw. das Profil, Minecraft-Version, Spielzeit und einen Button zum Launcher.">
         <Toggle checked={s.discordRpc !== false} onChange={(v) => set({ discordRpc: v })} label="Rich Presence aktivieren" />
         <Toggle checked={s.discordShowState !== false} onChange={(v) => set({ discordShowState: v })} label="Spielstatus anzeigen" description="Profilname, Server und Minecraft-Version in Discord anzeigen." />
-        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10 }}>
-          <span className={"chaos-badge " + (s.discordAppId ? "chaos-badge-success" : "chaos-badge-warning")}>{s.discordAppId ? "Verbunden mit Application-ID" : "Application-ID fehlt – Anzeige noch inaktiv"}</span>
+        <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10, alignItems: "center" }}>
+          <span className={"chaos-badge " + (dcStatus.startsWith("verbunden") ? "chaos-badge-success" : dcStatus ? "chaos-badge-warning" : "")}>{dcStatus ? `Discord: ${dcStatus}` : "Discord: noch nicht verbunden (Launcher neu starten oder Status prüfen)"}</span>
+          <button className="chaos-btn chaos-btn-sm" onClick={async () => { try { await invoke("discord_set_state", { state: "idle" }); } catch { /* ignorieren */ } setTimeout(() => invoke<string>("discord_status").then(setDcStatus).catch(() => {}), 800); }}>
+            Jetzt verbinden
+          </button>
         </div>
+        <p className="chaos-faint" style={{ fontSize: 12, marginTop: 8 }}>Erscheint trotz „verbunden“ kein Status: In Discord unter Einstellungen → Aktivitätsdatenschutz muss „Aktuelle Aktivität als Statusnachricht anzeigen“ eingeschaltet sein.</p>
       </Section>
-      <Section title="Discord-App einrichten (einmalig, 2 Minuten)" desc="Discord zeigt den Namen der App an, die du dort anlegst – dadurch steht in deinem Profil „Spielt Chaos Launcher“.">
+      <Section title="Eigene Discord-App (optional)" desc="Standardmäßig nutzt der Launcher die Chaos-Launcher-App – es steht also „Spielt Chaos Launcher“ in deinem Profil. Nur wenn du eine eigene App mit eigenem Namen/Logo willst, trage hier deren Application-ID ein.">
         <ol className="chaos-faint" style={{ fontSize: 12.5, lineHeight: 1.8, paddingLeft: 18, margin: "0 0 10px" }}>
           <li>Developer Portal öffnen → <strong>New Application</strong> → Name <strong>Chaos Launcher</strong>.</li>
           <li>Unter <strong>Rich Presence → Art Assets</strong> zwei Bilder hochladen: <code>logo</code> (Chaos-Logo, 512×512) und <code>play</code> (kleines Icon).</li>
@@ -724,7 +734,7 @@ function Discord({ s, set }: P) {
             Developer Portal öffnen ↗
           </button>
         </div>
-        <input className="chaos-input chaos-mono" value={s.discordAppId ?? ""} onChange={(e) => set({ discordAppId: e.target.value.trim() })} placeholder="Application ID, z.B. 1234567890123456789" />
+        <input className="chaos-input chaos-mono" value={s.discordAppId ?? ""} onChange={(e) => set({ discordAppId: e.target.value.trim() })} placeholder="Leer = Standard (Chaos Launcher)" />
       </Section>
     </>
   );

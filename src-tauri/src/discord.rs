@@ -9,6 +9,31 @@
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::{LazyLock, Mutex};
 
+/// Discord-Application-ID des Chaos Launchers (Developer Portal). Leere
+/// Einstellung = diese ID.
+pub const DEFAULT_APP_ID: &str = "1555834341794512966";
+
+/// Konfigurierte ID oder Standard.
+pub fn effective_app_id(settings: &crate::models::Settings) -> String {
+    let id = settings.discord_app_id.trim();
+    if id.is_empty() { DEFAULT_APP_ID.to_string() } else { id.to_string() }
+}
+
+/// Letzter Verbindungsstatus (für Einstellungen/Diagnose).
+static LAST_STATUS: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::new()));
+pub fn last_status() -> String {
+    LAST_STATUS.lock().map(|s| s.clone()).unwrap_or_default()
+}
+fn set_status(s: String) {
+    let changed = LAST_STATUS.lock().map(|cur| *cur != s).unwrap_or(true);
+    if changed {
+        crate::launch::log_step(format!("Discord: {s}"));
+        if let Ok(mut cur) = LAST_STATUS.lock() {
+            *cur = s;
+        }
+    }
+}
+
 static CLIENT: LazyLock<Mutex<Option<DiscordIpcClient>>> = LazyLock::new(|| Mutex::new(None));
 static APP_ID: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::new()));
 
@@ -29,11 +54,16 @@ fn connect(app_id: &str) -> bool {
     }
     let mut client = match DiscordIpcClient::new(app_id) {
         Ok(c) => c,
-        Err(_) => return false,
+        Err(e) => {
+            set_status(format!("Client konnte nicht erstellt werden ({e})"));
+            return false;
+        }
     };
-    if client.connect().is_err() {
+    if let Err(e) = client.connect() {
+        set_status(format!("nicht verbunden – läuft Discord? ({e})"));
         return false;
     }
+    set_status(format!("verbunden (App {app_id})"));
     if let Ok(mut id) = APP_ID.lock() {
         *id = app_id.to_string();
     }
@@ -87,7 +117,7 @@ pub fn set_playing(app_id: &str, profile: &str, mc_version: &str, server: Option
                     activity::Assets::new()
                         .large_image("logo")
                         .large_text("Chaos Launcher · ChaoscraftSMP")
-                        .small_image("play")
+                        .small_image("small")
                         .small_text("Im Spiel"),
                 )
                 .timestamps(activity::Timestamps::new().start(crate::system::now_secs()))

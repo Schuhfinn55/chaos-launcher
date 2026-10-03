@@ -793,14 +793,14 @@ pub async fn launch_instance(
             let settings_c = settings.clone();
             let inst_name = instance.name.clone();
             let mc_ver = instance.mc_version.clone();
-            if settings_c.discord_rpc && !settings_c.discord_app_id.is_empty() {
+            if settings_c.discord_rpc {
                 let server = instance.quick_server.clone();
                 let chaos_addr = {
                     let s = settings_c.chaoscraft_server.trim();
                     if s.is_empty() { crate::shared::CHAOSCRAFT_DEFAULT.to_string() } else { s.to_string() }
                 };
                 let is_chaos = !server.is_empty() && server.to_lowercase().contains(&chaos_addr.to_lowercase()) || server.to_lowercase().contains("chaoscraft") || instance.name.to_lowercase().contains("chaoscraft");
-                crate::discord::set_playing(&settings_c.discord_app_id, &inst_name, &mc_ver, if server.is_empty() { None } else { Some(server.as_str()) }, is_chaos, settings_c.discord_show_state);
+                crate::discord::set_playing(&crate::discord::effective_app_id(&settings_c), &inst_name, &mc_ver, if server.is_empty() { None } else { Some(server.as_str()) }, is_chaos, settings_c.discord_show_state);
             }
             tokio::task::spawn_blocking(move || {
                 let _ = child.wait();
@@ -810,8 +810,8 @@ pub async fn launch_instance(
                     running.remove(&instance_id);
                 }
                 add_play_time(&instance_id, elapsed);
-                if settings_c.discord_rpc && !settings_c.discord_app_id.is_empty() {
-                    crate::discord::set_idle(&settings_c.discord_app_id);
+                if settings_c.discord_rpc {
+                    crate::discord::set_idle(&crate::discord::effective_app_id(&settings_c));
                 }
             });
             Ok(format!("Minecraft '{}' gestartet.", instance.name))

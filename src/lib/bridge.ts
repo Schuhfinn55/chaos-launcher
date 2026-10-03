@@ -251,6 +251,9 @@ const mocks: Record<string, MockHandler> = {
   async get_remote_cosmetics() {
     return null;
   },
+  async discord_status() {
+    return "verbunden (App Mock)";
+  },
   async curseforge_status() {
     return { configured: false, ok: false, http: 0, message: "Mock: kein CurseForge-Key." };
   },

@@ -17,8 +17,8 @@ pub fn get_settings() -> Result<Settings, String> {
 pub fn save_settings(settings: Settings) -> Result<bool, String> {
     storage::save_settings(&settings)?;
     // Discord-Status aktualisieren
-    if settings.discord_rpc && !settings.discord_app_id.trim().is_empty() {
-        let id = settings.discord_app_id.clone();
+    if settings.discord_rpc {
+        let id = crate::discord::effective_app_id(&settings);
         std::thread::spawn(move || crate::discord::set_idle(&id));
     } else {
         std::thread::spawn(crate::discord::clear);
@@ -370,14 +370,21 @@ pub fn save_servers(servers: serde_json::Value) -> Result<bool, String> {
 
 /* ---------- Discord ---------- */
 
+/// Letzter Verbindungsstatus zu Discord (für die Einstellungen).
+#[tauri::command]
+pub fn discord_status() -> String {
+    crate::discord::last_status()
+}
+
+
 /// Setzt den Discord-Status manuell ("idle" | "clear").
 #[tauri::command]
 pub fn discord_set_state(state: String) -> Result<bool, String> {
     let settings = storage::load_settings().unwrap_or_default();
-    if state == "clear" || !settings.discord_rpc || settings.discord_app_id.trim().is_empty() {
+    if state == "clear" || !settings.discord_rpc {
         crate::discord::clear();
     } else {
-        crate::discord::set_idle(&settings.discord_app_id);
+        crate::discord::set_idle(&crate::discord::effective_app_id(&settings));
     }
     Ok(true)
 }

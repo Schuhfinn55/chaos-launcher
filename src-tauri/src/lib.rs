@@ -72,8 +72,8 @@ pub fn run() {
             }
             // Discord-Status (optional)
             if let Ok(settings) = storage::load_settings() {
-                if settings.discord_rpc && !settings.discord_app_id.trim().is_empty() {
-                    let id = settings.discord_app_id.clone();
+                if settings.discord_rpc {
+                    let id = discord::effective_app_id(&settings);
                     std::thread::spawn(move || discord::set_idle(&id));
                 }
             }
@@ -199,6 +199,7 @@ pub fn run() {
             commands::cosmetics::cosmetics_server_stop,
             commands::cosmetics::set_cosmetic,
             commands::system::discord_set_state,
+            commands::system::discord_status,
             // Launch
             commands::launching::preflight_check,
             commands::launching::launch_instance,
