@@ -2,15 +2,15 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.4",
-        "fileName": "ChaosLauncher-2.1.4-setup.exe",
-        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.4-setup.exe",
-        "sha256": "faac29a760e4a150e3ae8223aae1f34f5f0f14ab015ba2d296f508d8173f3043",
-        "size": 5660218,
+        "version": "2.1.5",
+        "fileName": "ChaosLauncher-2.1.5-setup.exe",
+        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.5-setup.exe",
+        "sha256": "d4073b9bec9dc8e9f83081cd7546caacfe02e2c332b148ef4de76cee4f04e94d",
+        "size": 6504413,
         "publishedAt": "2026-10-03",
-        "notes": "- Großer Update-Dialog direkt nach dem Start mit Release-Notes und Ein-Klick-Installation\n- Discord-Button führt zur Website",
-        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.4.msi",
-        "msiSha256": "401e785999e67da3e589cb46196400445c4bc4801fa55c06c9dd9c55bb5052a9"
+        "notes": "- Profile aus anderen Launchern übernehmen: NoRisk Client, Minecraft Launcher, Prism, CurseForge App, Modrinth App, GDLauncher, ATLauncher\n- Mods mit Quelle (Modrinth/CurseForge) für Updates, lokale JARs werden bei Modrinth erkannt\n- Konfigs, Spieleinstellungen, Server, Welten, Resourcepacks, Shader wahlweise mitnehmen",
+        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.5.msi",
+        "msiSha256": "6a9dc9a5b055e3225c5a0c5c0881686bf5b6f016d335634daae4c3018aa0fb1d"
       },
       "client": {
         "version": "2.1.0",
@@ -24,6 +24,11 @@
     }
   },
   "history": [
+    {
+      "version": "2.1.5",
+      "date": "2026-10-03",
+      "notes": "- Profile aus anderen Launchern übernehmen: NoRisk Client, Minecraft Launcher, Prism, CurseForge App, Modrinth App, GDLauncher, ATLauncher\n- Mods mit Quelle (Modrinth/CurseForge) für Updates, lokale JARs werden bei Modrinth erkannt\n- Konfigs, Spieleinstellungen, Server, Welten, Resourcepacks, Shader wahlweise mitnehmen"
+    },
     {
       "version": "2.1.4",
       "date": "2026-10-03",
