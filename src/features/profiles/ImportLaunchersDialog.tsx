@@ -29,7 +29,7 @@ export default function ImportLaunchersDialog({ open, onClose, onImported }: Pro
   const [launchers, setLaunchers] = useState<ForeignLauncher[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [opts, setOpts] = useState<ImportOptions>({ mods: true, config: true, options: true, servers: true, saves: false, resourcepacks: true, shaderpacks: true, screenshots: false });
+  const [opts, setOpts] = useState<ImportOptions>({ mods: true, config: true, options: true, servers: true, saves: true, resourcepacks: true, shaderpacks: true, screenshots: false });
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<{ message: string; step: number; total: number } | null>(null);
   const [current, setCurrent] = useState<string>("");
@@ -106,7 +106,7 @@ export default function ImportLaunchersDialog({ open, onClose, onImported }: Pro
             <Toggle checked={opts.servers} onChange={(v) => setOpts({ ...opts, servers: v })} label="Serverliste" description="servers.dat" />
             <Toggle checked={opts.resourcepacks} onChange={(v) => setOpts({ ...opts, resourcepacks: v })} label="Resourcepacks" />
             <Toggle checked={opts.shaderpacks} onChange={(v) => setOpts({ ...opts, shaderpacks: v })} label="Shader" />
-            <Toggle checked={opts.saves} onChange={(v) => setOpts({ ...opts, saves: v })} label="Welten" description="Kann groß sein – wird kopiert, Original bleibt" />
+            <Toggle checked={opts.saves} onChange={(v) => setOpts({ ...opts, saves: v })} label="Welten" description="Alle Einzelspieler-Welten (wird kopiert, Original bleibt)" />
             <Toggle checked={opts.screenshots} onChange={(v) => setOpts({ ...opts, screenshots: v })} label="Screenshots" />
           </div>
         </div>
@@ -208,7 +208,7 @@ function ProfileRow({ p, checked, disabled, onToggle }: { p: ForeignProfile; che
             {p.note && <span className="chaos-faint" style={{ fontSize: 11 }}>{p.note}</span>}
           </div>
           <div className="chaos-imp-contents">
-            <span className={p.mods.length ? "" : "off"}>📦 {p.mods.length} Mods{p.mods.length ? ` (${Object.entries(srcCounts).map(([k, v]) => `${v} ${k === "modrinth" ? "Modrinth" : k === "curseforge" ? "CurseForge" : "lokal"}`).join(", ")})` : ""}</span>
+            <span className={p.mods.length || p.bundledModrinthVersions?.length ? "" : "off"}>📦 {p.mods.length} Mods{p.mods.length ? ` (${Object.entries(srcCounts).map(([k, v]) => `${v} ${k === "modrinth" ? "Modrinth" : k === "curseforge" ? "CurseForge" : "lokal"}`).join(", ")})` : ""}{p.bundledModrinthVersions?.length ? ` + ${p.bundledModrinthVersions.length} vom Launcher mitgeliefert (Sodium, Fabric API …)` : ""}</span>
             <span className={p.configFiles ? "" : "off"}>⚙ {p.configFiles} Konfigs</span>
             <span className={p.hasOptions ? "" : "off"}>🎮 Einstellungen</span>
             <span className={p.hasServers ? "" : "off"}>🌐 Server</span>
@@ -217,6 +217,7 @@ function ProfileRow({ p, checked, disabled, onToggle }: { p: ForeignProfile; che
             <span className={p.shaderpacks ? "" : "off"}>✨ {p.shaderpacks} Shader</span>
             <span className="chaos-faint">~{p.sizeMb} MB</span>
           </div>
+          <div className="chaos-faint chaos-mono" style={{ fontSize: 10.5, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={p.gameDir}>{p.gameDir}</div>
         </div>
       </label>
       {p.mods.length > 0 && (

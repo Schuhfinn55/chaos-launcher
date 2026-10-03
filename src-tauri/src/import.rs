@@ -84,6 +84,18 @@ pub struct ForeignProfile {
     pub last_played: i64,
     pub note: String,
     pub shared_dir: bool,
+    /// Mods, die der fremde Launcher automatisch mitliefert (z. B. NoRisk-Pack: Sodium, Fabric API …),
+    /// als Modrinth-Versions-IDs. Werden beim Import aufgelöst.
+    #[serde(default)]
+    pub bundled_modrinth_versions: Vec<BundledMod>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct BundledMod {
+    pub id: String,
+    pub project_id: String,
+    pub version_id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -349,13 +361,30 @@ fn scan_norisk(_own: &Path) -> Option<ForeignLauncher> {
         })
         .ok()?;
     let profiles_dir = root.join("data").join("profiles");
+    // NoRisk-Packs (norisk_modpacks.json): liefern pro Profil zusätzliche Mods wie Sodium, Fabric API, Lithium …
+    let packs: serde_json::Value = fs::read_to_string(root.join("norisk_modpacks.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+    let mut pack_by_profile: HashMap<String, String> = HashMap::new();
+    if let Ok(mut ps) = conn.prepare("SELECT id, selected_norisk_pack_id FROM profiles") {
+        if let Ok(prows) = ps.query_map([], |r| Ok((vs(r, 0), vs(r, 1)))) {
+            for (pid, pack) in prows.flatten() {
+                pack_by_profile.insert(pid, pack);
+            }
+        }
+    }
+    let mut disabled: HashSet<(String, String)> = HashSet::new();
+    if let Ok(mut ds) = conn.prepare("SELECT profile_id, mod_id FROM profile_disabled_norisk_mods") {
+        if let Ok(drows) = ds.query_map([], |r| Ok((vs(r, 0), vs(r, 1)))) {
+            for d in drows.flatten() {
+                disabled.insert(d);
+            }
+        }
+    }
     for row in rows.flatten() {
         let (id, name, path, mc, loader, lver, shared, settings, playtime, last_played, group) = row;
-        let game_dir = if shared != 0 {
-            appdata().map(|a| a.join(".minecraft")).unwrap_or_default()
-        } else {
-            profiles_dir.join(path.replace('/', std::path::MAIN_SEPARATOR_STR))
-        };
+        let bundled = norisk_pack_mods(&packs, pack_by_profile.get(&id).map(|s| s.as_str()).unwrap_or(""), &mc, &norm_loader(&loader), &id, &disabled);
+        // NoRisk legt alle Profildaten unter data/profiles/<path> ab; "use_shared_minecraft_folder"
+        // bedeutet, dass sich mehrere NRC-Versionen denselben Ordner (z. B. noriskclient/new) teilen.
+        let game_dir = profiles_dir.join(path.replace('/', std::path::MAIN_SEPARATOR_STR));
         let mut mods = Vec::new();
         let mut known = HashSet::new();
         if let Ok(mut ms) = conn.prepare("SELECT source_type, project_id, version_id, file_name, enabled, display_name, version, source, game_versions FROM profile_mods WHERE profile_id = ?1 ORDER BY ordinal") {
@@ -417,8 +446,16 @@ fn scan_norisk(_own: &Path) -> Option<ForeignLauncher> {
             ram_mb: ram,
             playtime_seconds: playtime.max(0) as u64,
             last_played: { let lp: i64 = last_played.trim().parse().unwrap_or(0); if lp > 10_000_000_000_000 { lp / 1_000_000 } else { lp } },
-            note: if group.is_empty() { String::new() } else { group },
-            shared_dir: shared != 0,
+            note: {
+                let mut n = if group.is_empty() { String::new() } else { group };
+                if shared != 0 || path.starts_with("noriskclient/") {
+                    if !n.is_empty() { n.push_str(" · "); }
+                    n.push_str("teilt Welten, Einstellungen und Server mit anderen NRC-Versionen");
+                }
+                n
+            },
+            shared_dir: shared != 0 || path.starts_with("noriskclient/"),
+            bundled_modrinth_versions: bundled,
             ..Default::default()
         };
         fill_contents(&mut p);
@@ -429,6 +466,47 @@ fn scan_norisk(_own: &Path) -> Option<ForeignLauncher> {
     }
     profiles.sort_by(|a, b| b.last_played.cmp(&a.last_played).then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())));
     Some(ForeignLauncher { id: "norisk".into(), name: "NoRisk Client".into(), path: root.to_string_lossy().to_string(), profiles, note: String::new() })
+}
+
+/// Mods eines NoRisk-Packs für Version/Loader (nur Modrinth-Quellen; NoRisk-eigene Maven-Module werden ausgelassen).
+fn norisk_pack_mods(packs: &serde_json::Value, pack_id: &str, mc: &str, loader: &str, profile_id: &str, disabled: &HashSet<(String, String)>) -> Vec<BundledMod> {
+    let mut out = Vec::new();
+    if pack_id.is_empty() {
+        return out;
+    }
+    let mut seen = HashSet::new();
+    let mut current = Some(pack_id.to_string());
+    let mut guard = 0;
+    while let Some(pid) = current.take() {
+        guard += 1;
+        if guard > 6 || !seen.insert(pid.clone()) {
+            break;
+        }
+        let Some(pack) = packs.pointer(&format!("/packs/{pid}")) else { break };
+        let excluded: HashSet<String> = pack.get("excludeMods").and_then(|e| e.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
+        if let Some(mods) = pack.get("mods").and_then(|m| m.as_array()) {
+            for m in mods {
+                let mid = m.get("id").and_then(|x| x.as_str()).unwrap_or("");
+                if mid.is_empty() || excluded.contains(mid) || disabled.contains(&(profile_id.to_string(), mid.to_string())) {
+                    continue;
+                }
+                if m.pointer("/source/type").and_then(|x| x.as_str()) != Some("modrinth") {
+                    continue;
+                }
+                let project_id = m.pointer("/source/projectId").and_then(|x| x.as_str()).unwrap_or("").to_string();
+                let version_id = m.pointer(&format!("/compatibility/{mc}/{loader}/identifier")).and_then(|x| x.as_str()).unwrap_or("").to_string();
+                if project_id.is_empty() || version_id.is_empty() {
+                    continue;
+                }
+                if out.iter().any(|b: &BundledMod| b.project_id == project_id) {
+                    continue;
+                }
+                out.push(BundledMod { id: mid.to_string(), project_id, version_id });
+            }
+        }
+        current = pack.get("inheritsFrom").and_then(|x| x.as_str()).map(|s| s.to_string());
+    }
+    out
 }
 
 /* ---------- Minecraft Launcher (.minecraft) ---------- */
@@ -964,6 +1042,93 @@ pub async fn import_profile(profile: ForeignProfile, opts: ImportOptions, progre
         }
     }
 
+    // 1b. Vom fremden Launcher mitgelieferte Mods (z. B. NoRisk-Pack) über Modrinth auflösen
+    if opts.mods && !profile.bundled_modrinth_versions.is_empty() {
+        progress(format!("{} mitgelieferte Mods werden aufgelöst …", profile.bundled_modrinth_versions.len()), 2, steps);
+        let have: HashSet<String> = inst.mods.iter().map(|m| m.project_id.clone()).filter(|p| !p.is_empty()).collect();
+        for b in &profile.bundled_modrinth_versions {
+            if have.contains(&b.project_id) {
+                continue;
+            }
+            match modrinth_version(&b.version_id).await {
+                Some(im) => {
+                    inst.mods.push(im);
+                    result.mods_imported += 1;
+                }
+                None => result.warnings.push(format!("{}: Modrinth-Version {} nicht gefunden", b.id, b.version_id)),
+            }
+        }
+    }
+    // 1c. Abhängigkeiten der lokalen JARs (fabric.mod.json „depends“) ergänzen
+    if opts.mods && loader == "fabric" {
+        let mut have_ids: HashSet<String> = HashSet::new();
+        let mut needed: Vec<String> = Vec::new();
+        for m in &inst.mods {
+            let p = storage::mod_cache_dir().join(&m.file_name);
+            if let Some((id, deps)) = fabric_mod_meta(&p) {
+                have_ids.insert(id);
+                for d in deps {
+                    if !needed.contains(&d) {
+                        needed.push(d);
+                    }
+                }
+            }
+            if m.project_id == "P7dR8mSH" { have_ids.insert("fabric-api".into()); }
+            if m.project_id == "AANobbMI" { have_ids.insert("sodium".into()); }
+            if m.project_id == "9s6osm5g" { have_ids.insert("cloth-config".into()); }
+            if m.project_id == "1eAoo2KR" { have_ids.insert("yet_another_config_lib_v3".into()); }
+            if m.project_id == "lhGA9TYQ" { have_ids.insert("architectury".into()); }
+        }
+        let known_slugs: &[(&str, &str)] = &[
+            ("fabric-api", "fabric-api"), ("fabric", "fabric-api"), ("sodium", "sodium"), ("cloth-config", "cloth-config"), ("cloth-config2", "cloth-config"),
+            ("yet_another_config_lib_v3", "yacl"), ("yet-another-config-lib", "yacl"), ("architectury", "architectury-api"), ("modmenu", "modmenu"),
+            ("iris", "iris"), ("lithium", "lithium"), ("indium", "indium"), ("owo", "owo-lib"), ("geckolib", "geckolib"), ("malilib", "malilib"),
+            ("fabric-language-kotlin", "fabric-language-kotlin"), ("forgeconfigapiport", "forge-config-api-port"), ("puzzleslib", "puzzles-lib"),
+            ("resourcefullib", "resourceful-lib"), ("cardinal-components-base", "cardinal-components-api"), ("balm-fabric", "balm"), ("balm", "balm"),
+            ("libipn", "libipn"), ("midnightlib", "midnightlib"), ("collective", "collective"), ("fabric-permissions-api-v0", "fabric-permissions-api"),
+            ("placeholder-api", "placeholder-api"), ("trinkets", "trinkets"), ("creativecore", "creativecore"), ("konkrete", "konkrete"), ("melody", "melody"),
+            ("mixinextras", "mixinextras"), ("cicada", "cicada"), ("satin", "satin-api"), ("bclib", "bclib"), ("wthit", "wthit"), ("jade", "jade"),
+            ("terrablender", "terrablender"), ("cupboard", "cupboard"), ("supermartijn642configlib", "supermartijn642s-config-lib"), ("supermartijn642corelib", "supermartijn642s-core-lib"),
+            ("fzzy_config", "fzzy-config"), ("searchables", "searchables"), ("betterf3", "betterf3"), ("ferritecore", "ferrite-core"), ("immediatelyfast", "immediatelyfast"),
+        ];
+        let ignore = ["minecraft", "java", "fabricloader", "fabric-loader", "fabric-resource-loader-v0", "fabric-rendering-v1", "fabric-api-base", "fabric-lifecycle-events-v1", "fabric-networking-api-v1", "fabric-key-binding-api-v1", "fabric-screen-api-v1", "fabric-command-api-v2", "fabric-item-api-v1", "fabric-registry-sync-v0", "fabric-events-interaction-v0", "fabric-transitive-access-wideners-v1", "fabric-entity-events-v1", "fabric-block-api-v1", "fabric-model-loading-api-v1", "fabric-renderer-api-v1", "fabric-biome-api-v1", "fabric-convention-tags-v2", "fabric-data-generation-api-v1", "fabric-dimensions-v1", "fabric-game-rule-api-v1", "fabric-gametest-api-v1", "fabric-item-group-api-v1", "fabric-loot-api-v3", "fabric-message-api-v1", "fabric-object-builder-api-v1", "fabric-particles-v1", "fabric-recipe-api-v1", "fabric-renderer-indigo", "fabric-resource-conditions-api-v1", "fabric-screen-handler-api-v1", "fabric-sound-api-v1", "fabric-transfer-api-v1", "fabric-content-registries-v0", "fabric-blockrenderlayer-v1", "fabric-client-tags-api-v1", "fabric-data-attachment-api-v1", "fabric-tag-api-v1", "fabric-block-view-api-v2", "fabric-model-loading-api-v1"];
+        let mut fabric_api_needed = false;
+        let mut missing_slugs: Vec<String> = Vec::new();
+        for d in needed {
+            if ignore.contains(&d.as_str()) || have_ids.contains(&d) {
+                continue;
+            }
+            if d.starts_with("fabric-") && d.contains("-v") {
+                fabric_api_needed = true;
+                continue;
+            }
+            if let Some((_, slug)) = known_slugs.iter().find(|(id, _)| *id == d) {
+                if !missing_slugs.contains(&slug.to_string()) {
+                    missing_slugs.push(slug.to_string());
+                }
+            } else if !missing_slugs.contains(&d) {
+                missing_slugs.push(d.clone()); // Slug = Mod-ID versuchen
+            }
+        }
+        if fabric_api_needed && !have_ids.contains("fabric-api") && !inst.mods.iter().any(|m| m.project_id == "P7dR8mSH") {
+            missing_slugs.insert(0, "fabric-api".into());
+        }
+        if !missing_slugs.is_empty() {
+            progress(format!("{} fehlende Abhängigkeiten werden geladen …", missing_slugs.len()), 2, steps);
+            for slug in missing_slugs {
+                match modrinth_latest(&slug, &mc_version, &loader).await {
+                    Some(im) => {
+                        if !inst.mods.iter().any(|m| m.project_id == im.project_id) {
+                            inst.mods.push(im);
+                            result.mods_imported += 1;
+                        }
+                    }
+                    None => result.warnings.push(format!("Abhängigkeit „{slug}“ nicht auf Modrinth gefunden")),
+                }
+            }
+        }
+    }
+
     // 2. Dateien
     let mut copied = 0u64;
     progress("Einstellungen & Dateien werden kopiert …".into(), 3, steps);
@@ -1010,6 +1175,69 @@ pub async fn import_profile(profile: ForeignProfile, opts: ImportOptions, progre
     Ok(result)
 }
 
+/// Mod-ID und „depends“-IDs aus fabric.mod.json einer JAR.
+fn fabric_mod_meta(jar: &Path) -> Option<(String, Vec<String>)> {
+    let f = fs::File::open(jar).ok()?;
+    let mut z = zip::ZipArchive::new(f).ok()?;
+    use std::io::Read;
+    let mut e = z.by_name("fabric.mod.json").ok()?;
+    let mut s = String::new();
+    e.read_to_string(&mut s).ok()?;
+    let v: serde_json::Value = serde_json::from_str(&s).ok()?;
+    let id = v.get("id").and_then(|i| i.as_str())?.to_string();
+    let deps = v.get("depends").and_then(|d| d.as_object()).map(|o| o.keys().cloned().collect()).unwrap_or_default();
+    Some((id, deps))
+}
+
+fn modrinth_file_to_mod(v: &serde_json::Value) -> Option<InstanceMod> {
+    let files = v.get("files")?.as_array()?;
+    let f = files.iter().find(|f| f.get("primary").and_then(|p| p.as_bool()).unwrap_or(false)).or(files.first())?;
+    Some(InstanceMod {
+        id: format!("{:x}{}", now_millis(), v.get("id").and_then(|x| x.as_str()).unwrap_or("")),
+        title: v.get("name").and_then(|x| x.as_str()).unwrap_or("Mod").to_string(),
+        source: ModSource::Modrinth,
+        file_name: f.get("filename").and_then(|x| x.as_str()).unwrap_or("mod.jar").to_string(),
+        enabled: true,
+        project_type: "mod".into(),
+        project_id: v.get("project_id").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        version_id: v.get("id").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        version_number: v.get("version_number").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        game_versions: v.get("game_versions").and_then(|x| x.as_array()).map(|a| a.iter().filter_map(|s| s.as_str().map(|s| s.to_string())).collect()).unwrap_or_default(),
+        loaders: v.get("loaders").and_then(|x| x.as_array()).map(|a| a.iter().filter_map(|s| s.as_str().map(|s| s.to_string())).collect()).unwrap_or_default(),
+        sha1: f.pointer("/hashes/sha1").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        url: f.get("url").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        installed_at: now_millis(),
+        ..Default::default()
+    })
+}
+
+/// Modrinth-Version per ID.
+async fn modrinth_version(version_id: &str) -> Option<InstanceMod> {
+    let client = crate::mod_search::http_client().ok()?;
+    let r = client.get(format!("https://api.modrinth.com/v2/version/{version_id}")).timeout(std::time::Duration::from_secs(12)).send().await.ok()?;
+    if !r.status().is_success() {
+        return None;
+    }
+    let v: serde_json::Value = r.json().await.ok()?;
+    modrinth_file_to_mod(&v)
+}
+
+/// Neueste passende Modrinth-Version eines Projekts (Slug) für Version/Loader.
+async fn modrinth_latest(slug: &str, mc: &str, loader: &str) -> Option<InstanceMod> {
+    let client = crate::mod_search::http_client().ok()?;
+    let url = format!(
+        "https://api.modrinth.com/v2/project/{slug}/version?game_versions=%5B%22{mc}%22%5D&loaders=%5B%22{loader}%22%5D"
+    );
+    let r = client.get(url).timeout(std::time::Duration::from_secs(12)).send().await.ok()?;
+    if !r.status().is_success() {
+        return None;
+    }
+    let v: serde_json::Value = r.json().await.ok()?;
+    let list = v.as_array()?;
+    let best = list.iter().find(|x| x.get("version_type").and_then(|t| t.as_str()) == Some("release")).or(list.first())?;
+    modrinth_file_to_mod(best)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1020,7 +1248,7 @@ mod tests {
         for l in &found {
             println!("== {} ({}) – {} Profile {}", l.name, l.path, l.profiles.len(), l.note);
             for p in l.profiles.iter().take(40) {
-                println!("   {} | {} {} {} | mods {} | opt {} srv {} saves {} rp {} sp {} | {} MB | {}", p.name, p.mc_version, p.loader, p.loader_version, p.mods.len(), p.has_options, p.has_servers, p.saves, p.resourcepacks, p.shaderpacks, p.size_mb, p.game_dir);
+                println!("   {} | {} {} {} | mods {} (+{} Pack) | opt {} srv {} saves {} rp {} sp {} | {} MB | {}", p.name, p.mc_version, p.loader, p.loader_version, p.mods.len(), p.bundled_modrinth_versions.len(), p.has_options, p.has_servers, p.saves, p.resourcepacks, p.shaderpacks, p.size_mb, p.game_dir);
             }
         }
     }

@@ -449,6 +449,7 @@ export interface ForeignProfile {
   lastPlayed: number;
   note: string;
   sharedDir: boolean;
+  bundledModrinthVersions?: { id: string; projectId: string; versionId: string }[];
 }
 export interface ForeignLauncher {
   id: string;
