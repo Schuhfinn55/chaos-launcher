@@ -2,15 +2,15 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.3",
-        "fileName": "ChaosLauncher-2.1.3-setup.exe",
-        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.3-setup.exe",
-        "sha256": "4f8e99a689dc957db92ed825c1cb89752e170cbef01fc8d64deacef5159c8903",
-        "size": 5668311,
+        "version": "2.1.4",
+        "fileName": "ChaosLauncher-2.1.4-setup.exe",
+        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.4-setup.exe",
+        "sha256": "faac29a760e4a150e3ae8223aae1f34f5f0f14ab015ba2d296f508d8173f3043",
+        "size": 5660218,
         "publishedAt": "2026-10-03",
-        "notes": "- Discord-Button „Chaos Launcher holen“ führt jetzt zu chaoslauncher.duckdns.org",
-        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.3.msi",
-        "msiSha256": "e7e29b8a2cf7be0033424db9b98430a073d916358d7ca5b71fd9ad0e5f31c761"
+        "notes": "- Großer Update-Dialog direkt nach dem Start mit Release-Notes und Ein-Klick-Installation\n- Discord-Button führt zur Website",
+        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.4.msi",
+        "msiSha256": "401e785999e67da3e589cb46196400445c4bc4801fa55c06c9dd9c55bb5052a9"
       },
       "client": {
         "version": "2.1.0",
@@ -24,6 +24,11 @@
     }
   },
   "history": [
+    {
+      "version": "2.1.4",
+      "date": "2026-10-03",
+      "notes": "- Großer Update-Dialog direkt nach dem Start mit Release-Notes und Ein-Klick-Installation\n- Discord-Button führt zur Website"
+    },
     {
       "version": "2.1.3",
       "date": "2026-10-03",
