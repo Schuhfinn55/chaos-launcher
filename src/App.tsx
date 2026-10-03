@@ -6,6 +6,7 @@ import Topbar from "@/components/Topbar";
 import Tutorial, { isTutorialDone } from "@/components/Tutorial";
 import MusicPlayer from "@/components/MusicPlayer";
 import StartupOverlay from "@/components/StartupOverlay";
+import UpdateDialog from "@/components/UpdateDialog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastHost } from "@/components/ui";
 import { invoke } from "@/lib/bridge";
@@ -255,6 +256,7 @@ export default function App() {
           </div>
         </div>
         <MusicPlayer />
+        <UpdateDialog ready={!starting && !showTutorial} />
         <ToastHost />
       </ErrorBoundary>
     </HashRouter>

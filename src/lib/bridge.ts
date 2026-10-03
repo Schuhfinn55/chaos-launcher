@@ -282,7 +282,9 @@ const mocks: Record<string, MockHandler> = {
     return true;
   },
   async check_for_updates() {
-    return null;
+    // Browser-Dev: localStorage "chaos.mockUpdate" = "1" simuliert ein verfügbares Update
+    if (localStorage.getItem("chaos.mockUpdate") !== "1") return null;
+    return { version: "9.9.9", currentVersion: "2.1.3", releaseUrl: "https://chaoslauncher.duckdns.org/#download", releaseNotes: ["- Discord Rich Presence ohne Einrichtung", "- Website mit Animationen und Community-Bereich", "- Cosmetics anderer Spieler automatisch sichtbar"].join(String.fromCharCode(10)), downloadUrl: "https://chaoslauncher.duckdns.org/download/ChaosLauncher-9.9.9-setup.exe", fileName: "ChaosLauncher-9.9.9-setup.exe", fileSize: 5668311, isNewer: true, verifiable: true, publishedAt: "2026-10-03", prerelease: false, sha256: "0".repeat(64) };
   },
   async is_instance_running() {
     return false;
