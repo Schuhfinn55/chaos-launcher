@@ -71,7 +71,8 @@ fn connect(app_id: &str) -> bool {
     true
 }
 
-const LAUNCHER_URL: &str = crate::updater::WEBSITE_URL;
+/// Link im Discord-Button: GitHub-Repo (immer erreichbar, verlinkt Website + Downloads).
+const LAUNCHER_URL: &str = crate::updater::GITHUB_REPO_URL;
 static STARTED_AT: LazyLock<i64> = LazyLock::new(|| crate::system::now_secs());
 
 /// Setzt den Status "Im Launcher".

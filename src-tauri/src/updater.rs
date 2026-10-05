@@ -24,7 +24,19 @@ use std::time::Duration;
 
 /// Website des Chaos Launchers (Downloads, News, Release-Feed).
 pub const WEBSITE_URL: &str = "https://chaoslauncher.duckdns.org";
+/// Spiegel auf GitHub Pages (gleiche Dateien; Downloads liegen in GitHub-Releases).
+pub const GITHUB_PAGES_URL: &str = "https://schuhfinn55.github.io/chaos-launcher";
+pub const GITHUB_REPO_URL: &str = "https://github.com/Schuhfinn55/chaos-launcher";
+/// Kandidaten für Website/Feed in Reihenfolge; der erste erreichbare wird genutzt.
+pub const WEBSITE_URLS: [&str; 2] = [WEBSITE_URL, GITHUB_PAGES_URL];
 pub const FEED_URL: &str = "https://chaoslauncher.duckdns.org/releases.json";
+
+static ACTIVE_SITE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// Zuletzt erreichbare Website-Basis (für Links in Dialogen, Discord, News).
+pub fn active_website() -> &'static str {
+    WEBSITE_URLS[ACTIVE_SITE.load(std::sync::atomic::Ordering::Relaxed).min(WEBSITE_URLS.len() - 1)]
+}
 const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -82,21 +94,38 @@ pub struct Feed {
     pub channels: std::collections::HashMap<String, FeedChannel>,
 }
 
-/// Lädt den Release-Feed von der Website.
+/// Lädt den Release-Feed – zuerst von der Website, dann vom GitHub-Pages-Spiegel.
 pub(crate) async fn fetch_feed() -> Result<Feed, String> {
     let client = http_client()?;
-    log::info!("[Chaos] Prüfe auf Updates: {FEED_URL}");
-    let resp = client
-        .get(FEED_URL)
-        .header("Accept", "application/json")
-        .timeout(Duration::from_secs(8))
-        .send()
-        .await
-        .map_err(|e| format!("Update-Check: {e}"))?;
-    if !resp.status().is_success() {
-        return Err(format!("Update-Feed HTTP {}", resp.status()));
+    let mut last_err = String::new();
+    for (i, base) in WEBSITE_URLS.iter().enumerate() {
+        let url = format!("{base}/releases.json");
+        log::info!("[Chaos] Prüfe auf Updates: {url}");
+        let resp = match client
+            .get(&url)
+            .header("Accept", "application/json")
+            .header("Cache-Control", "no-cache")
+            .timeout(Duration::from_secs(8))
+            .send()
+            .await
+        {
+            Ok(r) => r,
+            Err(e) => { last_err = format!("Update-Check: {e}"); continue; }
+        };
+        if !resp.status().is_success() {
+            last_err = format!("Update-Feed HTTP {}", resp.status());
+            continue;
+        }
+        match resp.json::<Feed>().await {
+            Ok(feed) => {
+                ACTIVE_SITE.store(i, std::sync::atomic::Ordering::Relaxed);
+                if i > 0 { log::info!("[Chaos] Website nicht erreichbar – nutze GitHub-Spiegel {base}"); }
+                return Ok(feed);
+            }
+            Err(e) => { last_err = format!("Update-Feed parsen: {e}"); }
+        }
     }
-    resp.json::<Feed>().await.map_err(|e| format!("Update-Feed parsen: {e}"))
+    Err(if last_err.is_empty() { "Update-Feed nicht erreichbar".to_string() } else { last_err })
 }
 
 /// Kanal-Eintrag: "beta" fällt auf "stable" zurück.
@@ -122,9 +151,9 @@ pub async fn check_for_update(channel: &str) -> Result<Option<UpdateInfo>, Strin
     Ok(Some(UpdateInfo {
         version: latest,
         current_version: CURRENT_VERSION.to_string(),
-        release_url: format!("{WEBSITE_URL}/#download"),
+        release_url: format!("{}/#download", active_website()),
         release_notes: l.notes.clone(),
-        download_url: if l.url.is_empty() { format!("{WEBSITE_URL}/#download") } else { l.url.clone() },
+        download_url: if l.url.is_empty() { format!("{}/#download", active_website()) } else { l.url.clone() },
         file_name: if l.file_name.is_empty() { format!("Chaos Launcher_{}_x64-setup.exe", l.version) } else { l.file_name.clone() },
         file_size: l.size,
         is_newer: true,

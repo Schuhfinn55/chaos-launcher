@@ -10,7 +10,7 @@
 
   /* ---------- Releases ---------- */
   try {
-    const feed = await fetch("/releases.json", { cache: "no-store" }).then((r) => r.json());
+    const feed = await fetch("./releases.json", { cache: "no-store" }).then((r) => r.json());
     const ch = feed.channels?.stable || {};
     const l = ch.launcher, c = ch.client;
     if (l) {
@@ -41,7 +41,7 @@
 
   /* ---------- News ---------- */
   try {
-    const items = await fetch("/news.json", { cache: "no-store" }).then((r) => r.json());
+    const items = await fetch("./news.json", { cache: "no-store" }).then((r) => r.json());
     const list = Array.isArray(items) ? items : items.items || [];
     $("news-list").innerHTML = list.length ? list.slice(0, 6).map((n) => `
       <article class="news-item">

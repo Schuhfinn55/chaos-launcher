@@ -24,7 +24,14 @@ pub async fn fetch_news(url: Option<String>, force: Option<bool>) -> Result<Vec<
     let settings = crate::storage::load_settings().unwrap_or_default();
     let mut source = url.filter(|u| !u.trim().is_empty()).unwrap_or(settings.news_url);
     if source.trim().is_empty() {
-        source = format!("{}/news.json", crate::updater::WEBSITE_URL);
+        // Standardquelle: Website, bei Ausfall der GitHub-Pages-Spiegel
+        let force = force.unwrap_or(false);
+        let mut last = Err("News nicht erreichbar".to_string());
+        for base in crate::updater::WEBSITE_URLS {
+            last = crate::news::fetch(&format!("{base}/news.json"), force).await;
+            if last.is_ok() { break; }
+        }
+        return last;
     }
     crate::news::fetch(&source, force.unwrap_or(false)).await
 }
