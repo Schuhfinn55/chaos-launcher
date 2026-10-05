@@ -39,7 +39,7 @@ def staging_dir(name):
     shutil.rmtree(d, ignore_errors=True)
     os.makedirs(d, exist_ok=True)
     return d
-SITE_FILES = ["index.html", "style.css", "animations.css", "app.js", "animations.js", "licenses.html", "releases.json", "news.json", "SHA256SUMS", ".nojekyll"]
+SITE_FILES = ["index.html", "style.css", "animations.css", "app.js", "animations.js", "licenses.html", "releases.json", "news.json", "SHA256SUMS", ".nojekyll", "robots.txt", "sitemap.xml"]
 
 
 def sha256(path):
