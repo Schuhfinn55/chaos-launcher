@@ -1,10 +1,20 @@
 # Chaos-Launcher-Website als Cloudflare Worker mit statischen Assets (kostenlos, sofort online)
 #   npx wrangler deploy   → https://chaos-launcher.chaoscraft.workers.dev
 name = "chaos-launcher"
+main = "worker.js"
 compatibility_date = "2026-09-01"
 workers_dev = true
 
 [assets]
 directory = "../website"
+binding = "ASSETS"
 html_handling = "auto-trailing-slash"
 not_found_handling = "404-page"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "b355fca6481141d7bef5d1d8ef7da158"
+
+[vars]
+# Startwert der Download-Anzeige (wird zu den echten Downloads addiert)
+DOWNLOAD_OFFSET = "531"

@@ -13,14 +13,25 @@
     const feed = await fetch("./releases.json", { cache: "no-store" }).then((r) => r.json());
     const ch = feed.channels?.stable || {};
     const l = ch.launcher, c = ch.client;
+    // Download-Zähler: läuft über den Website-Worker (/api/downloads, /dl/…); auf statischen Spiegeln Direktlinks
+    let counted = false;
+    try {
+      const d = await fetch("./api/downloads", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null));
+      if (d && typeof d.count === "number") { $("stat-downloads").textContent = String(d.count); counted = true; }
+    } catch (e) { /* statischer Spiegel */ }
+    if (!counted) $("stat-downloads").textContent = "–";
     if (l) {
-      for (const id of ["btn-download", "btn-download-2"]) { const a = $(id); a.href = l.url; a.setAttribute("download", l.fileName || ""); }
-      $("nav-download").href = l.url;
+      const dlUrl = counted ? "./dl/launcher" : l.url, msiUrl = counted ? "./dl/msi" : l.msiUrl;
+      for (const id of ["btn-download", "btn-download-2"]) { const a = $(id); a.href = dlUrl; if (!counted) a.setAttribute("download", l.fileName || ""); else a.removeAttribute("download"); }
+      $("nav-download").href = dlUrl;
+      if (counted) document.querySelectorAll("#btn-download, #btn-download-2, #btn-msi, #btn-msi-2").forEach((a) => a.addEventListener("click", () => {
+        const el = $("stat-downloads"); const n = parseInt(el.textContent, 10); if (!isNaN(n)) setTimeout(() => (el.textContent = String(n + 1)), 800);
+      }));
       $("btn-sub").textContent = `v${l.version} · ${fmtBytes(l.size || 0)} · ${fmtDate(l.publishedAt)}`;
       $("dl-meta").textContent = `Chaos Launcher ${l.version} · ${fmtBytes(l.size || 0)} · ${fmtDate(l.publishedAt)} · Windows x64`;
       $("dl-sha").textContent = l.sha256 || "–";
       $("stat-version").textContent = "v" + l.version;
-      for (const id of ["btn-msi", "btn-msi-2"]) { const a = $(id); if (l.msiUrl) a.href = l.msiUrl; else a.style.display = "none"; }
+      for (const id of ["btn-msi", "btn-msi-2"]) { const a = $(id); if (l.msiUrl) { a.href = msiUrl; if (counted) a.removeAttribute("download"); } else a.style.display = "none"; }
     }
     if (c) {
       $("stat-client").textContent = "v" + c.version;
