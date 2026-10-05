@@ -13,13 +13,13 @@
         "msiSha256": "aedc6ff485fc9f70ab7db9afcddac4e32f9b1868ab7de1044cb569e8991582cd"
       },
       "client": {
-        "version": "2.3.2",
-        "fileName": "chaos-client-2.3.2.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.2.jar",
-        "sha256": "96089cdd2df02dd0d8b473c437ad96b1308b4e394cbe2904aca1642594cfc67f",
-        "size": 467360,
+        "version": "2.3.3",
+        "fileName": "chaos-client-2.3.3.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.3.jar",
+        "sha256": "ea2641e5636f3b9e118ae5141cb9c0b36f227c2254dfc91ac71b2c11bd660470",
+        "size": 467331,
         "publishedAt": "2026-10-05",
-        "notes": "Fix: Chaos-Badge-Icon (Font-Bitmap-Pfad)"
+        "notes": "Chaos-Badge: nur rotes C"
       }
     }
   },

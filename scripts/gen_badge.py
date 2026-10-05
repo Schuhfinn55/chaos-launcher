@@ -15,12 +15,15 @@ RED, RED2, DARK, BLACK, WHITE, GOLD, GOLD2, BONE = (225, 29, 46, 255), (255, 92,
 
 
 def chaos_c(d):
-    # schwarzer runder Button mit rotem Ring-C und Glanz
-    d.ellipse([1, 1, 14, 14], fill=BLACK, outline=DARK)
-    d.ellipse([3, 3, 12, 12], outline=RED, width=2)
-    d.rectangle([9, 6, 13, 9], fill=BLACK)  # Öffnung des C
-    d.point([(4, 4), (5, 3)], fill=RED2)
-    d.point([(12, 2)], fill=WHITE)
+    # rotes C ohne Hintergrund: kräftiger Ring, Öffnung rechts, dunkler Innenrand, Glanzpunkt
+    d.ellipse([1, 1, 14, 14], outline=RED, width=4)
+    d.ellipse([3, 3, 12, 12], outline=DARK, width=1)
+    d.ellipse([1, 1, 14, 14], outline=DARK, width=1)
+    d.ellipse([2, 2, 13, 13], outline=RED, width=3)
+    d.rectangle([9, 6, 15, 9], fill=(0, 0, 0, 0))  # Öffnung des C
+    d.point([(9, 6), (9, 9)], fill=DARK)
+    d.point([(4, 4), (5, 3), (3, 6)], fill=RED2)
+    d.point([(5, 4)], fill=WHITE)
 
 
 def flame(d):
