@@ -40,6 +40,8 @@ struct Player {
     #[serde(default)]
     effect: String,
     #[serde(default)]
+    wings: String,
+    #[serde(default)]
     visibility: String,
     #[serde(default)]
     updated_at: i64,
@@ -323,6 +325,7 @@ fn player_view(st: &State, host: &str, uuid: &str) -> Option<serde_json::Value> 
         "activeCape": if hidden { serde_json::Value::Null } else { st.capes.get(&p.active_cape).map(|c| cape_view(host, c)).unwrap_or(serde_json::Value::Null) },
         "hat": if hidden { "" } else { p.hat.as_str() },
         "effect": if hidden { "" } else { p.effect.as_str() },
+        "wings": if hidden { "" } else { p.wings.as_str() },
         "visibility": if p.visibility.is_empty() { "everyone" } else { p.visibility.as_str() },
         "cosmeticsVersion": COSMETICS_VERSION,
         "updatedAt": p.updated_at,
@@ -469,6 +472,9 @@ fn handle(mut req: Request) -> Result<(), String> {
                         }
                         if let Some(v) = body.get("effect").and_then(|v| v.as_str()) {
                             p.effect = sanitize_id(v);
+                        }
+                        if let Some(v) = body.get("wings").and_then(|v| v.as_str()) {
+                            p.wings = sanitize_id(v);
                         }
                         if let Some(v) = body.get("visibility").and_then(|v| v.as_str()) {
                             p.visibility = if matches!(v, "everyone" | "chaos" | "none") { v.to_string() } else { "everyone".into() };

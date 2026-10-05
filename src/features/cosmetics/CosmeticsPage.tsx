@@ -18,7 +18,9 @@ import { CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, deleteCape, fileToB
 import { CHAOS_CAPES } from "@/lib/builtinCapes";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
+import { wingsById } from "@/lib/builtinWings";
 import { HatsSection, EffectsSection } from "./HatsEffectsSections";
+import { WingsSection } from "./WingsSection";
 import EffectPreview from "./EffectPreview";
 import type { Cape, CosmeticsApiInfo, SkinEntry } from "@/types";
 import "./CosmeticsPage.css";
@@ -73,19 +75,22 @@ export default function CosmeticsPage() {
   const profile = profileFor(cosmetics, account?.uuid);
   const [previewHatId, setPreviewHatId] = useState<string | null>(null);
   const [previewEffectId, setPreviewEffectId] = useState<string | null>(null);
+  const [previewWingsId, setPreviewWingsId] = useState<string | null>(null);
+  const shownWings = wingsById(previewWingsId ?? profile?.wingsId);
   const [cosBusy, setCosBusy] = useState(false);
   const shownHat = hatById(previewHatId ?? profile?.hatId);
   const shownEffect = effectById(previewEffectId ?? profile?.effectId);
-  const selectCosmetic = async (kind: "hat" | "effect", id: string) => {
+  const selectCosmetic = async (kind: "hat" | "effect" | "wings", id: string) => {
     if (!account) return;
     setCosBusy(true);
     try {
       await setCosmetic(account.uuid, kind, id);
       await reloadCosmetics();
       syncCosmetics(account.uuid).catch(() => {});
-      if (kind === "hat") setPreviewHatId(null); else setPreviewEffectId(null);
-      const name = kind === "hat" ? hatById(id)?.name : effectById(id)?.name;
-      toast.success(id ? `${kind === "hat" ? "Hut" : "Effekt"} aktiviert` : `${kind === "hat" ? "Hut" : "Effekt"} entfernt`, id ? `${name} wird ingame vom Chaos Client gerendert.` : undefined);
+      if (kind === "hat") setPreviewHatId(null); else if (kind === "wings") setPreviewWingsId(null); else setPreviewEffectId(null);
+      const name = kind === "hat" ? hatById(id)?.name : kind === "wings" ? wingsById(id)?.name : effectById(id)?.name;
+      const label = kind === "hat" ? "Hut" : kind === "wings" ? "Wings" : "Effekt";
+      toast.success(id ? `${label} aktiviert` : `${label} entfernt`, id ? `${name} wird ingame vom Chaos Client gerendert.` : undefined);
     } catch (e) {
       toast.error("Speichern fehlgeschlagen", String(e));
     } finally {
@@ -101,7 +106,7 @@ export default function CosmeticsPage() {
         {/* ---------- 3D-Vorschau ---------- */}
         <aside className="chaos-card chaos-cos-preview">
           <div className="chaos-cos-preview-canvas">
-            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} model={skinModel} hat={showCosmetics ? shownHat : null} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
+            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
             {showCosmetics && <EffectPreview effect={shownEffect} width={300} height={400} />}
           </div>
           <div className="chaos-cos-preview-info">
@@ -110,6 +115,7 @@ export default function CosmeticsPage() {
               {activeSkin ? `Skin: ${activeSkin.name}` : account ? (profileSkin ? `Account-Skin (${profileSkin.model === "slim" ? "Alex-Modell" : "Steve-Modell"})` : "Account-Skin wird geladen …") : "Melde dich an oder lade einen Skin hoch."}
               {previewCape ? ` · Cape: ${previewCape.name}${previewCape.id === activeCape?.id ? " (aktiv)" : " (Vorschau)"}` : " · kein Cape"}
               {shownHat ? ` · ${shownHat.name}` : ""}
+              {shownWings ? ` · ${shownWings.name}` : ""}
               {shownEffect ? ` · ${shownEffect.name}` : ""}
             </span>
           </div>
@@ -156,6 +162,7 @@ export default function CosmeticsPage() {
             />
           )}
           {kind === "hat" && <HatsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("hat", id)} onPreview={setPreviewHatId} previewId={previewHatId} onLogin={() => navigate("/accounts")} />}
+          {kind === "wings" && <WingsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("wings", id)} onPreview={setPreviewWingsId} previewId={previewWingsId} onLogin={() => navigate("/accounts")} />}
           {kind === "effect" && <EffectsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("effect", id)} onPreview={setPreviewEffectId} previewId={previewEffectId} onLogin={() => navigate("/accounts")} />}
         </section>
       </div>

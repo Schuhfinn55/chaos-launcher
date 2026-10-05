@@ -305,6 +305,9 @@ pub fn export_for_instance(
         if !p.effect_id.is_empty() {
             entry.insert("effect".into(), serde_json::json!(p.effect_id));
         }
+        if !p.wings_id.is_empty() {
+            entry.insert("wings".into(), serde_json::json!(p.wings_id));
+        }
         if !entry.is_empty() {
             players.insert(uuid, serde_json::Value::Object(entry));
         }
@@ -346,7 +349,7 @@ pub fn export_for_instance(
                                 entry.insert("sha1".into(), serde_json::json!(s));
                             }
                         }
-                        for k in ["hat", "effect"] {
+                        for k in ["hat", "effect", "wings"] {
                             if let Some(s) = v.get(k).and_then(|s| s.as_str()).filter(|s| !s.is_empty()) {
                                 entry.insert(k.into(), serde_json::json!(sanitize_id(s)));
                             }
@@ -380,6 +383,7 @@ pub fn export_for_instance(
         "activeCapeId": active.as_ref().map(|c| c.id.clone()).unwrap_or_default(),
         "hat": if settings.cosmetics_enabled { profile.map(|p| p.hat_id.clone()).unwrap_or_default() } else { String::new() },
         "effect": if settings.cosmetics_enabled { profile.map(|p| p.effect_id.clone()).unwrap_or_default() } else { String::new() },
+        "wings": if settings.cosmetics_enabled { profile.map(|p| p.wings_id.clone()).unwrap_or_default() } else { String::new() },
         "library": library,
         "players": players,
         "exportedAt": now_millis(),
@@ -403,6 +407,8 @@ struct IngameState {
     hat_id: Option<String>,
     #[serde(default)]
     effect_id: Option<String>,
+    #[serde(default)]
+    wings_id: Option<String>,
     #[serde(default)]
     owner_uuid: String,
     #[serde(default)]
@@ -434,6 +440,8 @@ pub fn import_ingame_state(home: &Path, account_uuid: &str) -> Result<Option<Str
     let current_effect = current.map(|p| p.effect_id.clone()).unwrap_or_default();
     let new_hat = st.hat_id.clone().unwrap_or_else(|| current_hat.clone());
     let new_effect = st.effect_id.clone().unwrap_or_else(|| current_effect.clone());
+    let current_wings = current.map(|p| p.wings_id.clone()).unwrap_or_default();
+    let new_wings = st.wings_id.clone().unwrap_or_else(|| current_wings.clone());
     let mut changes: Vec<String> = Vec::new();
     if st.active_cape_id != current_id {
         if st.active_cape_id.is_empty() {
@@ -448,6 +456,9 @@ pub fn import_ingame_state(home: &Path, account_uuid: &str) -> Result<Option<Str
     if new_effect != current_effect {
         changes.push(if new_effect.is_empty() { "kein Effekt".to_string() } else { format!("Effekt {new_effect}") });
     }
+    if new_wings != current_wings {
+        changes.push(if new_wings.is_empty() { "keine Wings".to_string() } else { format!("Wings {new_wings}") });
+    }
     let cape_ok = st.active_cape_id.is_empty() || state.capes.iter().any(|c| c.id == st.active_cape_id);
     let p = profile_mut(&mut state, account_uuid);
     if cape_ok {
@@ -455,6 +466,7 @@ pub fn import_ingame_state(home: &Path, account_uuid: &str) -> Result<Option<Str
     }
     p.hat_id = sanitize_id(&new_hat);
     p.effect_id = sanitize_id(&new_effect);
+    p.wings_id = sanitize_id(&new_wings);
     p.updated_at = st.state_at;
     save(&state)?;
     if changes.is_empty() { Ok(None) } else { Ok(Some(changes.join(", "))) }
@@ -490,7 +502,7 @@ pub fn sanitize_id(id: &str) -> String {
     id.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_').take(40).collect::<String>().to_lowercase()
 }
 
-/// Setzt Hut ("hat") oder Effekt ("effect") eines Accounts.
+/// Setzt Hut ("hat"), Effekt ("effect") oder Wings ("wings") eines Accounts.
 pub fn set_cosmetic(account_uuid: &str, kind: &str, id: &str) -> Result<CosmeticsProfile, String> {
     let mut state = load()?;
     let clean = sanitize_id(id);
@@ -498,6 +510,7 @@ pub fn set_cosmetic(account_uuid: &str, kind: &str, id: &str) -> Result<Cosmetic
     match kind {
         "hat" => profile.hat_id = clean,
         "effect" => profile.effect_id = clean,
+        "wings" => profile.wings_id = clean,
         _ => return Err(format!("Unbekannte Cosmetic-Art: {kind}")),
     }
     profile.updated_at = now_millis();

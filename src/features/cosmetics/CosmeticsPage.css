@@ -55,3 +55,9 @@
 .chaos-cos-effect-icon { font-size: 34px; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.25)); }
 .chaos-cos-effect-dots { display: flex; gap: 6px; }
 .chaos-cos-effect-dots span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* Wings-Vorschau (Pixel-Art-Textur, beide Flügel) */
+.chaos-cos-item-img.wings { background: radial-gradient(circle at 50% 45%, rgba(225, 29, 46, 0.14), transparent 70%); overflow: hidden; }
+.chaos-cos-item-img.wings.glow .chaos-wings-thumb { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35)); }
+.chaos-wings-thumb { background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; animation: chaos-wing-flap var(--dur, 1.4s) ease-in-out infinite alternate; transform-origin: 50% 55%; }
+@keyframes chaos-wing-flap { from { transform: scaleX(0.82); } to { transform: scaleX(1); } }

@@ -11,7 +11,7 @@ import { invoke } from "@/lib/bridge";
 import type { Cape, CosmeticsApiInfo, CosmeticsProfile, CosmeticsState, PlayerSkin } from "@/types";
 
 export interface CosmeticKind {
-  id: "skin" | "cape" | "hat" | "effect";
+  id: "skin" | "cape" | "hat" | "wings" | "effect";
   label: string;
   icon: string;
   description: string;
@@ -24,6 +24,7 @@ export const COSMETIC_KINDS: CosmeticKind[] = [
   { id: "skin", label: "Skins", icon: "🧍", description: "Skins verwalten und auf deinen Account anwenden.", available: true },
   { id: "cape", label: "Meine Capes", icon: "🧥", description: "Eigene Capes hochladen, aktivieren und ingame tragen.", available: true },
   { id: "hat", label: "Hüte", icon: "🎩", description: "Vorgefertigte Hüte, die der Chaos Client am Kopf rendert.", available: true },
+  { id: "wings", label: "Wings", icon: "🪽", description: "Animierte Flügel am Rücken – schlagen, gleiten, leuchten.", available: true },
   { id: "effect", label: "Effekte", icon: "✨", description: "Partikel- und Aura-Effekte um deinen Spieler.", available: true },
 ];
 
@@ -62,7 +63,7 @@ export async function setCapeEnabled(capeId: string, enabled: boolean): Promise<
 export async function setActiveCape(accountUuid: string, capeId: string): Promise<CosmeticsProfile> {
   return invoke<CosmeticsProfile>("set_active_cape", { accountUuid, capeId });
 }
-export async function setCosmetic(accountUuid: string, kind: "hat" | "effect", id: string): Promise<CosmeticsProfile> {
+export async function setCosmetic(accountUuid: string, kind: "hat" | "effect" | "wings", id: string): Promise<CosmeticsProfile> {
   return invoke<CosmeticsProfile>("set_cosmetic", { accountUuid, kind, id });
 }
 export async function getPlayerSkin(uuid: string): Promise<PlayerSkin> {
@@ -88,6 +89,7 @@ export interface RemoteCosmetics {
   activeCape: { id: string; name: string; url: string; sha1: string; version: number; kind: string } | null;
   hat: string;
   effect: string;
+  wings?: string;
   visibility: string;
   cosmeticsVersion: number;
   updatedAt: number;

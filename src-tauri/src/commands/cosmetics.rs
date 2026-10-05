@@ -152,12 +152,12 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     let mut state = cosmetics::load()?;
     let active = cosmetics::active_cape(&state, &accountUuid);
     let token = cosmetics_api::authenticate(&api, &account).await?;
-    let (visibility, hat, effect) = state
+    let (visibility, hat, effect, wings) = state
         .profiles
         .iter()
         .find(|p| p.account_uuid == accountUuid)
-        .map(|p| (p.visibility.clone(), p.hat_id.clone(), p.effect_id.clone()))
-        .unwrap_or_else(|| ("everyone".to_string(), String::new(), String::new()));
+        .map(|p| (p.visibility.clone(), p.hat_id.clone(), p.effect_id.clone(), p.wings_id.clone()))
+        .unwrap_or_else(|| ("everyone".to_string(), String::new(), String::new(), String::new()));
 
     let mut remote_id = String::new();
     if let Some(cape) = active {
@@ -174,11 +174,11 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
             cosmetics_api::RemoteCape { id: cape.remote_id.clone(), url: cape.remote_url.clone(), ..Default::default() }
         };
         remote_id = remote.id.clone();
-        cosmetics_api::set_active(&api, &token, &accountUuid, Some(&remote.id), &hat, &effect, &visibility).await?;
+        cosmetics_api::set_active(&api, &token, &accountUuid, Some(&remote.id), &hat, &effect, &wings, &visibility).await?;
     } else {
-        cosmetics_api::set_active(&api, &token, &accountUuid, None, &hat, &effect, &visibility).await?;
+        cosmetics_api::set_active(&api, &token, &accountUuid, None, &hat, &effect, &wings, &visibility).await?;
     }
-    Ok(SyncResult { synced: true, message: "Cape, Hut und Effekt synchronisiert – andere Chaos-Spieler sehen sie jetzt.".to_string(), remote_cape_id: remote_id })
+    Ok(SyncResult { synced: true, message: "Cape, Hut, Wings und Effekt synchronisiert – andere Chaos-Spieler sehen sie jetzt.".to_string(), remote_cape_id: remote_id })
 }
 
 /// Cosmetics eines anderen Spielers aus der API (für Freunde-/Spieleransichten).

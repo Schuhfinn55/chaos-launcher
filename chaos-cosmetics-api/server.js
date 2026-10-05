@@ -17,9 +17,9 @@
  *
  * Endpunkte:
  *   GET  /v1/version                         → {apiVersion, cosmeticsVersion}
- *   GET  /v1/cosmetics/:uuid                 → {uuid,name,activeCape,hat,effect,visibility,cosmeticsVersion,updatedAt}
+ *   GET  /v1/cosmetics/:uuid                 → {uuid,name,activeCape,hat,effect,wings,visibility,cosmeticsVersion,updatedAt}
  *   POST /v1/cosmetics/bulk {uuids:[…]}      → [ … ]
- *   PUT  /v1/cosmetics/:uuid (Bearer)        {activeCape, hat, effect, visibility}
+ *   PUT  /v1/cosmetics/:uuid (Bearer)        {activeCape, hat, effect, wings, visibility}
  *   POST /v1/capes (Bearer, multipart file+name oder JSON {name,dataBase64}) → RemoteCape
  *   GET  /v1/capes/:id/texture               → PNG
  *
@@ -107,6 +107,7 @@ function playerView(uuid) {
     activeCape: p.visibility === "none" ? null : remoteCape(capes[p.activeCape]),
     hat: p.visibility === "none" ? "" : p.hat || "",
     effect: p.visibility === "none" ? "" : p.effect || "",
+    wings: p.visibility === "none" ? "" : p.wings || "",
     visibility: p.visibility || "everyone",
     cosmeticsVersion: COSMETICS_VERSION,
     updatedAt: p.updatedAt || 0,
@@ -202,7 +203,7 @@ const server = http.createServer(async (req, res) => {
       const token = crypto.randomBytes(32).toString("hex");
       const expiresAt = Math.floor((now() + TOKEN_TTL_MS) / 1000);
       tokens.set(token, { uuid, name: joined.name || ch.name, expiresAt: now() + TOKEN_TTL_MS });
-      if (!players[uuid]) players[uuid] = { name: joined.name || ch.name, activeCape: "", hat: "", effect: "", visibility: "everyone", updatedAt: now() };
+      if (!players[uuid]) players[uuid] = { name: joined.name || ch.name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };
       else players[uuid].name = joined.name || ch.name;
       saveJson(PLAYERS_FILE, players);
       return json(res, 200, { token, expiresAt });
@@ -236,6 +237,7 @@ const server = http.createServer(async (req, res) => {
       }
       if ("hat" in b) pl.hat = sanitizeId(b.hat);
       if ("effect" in b) pl.effect = sanitizeId(b.effect);
+      if ("wings" in b) pl.wings = sanitizeId(b.wings);
       if ("visibility" in b) pl.visibility = ["everyone", "chaos", "none"].includes(b.visibility) ? b.visibility : "everyone";
       pl.name = s.name;
       pl.updatedAt = now();

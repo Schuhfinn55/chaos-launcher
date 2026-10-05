@@ -185,7 +185,7 @@ const mocks: Record<string, MockHandler> = {
   async set_active_cape(args) {
     const state = ls<{ capes: unknown[]; profiles: { accountUuid: string; activeCapeId: string }[]; version: number }>("chaos.cosmetics", { capes: [], profiles: [], version: 1 });
     const others = state.profiles.filter((p) => p.accountUuid !== args.accountUuid);
-    const profile = { accountUuid: String(args.accountUuid), activeCapeId: String(args.capeId), hatId: "", effectId: "", visibility: "everyone", updatedAt: Date.now() };
+    const profile = { accountUuid: String(args.accountUuid), activeCapeId: String(args.capeId), hatId: "", effectId: "", wingsId: "", visibility: "everyone", updatedAt: Date.now() };
     lsSet("chaos.cosmetics", { ...state, profiles: [...others, profile] });
     return profile;
   },
@@ -281,7 +281,7 @@ const mocks: Record<string, MockHandler> = {
     throw new Error("Mock: kein Sessionserver");
   },
   async set_cosmetic(args) {
-    return { accountUuid: args.accountUuid, activeCapeId: "", hatId: args.kind === "hat" ? args.id : "", effectId: args.kind === "effect" ? args.id : "", visibility: "everyone", updatedAt: Date.now() };
+    return { accountUuid: args.accountUuid, activeCapeId: "", hatId: args.kind === "hat" ? args.id : "", effectId: args.kind === "effect" ? args.id : "", wingsId: args.kind === "wings" ? args.id : "", visibility: "everyone", updatedAt: Date.now() };
   },
   async check_client_update() {
     return null;

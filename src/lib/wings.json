@@ -1,0 +1,233 @@
+{
+  "_doc": "Chaos Wings – gemeinsame Definition für Launcher (3D-Vorschau) und Chaos Client. Flügel = flache Textur-Ebene (plane.w × plane.h Einheiten, Oberkante plane.top über der Wurzel), Textur 2 px/Einheit, links gespiegelt (Nordseite), rechts Original (Südseite). Generiert von scripts/gen_wings.py.",
+  "root": {
+    "x": 2.0,
+    "y": 1.5,
+    "z": 2.3
+  },
+  "plane": {
+    "w": 26,
+    "h": 30,
+    "top": 16,
+    "texW": 64,
+    "texH": 32
+  },
+  "wings": [
+    {
+      "id": "angel",
+      "name": "Engelsflügel",
+      "description": "Weiße Federn mit cremefarbenem Schimmer – sanfter, ruhiger Flügelschlag.",
+      "icon": "🕊",
+      "colors": [
+        "#FFFFFF",
+        "#F4F6FA",
+        "#C9D2E3"
+      ],
+      "flapSpeed": 0.07,
+      "flapAmp": 16,
+      "openAngle": 40,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": false,
+      "particle": ""
+    },
+    {
+      "id": "chaos",
+      "name": "Chaos-Schwingen",
+      "description": "Schwarze Schwingen mit blutroten Federspitzen – das Markenzeichen des Chaos Clients.",
+      "icon": "✸",
+      "colors": [
+        "#17171C",
+        "#8A0F1C",
+        "#FF2D44"
+      ],
+      "flapSpeed": 0.09,
+      "flapAmp": 20,
+      "openAngle": 42,
+      "tilt": 10,
+      "scale": 1.0,
+      "glow": false,
+      "particle": "dust_red"
+    },
+    {
+      "id": "phoenix",
+      "name": "Phönix",
+      "description": "Brennende Federn von Gold über Orange bis Rot – leuchten im Dunkeln, mit Funkenflug.",
+      "icon": "🔥",
+      "colors": [
+        "#FFD166",
+        "#FF8A1F",
+        "#D7261E"
+      ],
+      "flapSpeed": 0.1,
+      "flapAmp": 22,
+      "openAngle": 44,
+      "tilt": 14,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "flame"
+    },
+    {
+      "id": "galaxy",
+      "name": "Galaxie",
+      "description": "Violett-blauer Sternennebel mit funkelnden Sternen – leuchtet bei Nacht.",
+      "icon": "🌌",
+      "colors": [
+        "#5B21B6",
+        "#2563EB",
+        "#C4B5FD"
+      ],
+      "flapSpeed": 0.075,
+      "flapAmp": 16,
+      "openAngle": 40,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "end_rod"
+    },
+    {
+      "id": "shadow",
+      "name": "Schattenflügel",
+      "description": "Rauchschwarze Federn mit violettem Schimmer an den Spitzen.",
+      "icon": "🌑",
+      "colors": [
+        "#101016",
+        "#4C1D95",
+        "#1E1E27"
+      ],
+      "flapSpeed": 0.08,
+      "flapAmp": 18,
+      "openAngle": 36,
+      "tilt": 8,
+      "scale": 1.0,
+      "glow": false,
+      "particle": "smoke"
+    },
+    {
+      "id": "demon",
+      "name": "Dämonenflügel",
+      "description": "Dunkelrote Membran auf schwarzen Knochen, glühende Adern – pure Bosheit.",
+      "icon": "😈",
+      "colors": [
+        "#5A0F1A",
+        "#1A0A0D",
+        "#FF2D44"
+      ],
+      "flapSpeed": 0.07,
+      "flapAmp": 22,
+      "openAngle": 40,
+      "tilt": 6,
+      "scale": 1.1,
+      "glow": false,
+      "particle": ""
+    },
+    {
+      "id": "dragon",
+      "name": "Drachenflügel",
+      "description": "Große grüne Drachenmembran mit dunklen Speichen und Kralle.",
+      "icon": "🐉",
+      "colors": [
+        "#2F7D3A",
+        "#14421C",
+        "#0B2A12"
+      ],
+      "flapSpeed": 0.06,
+      "flapAmp": 26,
+      "openAngle": 42,
+      "tilt": 4,
+      "scale": 1.15,
+      "glow": false,
+      "particle": ""
+    },
+    {
+      "id": "bat",
+      "name": "Fledermaus",
+      "description": "Kleine schwarze Membranflügel mit schnellem, flatterigem Schlag.",
+      "icon": "🦇",
+      "colors": [
+        "#26262E",
+        "#111116",
+        "#0A0A0E"
+      ],
+      "flapSpeed": 0.2,
+      "flapAmp": 24,
+      "openAngle": 38,
+      "tilt": 4,
+      "scale": 0.8,
+      "glow": false,
+      "particle": ""
+    },
+    {
+      "id": "neon",
+      "name": "Neon-Flügel",
+      "description": "Fast schwarze Membran mit grell leuchtenden Neon-Kanten in Chaos-Rot.",
+      "icon": "⚡",
+      "colors": [
+        "#0A0A0F",
+        "#FF1F3D",
+        "#FF2D8A"
+      ],
+      "flapSpeed": 0.085,
+      "flapAmp": 18,
+      "openAngle": 40,
+      "tilt": 8,
+      "scale": 1.0,
+      "glow": true,
+      "particle": ""
+    },
+    {
+      "id": "butterfly",
+      "name": "Schmetterling",
+      "description": "Pink-violette Schmetterlingsflügel mit Augenflecken und weißen Randpunkten.",
+      "icon": "🦋",
+      "colors": [
+        "#FF7EB6",
+        "#7C3AED",
+        "#1E1B4B"
+      ],
+      "flapSpeed": 0.12,
+      "flapAmp": 24,
+      "openAngle": 34,
+      "tilt": 6,
+      "scale": 1.0,
+      "glow": false,
+      "particle": ""
+    },
+    {
+      "id": "fairy",
+      "name": "Feenflügel",
+      "description": "Durchscheinend schimmernd in Cyan und Weiß – mit Glitzerstaub.",
+      "icon": "✨",
+      "colors": [
+        "#ECFEFF",
+        "#22D3EE",
+        "#A5F3FC"
+      ],
+      "flapSpeed": 0.16,
+      "flapAmp": 14,
+      "openAngle": 36,
+      "tilt": 10,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "end_rod"
+    },
+    {
+      "id": "crystal",
+      "name": "Kristallflügel",
+      "description": "Kantige Eiskristalle, klar und kühl – mit Schneeschimmer.",
+      "icon": "❄",
+      "colors": [
+        "#E0F2FE",
+        "#7DD3FC",
+        "#0369A1"
+      ],
+      "flapSpeed": 0.06,
+      "flapAmp": 10,
+      "openAngle": 38,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": false,
+      "particle": "snowflake"
+    }
+  ]
+}

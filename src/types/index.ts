@@ -288,6 +288,7 @@ export interface CosmeticsProfile {
   activeCapeId: string;
   hatId: string;
   effectId: string;
+  wingsId: string;
   visibility: "everyone" | "chaos" | "none" | string;
   updatedAt: number;
 }

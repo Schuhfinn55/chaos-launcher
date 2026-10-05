@@ -55,6 +55,8 @@ pub struct RemoteCosmetics {
     #[serde(default)]
     pub effect: String,
     #[serde(default)]
+    pub wings: String,
+    #[serde(default)]
     pub visibility: String,
     #[serde(default)]
     pub cosmetics_version: u32,
@@ -291,13 +293,13 @@ pub async fn upload_cape(api_url: &str, token: &str, name: &str, png: Vec<u8>) -
 }
 
 /// Setzt Cape, Hut, Effekt und Sichtbarkeit in der API.
-pub async fn set_active(api_url: &str, token: &str, uuid: &str, cape_id: Option<&str>, hat: &str, effect: &str, visibility: &str) -> Result<(), String> {
+pub async fn set_active(api_url: &str, token: &str, uuid: &str, cape_id: Option<&str>, hat: &str, effect: &str, wings: &str, visibility: &str) -> Result<(), String> {
     let b = base(api_url)?;
     let client = http_client()?;
     let resp = client
         .put(format!("{b}/v1/cosmetics/{}", uuid.replace('-', "")))
         .bearer_auth(token)
-        .json(&serde_json::json!({ "activeCape": cape_id, "hat": hat, "effect": effect, "visibility": visibility }))
+        .json(&serde_json::json!({ "activeCape": cape_id, "hat": hat, "effect": effect, "wings": wings, "visibility": visibility }))
         .send()
         .await
         .map_err(|e| format!("Cosmetics setzen: {e}"))?;
@@ -324,7 +326,7 @@ pub async fn cache_player_cape(api_url: &str, uuid: &str) -> Result<Option<std::
         Some(c) if !c.url.is_empty() => c,
         _ => {
             let _ = std::fs::remove_file(&dest);
-            let _ = std::fs::write(&meta_path, serde_json::json!({ "hat": remote.hat, "effect": remote.effect, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string());
+            let _ = std::fs::write(&meta_path, serde_json::json!({ "hat": remote.hat, "effect": remote.effect, "wings": remote.wings, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string());
             return Ok(None);
         }
     };
@@ -353,7 +355,7 @@ pub async fn cache_player_cape(api_url: &str, uuid: &str) -> Result<Option<std::
     std::fs::write(&dest, &bytes).map_err(|e| format!("Cape-Cache: {e}"))?;
     let _ = std::fs::write(
         &meta_path,
-        serde_json::json!({ "sha1": cape.sha1, "id": cape.id, "hat": remote.hat, "effect": remote.effect, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string(),
+        serde_json::json!({ "sha1": cape.sha1, "id": cape.id, "hat": remote.hat, "effect": remote.effect, "wings": remote.wings, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string(),
     );
     Ok(Some(dest))
 }

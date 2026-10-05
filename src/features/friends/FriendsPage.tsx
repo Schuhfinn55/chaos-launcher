@@ -19,6 +19,7 @@ import type { Friend } from "@/types";
 import { effectiveApiUrl, getRemoteCosmetics, type RemoteCosmetics } from "@/lib/api/cosmetics";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
+import { wingsById } from "@/lib/builtinWings";
 import { useSettingsStore } from "@/stores/useStore";
 import "./FriendsPage.css";
 
@@ -40,12 +41,13 @@ function FriendCosmetics({ uuid }: { uuid?: string }) {
   if (!apiUrl) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics anderer: Chaos-Cosmetics-API in den Einstellungen eintragen.</span>;
   if (data === undefined) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics werden geladen …</span>;
   if (!data) return <span className="chaos-faint" style={{ fontSize: 11 }}>Noch keine Chaos-Cosmetics bekannt (nutzt keinen Chaos Launcher, Cosmetics verborgen oder Server offline).</span>;
-  const hat = hatById(data.hat), effect = effectById(data.effect);
+  const hat = hatById(data.hat), effect = effectById(data.effect), wings = wingsById(data.wings);
   return (
     <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
       <span className="chaos-badge chaos-badge-accent">Chaos-Spieler</span>
       <span className="chaos-badge">{data.activeCape ? `🧥 ${data.activeCape.name || "Cape"}` : "🧥 kein Cape"}</span>
       <span className="chaos-badge">{hat ? `${hat.icon} ${hat.name}` : "🎩 kein Hut"}</span>
+      <span className="chaos-badge">{wings ? `${wings.icon} ${wings.name}` : "🪽 keine Wings"}</span>
       <span className="chaos-badge">{effect ? `${effect.icon} ${effect.name}` : "✨ kein Effekt"}</span>
     </div>
   );

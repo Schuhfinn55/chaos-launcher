@@ -496,6 +496,8 @@ pub struct CosmeticsProfile {
     pub hat_id: String,
     #[serde(default)]
     pub effect_id: String,
+    #[serde(default)]
+    pub wings_id: String,
     /// "everyone" | "chaos" | "none".
     #[serde(default = "default_visibility")]
     pub visibility: String,

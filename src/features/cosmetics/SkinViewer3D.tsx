@@ -7,8 +7,9 @@
 
 import { useEffect, useRef } from "react";
 import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial } from "three";
+import { BoxGeometry, DoubleSide, Group, Mesh, MeshStandardMaterial, NearestFilter, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
 import type { BuiltinHat } from "@/lib/builtinHats";
+import { WINGS_PLANE, WINGS_ROOT, wingsTextureUrl, type BuiltinWings } from "@/lib/builtinWings";
 
 export type ViewerAnimation = "idle" | "walk" | "run" | "fly" | "none";
 
@@ -25,6 +26,8 @@ export interface SkinViewer3DProps {
   backEquipment?: "cape" | "elytra";
   /** Vorgefertigter Hut (Quader am Kopf) */
   hat?: BuiltinHat | null;
+  /** Animierte Wings (Federn am Rücken) */
+  wings?: BuiltinWings | null;
   className?: string;
 }
 
@@ -41,11 +44,13 @@ export default function SkinViewer3D({
   zoom = 0.85,
   backEquipment = "cape",
   hat = null,
+  wings = null,
   className,
 }: SkinViewer3DProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<SkinViewer | null>(null);
   const hatRef = useRef<Group | null>(null);
+  const wingsRef = useRef<Group | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -141,13 +146,106 @@ export default function SkinViewer3D({
     const g = new Group();
     for (const b of hat.boxes) {
       const mesh = new Mesh(new BoxGeometry(b.w, b.h, b.d), new MeshStandardMaterial({ color: b.color, roughness: 0.75, metalness: 0.05 }));
-      // MC: x nach links, y nach unten (Kopf -8..0), z nach hinten → three: Kopf-Box zentriert (y -4..4)
-      mesh.position.set(-(b.x + b.w / 2), -(b.y + b.h / 2) - 4, -(b.z + b.d / 2));
+      // MC: y nach unten (Kopf -8..0), z nach hinten → three: x gleich, y/z gekippt, Kopf-Box zentriert (y -4..4)
+      mesh.position.set(b.x + b.w / 2, -(b.y + b.h / 2) - 4, -(b.z + b.d / 2));
       g.add(mesh);
     }
     head.add(g);
     hatRef.current = g;
   }, [hat]);
+
+  // Wings: zwei flache Textur-Ebenen am Rücken, Pivot an der Flügelwurzel, Auf-/Zuklappen per rAF.
+  // Mapping MC-Körperraum → three (Körper-Gruppe): (x, y, z) → (x, 6 − y, −z) = 180°-Drehung um X;
+  // Rotationen um Y und Z wechseln dadurch das Vorzeichen gegenüber dem Chaos Client.
+  useEffect(() => {
+    const v = viewerRef.current;
+    if (!v) return;
+    const body = v.playerObject.skin.body;
+    const dispose = () => {
+      if (!wingsRef.current) return;
+      body.remove(wingsRef.current);
+      wingsRef.current.traverse((o) => {
+        if (o instanceof Mesh) {
+          o.geometry.dispose();
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
+            const mm = m as MeshStandardMaterial;
+            mm.map?.dispose();
+            mm.dispose();
+          });
+        }
+      });
+      wingsRef.current = null;
+    };
+    dispose();
+    if (!wings) return;
+    const url = wingsTextureUrl(wings.id);
+    if (!url) return;
+    const { w: W, h: H, top: TOP, texW, texH } = WINGS_PLANE;
+    const tex = new TextureLoader().load(url);
+    tex.magFilter = NearestFilter;
+    tex.minFilter = NearestFilter;
+    tex.colorSpace = SRGBColorSpace;
+    // Region 2 (Original, Wurzel links) ausschneiden: u W..2W, v 0..H (Bildkoordinaten, three: v von unten)
+    tex.offset.set(W / texW, 1 - H / texH);
+    tex.repeat.set(W / texW, H / texH);
+    const root = new Group();
+    root.scale.setScalar(wings.scale ?? 1);
+    const sides: { g: Group; sx: number }[] = [];
+    for (const sx of [1, -1]) {
+      const wing = new Group();
+      wing.rotation.order = "ZYX";
+      wing.position.set(sx * WINGS_ROOT.x, 6 - WINGS_ROOT.y, -WINGS_ROOT.z);
+      const mat = new MeshStandardMaterial({
+        map: tex,
+        transparent: true,
+        alphaTest: 0.05,
+        side: DoubleSide,
+        roughness: 0.8,
+        metalness: 0,
+        emissive: wings.glow ? "#ffffff" : "#000000",
+        emissiveMap: wings.glow ? tex : null,
+        emissiveIntensity: wings.glow ? 0.85 : 0,
+        depthWrite: true,
+      });
+      const mesh = new Mesh(new PlaneGeometry(W, H), mat);
+      mesh.position.set(sx * (W / 2), TOP - H / 2, 0);
+      mesh.scale.x = sx; // rechter Flügel gespiegelt
+      wing.add(mesh);
+      root.add(wing);
+      sides.push({ g: wing, sx });
+    }
+    root.position.y = 0;
+    body.add(root);
+    wingsRef.current = root;
+
+    const moving = animation === "walk" || animation === "run";
+    const gliding = animation === "fly";
+    const speed = wings.flapSpeed * (gliding ? 2.0 : moving ? 1.7 : 1);
+    const amp = wings.flapAmp * (gliding ? 1.4 : moving ? 1.15 : 1);
+    const rad = Math.PI / 180;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = () => {
+      const t = (performance.now() - t0) / 50; // Minecraft-Ticks
+      const phase = t * speed;
+      const flap = Math.sin(phase) * amp;
+      let open = wings.openAngle + flap + (gliding ? 22 : 0) + (moving ? 6 : 0);
+      open = Math.min(88, Math.max(8, open));
+      const tilt = wings.tilt + Math.sin(phase - 0.5) * 4 + (gliding ? 10 : 0) + Math.sin(t * 0.045) * 1.5;
+      const pitch = gliding ? -8 : 0;
+      for (const s of sides) {
+        s.g.rotation.x = pitch * rad;
+        s.g.rotation.y = s.sx * open * rad;
+        s.g.rotation.z = s.sx * tilt * rad;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      dispose();
+    };
+  }, [wings, animation]);
 
   return <canvas ref={canvasRef} className={className ?? "chaos-skin3d-canvas"} width={width} height={height} aria-label="3D-Vorschau" />;
 }
