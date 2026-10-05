@@ -2,28 +2,33 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.9",
-        "fileName": "ChaosLauncher-2.1.9-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/ChaosLauncher-2.1.9-setup.exe",
-        "sha256": "736e0e5c4189995718d4d6c7315093beb48e36b8ca9c0f866ed894a73733c7d7",
-        "size": 6659487,
-        "publishedAt": "2026-10-05",
-        "notes": "- Animierte Capes: PNG-Frame-Streifen oder animierte GIFs importieren, Tempo (fps) einstellen, animierte 3D-Vorschau – sechs neue animierte Chaos-Vorlagen (Chaos Flame, Chaos Pulse, Gewitter, Galaxy Drift, Red Matrix, Chaos Wave)\n- Chaos-Badge ingame: Pixel-Icon vor dem Namen über dem Kopf und in der Tab-Liste bei allen Chaos-Client-Spielern (Chaos Client 2.3.0)\n- Cosmetics-API unterstützt animierte Capes (fps wird mitgespeichert)",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/ChaosLauncher-2.1.9.msi",
-        "msiSha256": "aedc6ff485fc9f70ab7db9afcddac4e32f9b1868ab7de1044cb569e8991582cd"
+        "version": "2.1.10",
+        "fileName": "ChaosLauncher-2.1.10-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.10/ChaosLauncher-2.1.10-setup.exe",
+        "sha256": "78689fc0489ae330bd6ab1d01b4c1bfb707dea11e53add7a396e28ed9c46b984",
+        "size": 6793889,
+        "publishedAt": "2026-10-06",
+        "notes": "- Cosmetics anderer Spieler wieder sichtbar: Sync zur neuen Cosmetics-API repariert (alte Cape-IDs vom früheren Server werden neu hochgeladen, Fehler landen im launch.log), API-Login zustandslos (keine Aussetzer mehr)\n- Chaos Client 2.4.1: prüft alle 2 Minuten erneut, ob Mitspieler inzwischen Cosmetics haben",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.10/ChaosLauncher-2.1.10.msi",
+        "msiSha256": "3eca376bd637948915d246d3f3b2e2a96e8da05a273db0f33a8d57ae6e1ecf28"
       },
       "client": {
-        "version": "2.4.0",
-        "fileName": "chaos-client-2.4.0.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.4.0.jar",
-        "sha256": "1bbedb7c225b66f6c3bc8e25df8532908d4d92adc8e004aee53e7ab53e7ce6d0",
-        "size": 599460,
-        "publishedAt": "2026-10-05",
-        "notes": "Music Player: MP3-Wiedergabe + Lautstärkeregler; Badge: rotes C"
+        "version": "2.4.1",
+        "fileName": "chaos-client-2.4.1.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.10/chaos-client-2.4.1.jar",
+        "sha256": "704ff365b33c099767462d870610b6d012f3af908d805805e8675912a025ce39",
+        "size": 599551,
+        "publishedAt": "2026-10-06",
+        "notes": "Mitspieler alle 2 Minuten erneut prüfen"
       }
     }
   },
   "history": [
+    {
+      "version": "2.1.10",
+      "date": "2026-10-06",
+      "notes": "- Cosmetics anderer Spieler wieder sichtbar: Sync zur neuen Cosmetics-API repariert (alte Cape-IDs vom früheren Server werden neu hochgeladen, Fehler landen im launch.log), API-Login zustandslos (keine Aussetzer mehr)\n- Chaos Client 2.4.1: prüft alle 2 Minuten erneut, ob Mitspieler inzwischen Cosmetics haben"
+    },
     {
       "version": "2.1.9",
       "date": "2026-10-05",
@@ -70,6 +75,6 @@
       "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-05",
+  "updatedAt": "2026-10-06",
   "downloads": "github"
 }
