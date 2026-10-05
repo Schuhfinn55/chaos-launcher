@@ -220,19 +220,20 @@ export default function SkinViewer3D({
 
     const moving = animation === "walk" || animation === "run";
     const gliding = animation === "fly";
-    const speed = wings.flapSpeed * (gliding ? 2.0 : moving ? 1.7 : 1);
-    const amp = wings.flapAmp * (gliding ? 1.4 : moving ? 1.15 : 1);
+    const speed = wings.flapSpeed * (gliding ? 1.8 : moving ? 1.5 : 0.8);
+    const amp = wings.flapAmp * (gliding ? 1.3 : moving ? 1.1 : 1);
     const rad = Math.PI / 180;
     let raf = 0;
     const t0 = performance.now();
     const tick = () => {
       const t = (performance.now() - t0) / 50; // Minecraft-Ticks
       const phase = t * speed;
-      const flap = Math.sin(phase) * amp;
-      let open = wings.openAngle + flap + (gliding ? 22 : 0) + (moving ? 6 : 0);
-      open = Math.min(88, Math.max(8, open));
-      const tilt = wings.tilt + Math.sin(phase - 0.5) * 4 + (gliding ? 10 : 0) + Math.sin(t * 0.045) * 1.5;
-      const pitch = gliding ? -8 : 0;
+      const flap = Math.sin(phase);
+      // Hauptschlag = Heben/Senken der Spitzen (Roll), Auf-/Zuklappen (Yaw) nur dezent – wie im Chaos Client
+      let open = wings.openAngle * 0.75 + flap * amp * 0.3 + (gliding ? 18 : 0) + (moving ? 4 : 0);
+      open = Math.min(60, Math.max(10, open));
+      const tilt = wings.tilt + flap * amp * 0.6 + (gliding ? 12 : 0) + Math.sin(t * 0.045) * 1.5;
+      const pitch = (gliding ? -8 : 0) + Math.sin(phase - 0.4) * 3;
       for (const s of sides) {
         s.g.rotation.x = pitch * rad;
         s.g.rotation.y = s.sx * open * rad;
