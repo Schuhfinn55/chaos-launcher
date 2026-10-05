@@ -14,7 +14,13 @@ export default {
     if (p === "/api/downloads") {
       const real = Number((await env.KV.get(KEY)) || 0);
       const offset = Number(env.DOWNLOAD_OFFSET || 0);
-      return new Response(JSON.stringify({ count: offset + real, real, offset }), { headers: { "Content-Type": "application/json", ...cors } });
+      const count = offset + real;
+      // „Spieler mit Cosmetics“: Anteil der Downloads (COSMETICS_SHARE, Standard 0.9), mindestens die echten API-Spieler
+      let apiPlayers = 0;
+      try { const v = await fetch((env.COSMETICS_API || "https://chaos-cosmetics-api.chaoscraft.workers.dev") + "/v1/version", { cf: { cacheTtl: 60 } }).then((r) => r.json()); apiPlayers = Number(v.players || 0); } catch { /* egal */ }
+      const share = Number(env.COSMETICS_SHARE || 0.9);
+      const cosmeticsPlayers = Math.max(apiPlayers, Math.round(count * share));
+      return new Response(JSON.stringify({ count, real, offset, cosmeticsPlayers, apiPlayers }), { headers: { "Content-Type": "application/json", ...cors } });
     }
 
     const m = /^\/dl\/(launcher|msi|client)$/.exec(p);

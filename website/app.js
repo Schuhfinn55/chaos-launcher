@@ -18,6 +18,7 @@
     try {
       const d = await fetch("./api/downloads", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null));
       if (d && typeof d.count === "number") { $("stat-downloads").textContent = String(d.count); counted = true; }
+      if (d && typeof d.cosmeticsPlayers === "number") { $("stat-players").textContent = String(d.cosmeticsPlayers); $("stat-players").dataset.done = "1"; }
     } catch (e) { /* statischer Spiegel */ }
     if (!counted) $("stat-downloads").textContent = "–";
     if (l) {
@@ -68,10 +69,12 @@
 
   /* ---------- Cosmetics-API (Spieler mit Cosmetics) ---------- */
   try {
-    const v = await fetch("/api/v1/version", { cache: "no-store" }).then((r) => r.json());
-    $("stat-players").textContent = String(v.players ?? "–");
+    if ($("stat-players").dataset.done !== "1") {
+      const v = await fetch("https://chaos-cosmetics-api.chaoscraft.workers.dev/v1/version", { cache: "no-store" }).then((r) => r.json());
+      $("stat-players").textContent = String(v.players ?? "–");
+    }
   } catch (e) {
-    $("stat-players").textContent = "–";
+    if ($("stat-players").dataset.done !== "1") $("stat-players").textContent = "–";
   }
 
   /* ---------- Serverstatus (Minecraft) ---------- */

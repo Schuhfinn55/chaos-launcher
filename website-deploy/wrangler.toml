@@ -20,3 +20,6 @@ id = "b355fca6481141d7bef5d1d8ef7da158"
 [vars]
 # Startwert der Download-Anzeige (wird zu den echten Downloads addiert)
 DOWNLOAD_OFFSET = "531"
+# Anteil der Downloads, der als "Spieler mit Cosmetics" angezeigt wird
+COSMETICS_SHARE = "0.9"
+COSMETICS_API = "https://chaos-cosmetics-api.chaoscraft.workers.dev"
