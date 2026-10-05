@@ -13,8 +13,9 @@ Ablauf (GitHub):
      SHA256SUMS hochladen.
   3. website/releases.json (Feed für Launcher-Updates + Website) mit den Release-Asset-URLs
      schreiben, History ergänzen.
-  4. Website (website/) in den Branch gh-pages pushen → https://schuhfinn55.github.io/chaos-launcher
-     (GitHub Pages wird beim ersten Mal aktiviert).
+  4. Website (website/) auf Cloudflare deployen (website-deploy/wrangler.toml →
+     https://chaos-launcher.chaoscraft.workers.dev) und in den Branch gh-pages pushen
+     (Spiegel: https://schuhfinn55.github.io/chaos-launcher).
 Der Launcher liest zuerst https://chaoslauncher.duckdns.org/releases.json und fällt auf den
 GitHub-Pages-Spiegel zurück – beide Feeds sind identisch.
 """
@@ -110,6 +111,7 @@ def main():
     ap.add_argument("--client-notes-file", default="")
     ap.add_argument("--server", action="store_true", help="zusätzlich per SSH auf den eigenen Server laden")
     ap.add_argument("--no-github", action="store_true", help="kein GitHub-Release/Pages")
+    ap.add_argument("--no-cloudflare", action="store_true", help="Website nicht auf Cloudflare deployen")
     args = ap.parse_args()
     if args.notes_file:
         args.notes = open(args.notes_file, encoding="utf-8").read().strip()
@@ -192,6 +194,10 @@ def main():
                 print(f"GitHub-Release: https://github.com/{GH_REPO}/releases/tag/{tag}")
 
     site = collect_site()
+    # Cloudflare (Worker mit statischen Assets) – primäre Website-Adresse, sofort online
+    if not args.no_cloudflare:
+        r = run(["npx", "-y", "wrangler@latest", "deploy"], check=False, cwd=os.path.join(ROOT, "website-deploy"), shell=(os.name == "nt"))
+        print("Cloudflare: " + ("https://chaos-launcher.chaoscraft.workers.dev" if r.returncode == 0 else "Deploy fehlgeschlagen (npx wrangler login?)"))
     if use_github:
         publish_pages(site)
 

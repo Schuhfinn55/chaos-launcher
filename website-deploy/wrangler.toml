@@ -1,0 +1,10 @@
+# Chaos-Launcher-Website als Cloudflare Worker mit statischen Assets (kostenlos, sofort online)
+#   npx wrangler deploy   → https://chaos-launcher.chaoscraft.workers.dev
+name = "chaos-launcher"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[assets]
+directory = "../website"
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"

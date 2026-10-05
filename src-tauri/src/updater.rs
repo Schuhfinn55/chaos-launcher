@@ -24,12 +24,14 @@ use std::time::Duration;
 
 /// Website des Chaos Launchers (Downloads, News, Release-Feed).
 pub const WEBSITE_URL: &str = "https://chaoslauncher.duckdns.org";
-/// Spiegel auf GitHub Pages (gleiche Dateien; Downloads liegen in GitHub-Releases).
+/// Gehostete Website auf Cloudflare (Downloads liegen in GitHub-Releases).
+pub const CLOUD_SITE_URL: &str = "https://chaos-launcher.chaoscraft.workers.dev";
+/// Spiegel auf GitHub Pages (gleiche Dateien).
 pub const GITHUB_PAGES_URL: &str = "https://schuhfinn55.github.io/chaos-launcher";
 pub const GITHUB_REPO_URL: &str = "https://github.com/Schuhfinn55/chaos-launcher";
 /// Kandidaten für Website/Feed in Reihenfolge; der erste erreichbare wird genutzt.
-/// GitHub Pages zuerst (immer erreichbar), die eigene Domain als zweite Quelle.
-pub const WEBSITE_URLS: [&str; 2] = [GITHUB_PAGES_URL, WEBSITE_URL];
+/// Cloudflare zuerst (immer erreichbar), dann GitHub Pages, dann die eigene Domain.
+pub const WEBSITE_URLS: [&str; 3] = [CLOUD_SITE_URL, GITHUB_PAGES_URL, WEBSITE_URL];
 pub const FEED_URL: &str = "https://chaoslauncher.duckdns.org/releases.json";
 
 static ACTIVE_SITE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
