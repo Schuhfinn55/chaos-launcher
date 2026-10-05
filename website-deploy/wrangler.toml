@@ -9,7 +9,9 @@ workers_dev = true
 directory = "../website"
 binding = "ASSETS"
 html_handling = "auto-trailing-slash"
-not_found_handling = "404-page"
+not_found_handling = "none"
+# API- und Download-Routen immer im Worker (nicht als Asset) behandeln
+run_worker_first = ["/api/*", "/dl/*"]
 
 [[kv_namespaces]]
 binding = "KV"
