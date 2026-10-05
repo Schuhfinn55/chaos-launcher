@@ -6,8 +6,10 @@ from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MOD = os.path.join(os.path.dirname(os.path.dirname(HERE)), "onyx-visuals")
-OUT = os.path.join(MOD, "src", "main", "resources", "assets", "chaosclient", "font")
+OUT = os.path.join(MOD, "src", "main", "resources", "assets", "chaosclient", "font")  # badge.json
+TEX = os.path.join(MOD, "src", "main", "resources", "assets", "chaosclient", "textures", "font")  # badge.png (Minecraft sucht Font-Bitmaps unter textures/font/)
 os.makedirs(OUT, exist_ok=True)
+os.makedirs(TEX, exist_ok=True)
 G = 16
 RED, RED2, DARK, BLACK, WHITE, GOLD, GOLD2, BONE = (225, 29, 46, 255), (255, 92, 108, 255), (20, 8, 10, 255), (10, 10, 12, 255), (255, 255, 255, 255), (250, 204, 21, 255), (253, 230, 138, 255), (236, 236, 236, 255)
 
@@ -50,9 +52,9 @@ for i, fn in enumerate(glyphs):
     tile = Image.new("RGBA", (G, G), (0, 0, 0, 0))
     fn(ImageDraw.Draw(tile))
     img.paste(tile, (i * G, 0))
-img.save(os.path.join(OUT, "badge.png"))
+img.save(os.path.join(TEX, "badge.png"))
 chars = "".join(chr(0xE000 + i) for i in range(len(glyphs)))
 json.dump({"providers": [{"type": "bitmap", "file": "chaosclient:font/badge.png", "ascent": 7, "height": 8, "chars": [chars]}]}, open(os.path.join(OUT, "badge.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 prev = img.resize((img.width * 6, img.height * 6), Image.NEAREST)
 prev.save(os.path.join(HERE, "badge_preview.png"))
-print("ok", os.path.join(OUT, "badge.png"))
+print("ok", os.path.join(TEX, "badge.png"))

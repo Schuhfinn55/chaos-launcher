@@ -13,13 +13,13 @@
         "msiSha256": "aedc6ff485fc9f70ab7db9afcddac4e32f9b1868ab7de1044cb569e8991582cd"
       },
       "client": {
-        "version": "2.3.1",
-        "fileName": "chaos-client-2.3.1.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.1.jar",
-        "sha256": "8967cf898d9553a798cd618459f873037cb03de99b7661a7e743f9e1a07f1681",
-        "size": 467180,
+        "version": "2.3.2",
+        "fileName": "chaos-client-2.3.2.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.2.jar",
+        "sha256": "96089cdd2df02dd0d8b473c437ad96b1308b4e394cbe2904aca1642594cfc67f",
+        "size": 467360,
         "publishedAt": "2026-10-05",
-        "notes": "Fix: Chaos-Badge – Name wurde als Kästchen gezeichnet"
+        "notes": "Fix: Chaos-Badge-Icon (Font-Bitmap-Pfad)"
       }
     }
   },
