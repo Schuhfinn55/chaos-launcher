@@ -13,13 +13,13 @@
         "msiSha256": "aedc6ff485fc9f70ab7db9afcddac4e32f9b1868ab7de1044cb569e8991582cd"
       },
       "client": {
-        "version": "2.3.0",
-        "fileName": "chaos-client-2.3.0.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.0.jar",
-        "sha256": "dcf7b8f21827cf4f80e32d1a0980ce8f9e48135c95c8724e0d4360f157abd4f0",
-        "size": 467165,
+        "version": "2.3.1",
+        "fileName": "chaos-client-2.3.1.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.1.jar",
+        "sha256": "8967cf898d9553a798cd618459f873037cb03de99b7661a7e743f9e1a07f1681",
+        "size": 467180,
         "publishedAt": "2026-10-05",
-        "notes": "- Animierte Capes: PNG-Frame-Streifen oder animierte GIFs importieren, Tempo (fps) einstellen, animierte 3D-Vorschau – sechs neue animierte Chaos-Vorlagen (Chaos Flame, Chaos Pulse, Gewitter, Galaxy Drift, Red Matrix, Chaos Wave)\n- Chaos-Badge ingame: Pixel-Icon vor dem Namen über dem Kopf und in der Tab-Liste bei allen Chaos-Client-Spielern (Chaos Client 2.3.0)\n- Cosmetics-API unterstützt animierte Capes (fps wird mitgespeichert)"
+        "notes": "Fix: Chaos-Badge – Name wurde als Kästchen gezeichnet"
       }
     }
   },

@@ -112,6 +112,7 @@ def main():
     ap.add_argument("--server", action="store_true", help="zusätzlich per SSH auf den eigenen Server laden")
     ap.add_argument("--no-github", action="store_true", help="kein GitHub-Release/Pages")
     ap.add_argument("--no-cloudflare", action="store_true", help="Website nicht auf Cloudflare deployen")
+    ap.add_argument("--client-only", action="store_true", help="nur die Chaos-Client-JAR in das bestehende Launcher-Release laden und den Feed aktualisieren")
     args = ap.parse_args()
     if args.notes_file:
         args.notes = open(args.notes_file, encoding="utf-8").read().strip()
@@ -130,7 +131,24 @@ def main():
         return f"https://github.com/{GH_REPO}/releases/download/{tag}/{name}" if use_github else f"{PUBLIC}/download/{name}"
 
     assets = []  # (lokal, Dateiname)
-    if not args.site_only:
+    if args.client_only:
+        jar = os.path.join(ROOT, "src-tauri", "resources", "chaos-client.jar")
+        cv = jar_version(jar)
+        jar_name = f"chaos-client-{cv}.jar"
+        feed["channels"]["stable"]["client"] = {
+            "version": cv, "fileName": jar_name, "url": dl_url(jar_name),
+            "sha256": sha256(jar), "size": os.path.getsize(jar), "publishedAt": today,
+            "notes": args.client_notes or feed["channels"]["stable"].get("client", {}).get("notes", ""),
+        }
+        feed["updatedAt"] = today
+        json.dump(feed, open(feed_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+        if use_github:
+            tmp = staging_dir("release")
+            dest = os.path.join(tmp, jar_name)
+            shutil.copy2(jar, dest)
+            gh("release", "upload", tag, "-R", GH_REPO, "--clobber", dest)
+        print(f"Client {cv} veröffentlicht (Release {tag}).")
+    elif not args.site_only:
         setup = os.path.join(BUNDLE, "nsis", f"Chaos Launcher_{version}_x64-setup.exe")
         msi = os.path.join(BUNDLE, "msi", f"Chaos Launcher_{version}_x64_en-US.msi")
         jar = os.path.join(ROOT, "src-tauri", "resources", "chaos-client.jar")
