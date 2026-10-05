@@ -16,7 +16,7 @@
  * Deploy: npx wrangler deploy (siehe wrangler.toml)
  * ============================================================ */
 
-const API_VERSION = "1.3.0";
+const API_VERSION = "1.4.0";
 const COSMETICS_VERSION = 2;
 const TOKEN_TTL_S = 24 * 60 * 60;
 const MAX_PNG = 4 * 1024 * 1024;
@@ -90,6 +90,37 @@ function base64ToBytes(s) {
   return out;
 }
 
+/* ---------- Mojang-Spielerzertifikate (offline prüfbar – Mojang blockt Cloudflare) ----------
+ * Quelle: https://api.minecraftservices.com/publickeys → playerCertificateKeys (RSA-4096, SPKI, base64).
+ * Mojang signiert pro Spieler (uuid, expiresAt, publicKey) mit SHA1withRSA; der Launcher signiert damit
+ * unsere Challenge (SHA256withRSA). So ist der UUID-Besitz ohne Mojang-Aufruf aus dem Worker beweisbar. */
+const MOJANG_PLAYER_CERT_KEYS = [
+  "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAylB4B6m5lz7jwrcFz6Fd/fnfUhcvlxsTSn5kIK/2aGG1C3kMy4VjhwlxF6BFUSnfxhNswPjh3ZitkBxEAFY25uzkJFRwHwVA9mdwjashXILtR6OqdLXXFVyUPIURLOSWqGNBtb08EN5fMnG8iFLgEJIBMxs9BvF3s3/FhuHyPKiVTZmXY0WY4ZyYqvoKR+XjaTRPPvBsDa4WI2u1zxXMeHlodT3lnCzVvyOYBLXL6CJgByuOxccJ8hnXfF9yY4F0aeL080Jz/3+EBNG8RO4ByhtBf4Ny8NQ6stWsjfeUIvH7bU/4zCYcYOq4WrInXHqS8qruDmIl7P5XXGcabuzQstPf/h2CRAUpP/PlHXcMlvewjmGU6MfDK+lifScNYwjPxRo4nKTGFZf/0aqHCh/EAsQyLKrOIYRE0lDG3bzBh8ogIMLAugsAfBb6M3mqCqKaTMAf/VAjh5FFJnjS+7bE+bZEV0qwax1CEoPPJL1fIQjOS8zj086gjpGRCtSy9+bTPTfTR/SJ+VUB5G2IeCItkNHpJX2ygojFZ9n5Fnj7R9ZnOM+L8nyIjPu3aePvtcrXlyLhH/hvOfIOjPxOlqW+O5QwSFP4OEcyLAUgDdUgyW36Z5mB285uKW/ighzZsOTevVUG2QwDItObIV6i8RCxFbN2oDHyPaO5j1tTaBNyVt8CAwEAAQ==",
+  "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAt4t9NPuu7cktclnaH7eZj0omkLcJHeLz5MKsyJEntHZ0INtuBjSSul3Pp3pBeJN8k3ADdcdBLUN90bcAi7WsQqTx3Ft363q3W7TbM8j2iTEdp/0uVspoRt/DP1tkaWFs/w2WwUv9jbVoBUzfUc4pSTIxRwdjmqjZQfvjwKNDbOx3IhP2H0WXodbISejPi1wBZqNW4m1rnZAXp/EpUguxA8mobCa4vUCBkyFDyXdl69/wUSJHyCPmgcMJ364OlAhIqtwVPShBZObvrK/f0BYk6ShJD3N7TFDatSYsIIdcTKRknaIm91s+EsMrdB9U4Yw+ZJ/pyCB4S3vk8zfDCnb0DWIxYH3/EMzaxl77djmTmMzi/JDITup5z3jfWtRZmrAhU2/+W5IO5hEpo3/bCS9PXIY5xb41Lmp2ZO8dXKtyD66Chchy0W129n8vPl2GIruOdrxsjZAHnneyAb9jm0uaGaphwnEnuecX/qgHY6ZMtayvLLsPst8PO6R1vufMy8WqjK+j7LnC1krL7CPDg0NEhyQTmw5l+NCNjSlvB1juM9V4PARg0bYCOkGXm7ydRCjSSH8CJXZpwnd5cBB5WKAX3KPzutRgMi/LFwNSMZzFuUyXaYOZPpD259yqph1LmGqegEdDriACVU+dVEONFMm8eIuBofe7ljmsAFKW9BINwK0CAwEAAQ=="
+];
+function b64ToBytes(b64) { const bin = atob(b64.replace(/[^A-Za-z0-9+/=]/g, "")); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+function uuidBytes(hex32) { const out = new Uint8Array(16); for (let i = 0; i < 16; i++) out[i] = parseInt(hex32.slice(i * 2, i * 2 + 2), 16); return out; }
+function i64be(ms) { const out = new Uint8Array(8); let v = BigInt(ms); for (let i = 7; i >= 0; i--) { out[i] = Number(v & 0xffn); v >>= 8n; } return out; }
+async function rsaVerify(spkiDer, hash, data, sig) {
+  try {
+    const key = await crypto.subtle.importKey("spki", spkiDer, { name: "RSASSA-PKCS1-v1_5", hash }, false, ["verify"]);
+    return await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, sig, data);
+  } catch { return false; }
+}
+/** Prüft Mojangs Signatur über (uuid, expiresAt, publicKey) und die Challenge-Signatur des Spielers. */
+async function verifyPlayerCertificate(env, uuid, serverId, publicKeyB64, keySignatureB64, expiresAt, signatureB64) {
+  if (!publicKeyB64 || !keySignatureB64 || !signatureB64 || !(expiresAt > now())) return "Zertifikat fehlt oder abgelaufen";
+  const pub = b64ToBytes(publicKeyB64), keySig = b64ToBytes(keySignatureB64), sig = b64ToBytes(signatureB64);
+  const signed = new Uint8Array(16 + 8 + pub.length);
+  signed.set(uuidBytes(uuid), 0); signed.set(i64be(expiresAt), 16); signed.set(pub, 24);
+  let mojangOk = false;
+  const extra = env.MOJANG_CERT_KEYS ? String(env.MOJANG_CERT_KEYS).split(",") : [];
+  for (const k of [...MOJANG_PLAYER_CERT_KEYS, ...extra]) { if (await rsaVerify(b64ToBytes(k), "SHA-1", signed, keySig)) { mojangOk = true; break; } }
+  if (!mojangOk) return "Mojang-Zertifikat ungültig";
+  if (!(await rsaVerify(pub, "SHA-256", enc.encode(serverId), sig))) return "Challenge-Signatur ungültig";
+  return null;
+}
+
 /* ---------- Speicher ---------- */
 const getJson = async (env, key) => { const v = await env.KV.get(key, "json"); return v ?? null; };
 const putJson = (env, key, value, opts) => env.KV.put(key, JSON.stringify(value), opts);
@@ -122,12 +153,14 @@ async function bearer(env, request) {
   if (!t || t.length > 512) return null;
   return parseToken(env, t);
 }
+let lastMojang = { status: 0, body: "", at: 0 };
 async function mojangHasJoined(name, serverId) {
   try {
-    const r = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${encodeURIComponent(serverId)}`, { headers: { "User-Agent": "chaos-cosmetics-api/" + API_VERSION } });
+    const r = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${encodeURIComponent(serverId)}`, { headers: { "User-Agent": "chaos-cosmetics-api/" + API_VERSION, "Accept": "application/json" } });
+    lastMojang = { status: r.status, body: r.status === 200 ? "" : (await r.text()).slice(0, 200), at: now() };
     if (r.status !== 200) return null;
     return await r.json();
-  } catch { return null; }
+  } catch (e) { lastMojang = { status: -1, body: String(e), at: now() }; return null; }
 }
 
 /* ---------- Rate-Limit (pro Isolate, best effort) ---------- */
@@ -162,6 +195,15 @@ export default {
         return json(200, { name: "Chaos Cosmetics API", apiVersion: API_VERSION, cosmeticsVersion: COSMETICS_VERSION, players: pl.keys.length, capes: cp.keys.length, host: "cloudflare-workers" }, { "Cache-Control": "public, max-age=60" });
       }
 
+      if (request.method === "GET" && p === "/v1/health") {
+        // Erreichbarkeit der Mojang-Sessionserver aus dem Worker prüfen (Diagnose)
+        let mojang = 0, body = "";
+        try { const r = await fetch("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Notch&serverId=0", { headers: { "User-Agent": "chaos-cosmetics-api/" + API_VERSION } }); mojang = r.status; if (r.status !== 204 && r.status !== 200) body = (await r.text()).slice(0, 200); } catch (e) { mojang = -1; body = String(e); }
+        let services = 0;
+        try { const r2 = await fetch("https://api.minecraftservices.com/publickeys", { headers: { "User-Agent": "chaos-cosmetics-api/" + API_VERSION } }); services = r2.status; } catch { services = -1; }
+        return json(200, { ok: true, mojangStatus: mojang, mojangBody: body, servicesPublicKeysStatus: services, lastVerify: lastMojang, secret: !!env.SECRET });
+      }
+
       /* Auth */
       if (request.method === "POST" && p === "/v1/auth/challenge") {
         const b = await readJson(request, 4096);
@@ -174,9 +216,17 @@ export default {
         const b = await readJson(request, 4096);
         const uuid = normUuid(b.uuid), serverId = String(b.serverId || ""), chName = String(b.name || "").slice(0, 16);
         if (!isUuid(uuid) || !(await checkChallenge(env, uuid, chName, serverId))) return json(400, { error: "Unbekannte oder abgelaufene Challenge" });
-        const joined = await mojangHasJoined(chName, serverId);
-        if (!joined || normUuid(joined.id) !== uuid) return json(401, { error: "Mojang-Prüfung fehlgeschlagen" });
-        const name = joined.name || chName;
+        let name = chName;
+        if (b.publicKey) {
+          // Neuer Weg: Mojang-Spielerzertifikat (offline prüfbar)
+          const err = await verifyPlayerCertificate(env, uuid, serverId, String(b.publicKey), String(b.keySignature || ""), Number(b.expiresAt || 0), String(b.signature || ""));
+          if (err) return json(401, { error: "Identitätsprüfung fehlgeschlagen: " + err });
+        } else {
+          // Alter Weg (Sessionserver) – aus Cloudflare meist blockiert
+          const joined = await mojangHasJoined(chName, serverId);
+          if (!joined || normUuid(joined.id) !== uuid) return json(401, { error: "Mojang-Prüfung fehlgeschlagen (Mojang HTTP " + lastMojang.status + ") – bitte Launcher aktualisieren" });
+          name = joined.name || chName;
+        }
         const expiresAt = Math.floor(now() / 1000) + TOKEN_TTL_S;
         const token = await makeToken(env, uuid, name, now() + TOKEN_TTL_S * 1000);
         const pl = (await getPlayer(env, uuid)) || { name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };

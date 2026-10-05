@@ -1,0 +1,3 @@
+- Cosmetics-Sync funktioniert wieder: Anmeldung an der Cosmetics-API läuft jetzt über Mojangs Spieler-Zertifikat (Mojang blockiert Anfragen aus der Cloud). Dein Minecraft-Token geht weiterhin nur an Mojang.
+- Cosmetics werden beim Launcher-Start und nach dem Login automatisch hochgeladen – andere sehen Cape, Hut, Wings, Effekt und Badge ohne Zutun
+- Fehlermeldungen der API werden im Klartext angezeigt

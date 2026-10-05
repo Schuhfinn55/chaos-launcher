@@ -26,7 +26,8 @@ import MusicPage from "@/features/music/MusicPage";
 import FriendsPage from "@/features/friends/FriendsPage";
 import AccountsPage from "@/features/accounts/AccountsPage";
 import SettingsPage from "@/features/settings/SettingsPage";
-import { useCosmeticsStore, useFriendStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
+import { useAccountStore, useCosmeticsStore, useFriendStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
+import { syncCosmetics } from "@/lib/api/cosmetics";
 import { BUILTIN_THEMES } from "@/lib/themes";
 import "@/components/common.css";
 import "@/app.css";
@@ -95,6 +96,15 @@ export default function App() {
     void loadSkins();
     void loadCosmetics();
   }, [loadFriends, loadSkins, loadCosmetics]);
+
+  // Cosmetics beim Launcher-Start (und nach Account-Wechsel/Login) automatisch zur Community-API hochladen,
+  // damit andere Chaos-Spieler Cape, Hut, Wings und Effekt sehen. Ergebnis/Fehler stehen im launch.log.
+  const activeAccountUuid = useAccountStore((s) => s.active?.uuid);
+  useEffect(() => {
+    if (!activeAccountUuid || settings?.cosmeticsEnabled === false) return;
+    const t = setTimeout(() => { syncCosmetics(activeAccountUuid).catch(() => {}); }, 2500);
+    return () => clearTimeout(t);
+  }, [activeAccountUuid, settings?.cosmeticsEnabled]);
 
   // Sprache, Animationen, Hell/Dunkel, Akzent, Transparenz, Skalierung
   useEffect(() => {

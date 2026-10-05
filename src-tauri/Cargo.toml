@@ -1,6 +1,6 @@
 [package]
 name = "chaos-launcher"
-version = "2.1.10"
+version = "2.1.11"
 description = "Chaos Launcher - der Minecraft-Client-Launcher für ChaoscraftSMP"
 authors = ["ChaoscraftSMP"]
 edition = "2021"
@@ -23,6 +23,7 @@ reqwest = { version = "0.12", features = ["json", "rustls-tls", "multipart"], de
 tokio = { version = "1", features = ["full"] }
 sha1 = "0.10"
 sha2 = "0.10"
+rsa = { version = "0.9", features = ["sha2"] }
 hex = "0.4"
 zip = "2"
 chrono = "0.4"

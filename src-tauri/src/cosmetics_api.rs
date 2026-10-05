@@ -248,31 +248,30 @@ pub async fn authenticate(api_url: &str, account: &Account) -> Result<String, St
         .ok_or("Auth-Challenge ohne serverId")?
         .to_string();
 
-    // 2. Join bei Mojang (Token geht NUR an Mojang)
-    let join = client
-        .post("https://sessionserver.mojang.com/session/minecraft/join")
+    // 2. Spielerzertifikat von Mojang holen (Token geht NUR an Mojang) und die Challenge damit signieren.
+    //    Der Worker prüft offline: Mojangs Signatur über (uuid, expiresAt, publicKey) + unsere Challenge-Signatur.
+    let cert = player_certificate(&client, &account.uuid, &access).await?;
+    let signature = sign_challenge(&cert, &server_id)?;
+
+    // 3. Verify
+    let resp = client
+        .post(format!("{b}/v1/auth/verify"))
         .json(&serde_json::json!({
-            "accessToken": access,
-            "selectedProfile": account.uuid.replace('-', ""),
+            "uuid": account.uuid.replace('-', ""),
+            "name": account.username,
             "serverId": server_id,
+            "publicKey": cert.public_key_b64,
+            "keySignature": cert.key_signature_b64,
+            "expiresAt": cert.expires_at_ms,
+            "signature": signature,
         }))
         .send()
         .await
-        .map_err(|e| format!("Mojang-Join: {e}"))?;
-    if !(join.status().is_success() || join.status().as_u16() == 204) {
-        return Err(format!("Mojang-Join HTTP {}", join.status()));
+        .map_err(|e| format!("Auth-Verify: {e}"))?;
+    let ver: serde_json::Value = resp.json().await.map_err(|e| format!("Auth-Verify JSON: {e}"))?;
+    if let Some(err) = ver.get("error").and_then(|e| e.as_str()) {
+        return Err(format!("Cosmetics-API: {err}"));
     }
-
-    // 3. Verify
-    let ver: serde_json::Value = client
-        .post(format!("{b}/v1/auth/verify"))
-        .json(&serde_json::json!({ "uuid": account.uuid.replace('-', ""), "name": account.username, "serverId": server_id }))
-        .send()
-        .await
-        .map_err(|e| format!("Auth-Verify: {e}"))?
-        .json()
-        .await
-        .map_err(|e| format!("Auth-Verify JSON: {e}"))?;
     let token = ver.get("token").and_then(|t| t.as_str()).ok_or("Auth-Verify ohne Token")?.to_string();
     let expires_at = ver.get("expiresAt").and_then(|t| t.as_i64()).unwrap_or(now + 3600);
     if let Ok(mut map) = TOKENS.lock() {
@@ -296,6 +295,75 @@ pub async fn upload_cape(api_url: &str, token: &str, name: &str, png: Vec<u8>, f
         return Err(format!("Cape-Upload HTTP {}", resp.status()));
     }
     resp.json::<RemoteCape>().await.map_err(|e| format!("Cape-Upload JSON: {e}"))
+}
+
+
+/* ---------- Mojang-Spielerzertifikat (Chat-Signaturschlüssel) ---------- */
+
+#[derive(Clone)]
+struct PlayerCert {
+    private_der: Vec<u8>,
+    /// X.509 SubjectPublicKeyInfo (so wie von Mojang signiert), base64
+    public_key_b64: String,
+    key_signature_b64: String,
+    expires_at_ms: i64,
+}
+
+static CERTS: LazyLock<Mutex<HashMap<String, PlayerCert>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+
+fn pem_body(pem: &str) -> Result<Vec<u8>, String> {
+    let body: String = pem.lines().filter(|l| !l.starts_with("-----")).collect::<Vec<_>>().join("");
+    base64::Engine::decode(&base64::engine::general_purpose::STANDARD, body.trim()).map_err(|e| format!("PEM: {e}"))
+}
+
+async fn player_certificate(client: &reqwest::Client, uuid: &str, access: &str) -> Result<PlayerCert, String> {
+    let now_ms = crate::system::now_millis();
+    if let Ok(map) = CERTS.lock() {
+        if let Some(c) = map.get(uuid) {
+            if c.expires_at_ms > now_ms + 60_000 {
+                return Ok(c.clone());
+            }
+        }
+    }
+    let resp = client
+        .post("https://api.minecraftservices.com/player/certificates")
+        .bearer_auth(access)
+        .header("Content-Length", "0")
+        .send()
+        .await
+        .map_err(|e| format!("Mojang-Zertifikat: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Mojang-Zertifikat HTTP {} – bitte Account neu anmelden.", resp.status()));
+    }
+    let v: serde_json::Value = resp.json().await.map_err(|e| format!("Mojang-Zertifikat JSON: {e}"))?;
+    let kp = v.get("keyPair").ok_or("Mojang-Zertifikat ohne keyPair")?;
+    let private_der = pem_body(kp.get("privateKey").and_then(|s| s.as_str()).ok_or("kein privateKey")?)?;
+    let public_der = pem_body(kp.get("publicKey").and_then(|s| s.as_str()).ok_or("kein publicKey")?)?;
+    let key_signature_b64 = v.get("publicKeySignatureV2").and_then(|s| s.as_str()).ok_or("keine publicKeySignatureV2")?.to_string();
+    let expires = v.get("expiresAt").and_then(|s| s.as_str()).ok_or("kein expiresAt")?;
+    let expires_at_ms = chrono::DateTime::parse_from_rfc3339(expires).map_err(|e| format!("expiresAt: {e}"))?.timestamp_millis();
+    let cert = PlayerCert {
+        private_der,
+        public_key_b64: base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &public_der),
+        key_signature_b64,
+        expires_at_ms,
+    };
+    if let Ok(mut map) = CERTS.lock() {
+        map.insert(uuid.to_string(), cert.clone());
+    }
+    Ok(cert)
+}
+
+fn sign_challenge(cert: &PlayerCert, server_id: &str) -> Result<String, String> {
+    use rsa::pkcs1::DecodeRsaPrivateKey;
+    use rsa::pkcs8::DecodePrivateKey;
+    use rsa::signature::{SignatureEncoding, Signer};
+    let key = rsa::RsaPrivateKey::from_pkcs8_der(&cert.private_der)
+        .or_else(|_| rsa::RsaPrivateKey::from_pkcs1_der(&cert.private_der))
+        .map_err(|e| format!("Privater Schlüssel: {e}"))?;
+    let signing = rsa::pkcs1v15::SigningKey::<sha2::Sha256>::new(key);
+    let sig = signing.sign(server_id.as_bytes());
+    Ok(base64::Engine::encode(&base64::engine::general_purpose::STANDARD, sig.to_vec()))
 }
 
 /// Setzt Cape, Hut, Effekt und Sichtbarkeit in der API.
