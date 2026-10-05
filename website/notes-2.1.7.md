@@ -1,0 +1,3 @@
+- Wings: 12 animierte Pixel-Art-Flügel (Engel, Chaos, Phönix, Galaxie, Schatten, Dämon, Drache, Fledermaus, Neon, Schmetterling, Fee, Kristall) mit 3D-Vorschau; ingame vom Chaos Client 2.2.0 gerendert und für andere Chaos-Spieler sichtbar
+- Updates und Downloads zusätzlich über GitHub (Releases + GitHub Pages) – funktioniert auch, wenn die Website offline ist
+- 3D-Vorschau: Hüte sitzen jetzt exakt wie ingame

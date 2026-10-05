@@ -2,28 +2,33 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.6",
-        "fileName": "ChaosLauncher-2.1.6-setup.exe",
-        "url": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.6-setup.exe",
-        "sha256": "2b9ecd8b22de4cfbc84c3c2af9682886c0d6f56fecbbcbd6047c07154bf4d3d1",
-        "size": 6522318,
-        "publishedAt": "2026-10-03",
-        "notes": "- Import aus NoRisk: mitgelieferte Pack-Mods (Sodium, Fabric API, Lithium …) werden übernommen, fehlende Fabric-Abhängigkeiten automatisch ergänzt\n- Import aus NoRisk: gemeinsamer NRC-Ordner korrekt erkannt – Tastenbelegung, alle Welten, Serverliste, Resourcepacks kommen mit\n- Welten werden beim Import standardmäßig übernommen\n- Es läuft nur noch eine Launcher-Instanz gleichzeitig",
-        "msiUrl": "https://chaoslauncher.duckdns.org/download/ChaosLauncher-2.1.6.msi",
-        "msiSha256": "ea1bdfd8e82086d841138544d2d539fe7e0e3c7d6b93997794fffedc723f6398"
+        "version": "2.1.7",
+        "fileName": "ChaosLauncher-2.1.7-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.7/ChaosLauncher-2.1.7-setup.exe",
+        "sha256": "43f6a12918b6a01eddbf90608fb039cfb3609e9a63ff4575ac52c7be0d663fb3",
+        "size": 6647175,
+        "publishedAt": "2026-10-05",
+        "notes": "- Wings: 12 animierte Pixel-Art-Flügel (Engel, Chaos, Phönix, Galaxie, Schatten, Dämon, Drache, Fledermaus, Neon, Schmetterling, Fee, Kristall) mit 3D-Vorschau; ingame vom Chaos Client 2.2.0 gerendert und für andere Chaos-Spieler sichtbar\n- Updates und Downloads zusätzlich über GitHub (Releases + GitHub Pages) – funktioniert auch, wenn die Website offline ist\n- 3D-Vorschau: Hüte sitzen jetzt exakt wie ingame",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.7/ChaosLauncher-2.1.7.msi",
+        "msiSha256": "95cd135a020ccea0b5d53b9acd366e828f8e50ad794cd35e673d3f3c58d7d9ae"
       },
       "client": {
-        "version": "2.1.0",
-        "fileName": "chaos-client-2.1.0.jar",
-        "url": "https://chaoslauncher.duckdns.org/download/chaos-client-2.1.0.jar",
-        "sha256": "b30b4157a147f93d6794d3ffdb613406039b040ac17b46e9326a6bd48f467098",
-        "size": 392455,
-        "publishedAt": "2026-10-03",
-        "notes": "- Hüte und Partikel-Effekte anderer Spieler über die Cosmetics-API\n- Fix: Absturz beim Start durch Hilfsklasse im Mixin-Paket"
+        "version": "2.2.0",
+        "fileName": "chaos-client-2.2.0.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.7/chaos-client-2.2.0.jar",
+        "sha256": "e4e5826997f8dca8d8f170d51c3a1f46c175b3d0c203021402b94b65cb693d7b",
+        "size": 460111,
+        "publishedAt": "2026-10-05",
+        "notes": "Wings mit Flügelschlag-Animation, Leucht-Layer und Partikeln; Wings-Tab im Cosmetics-Menü"
       }
     }
   },
   "history": [
+    {
+      "version": "2.1.7",
+      "date": "2026-10-05",
+      "notes": "- Wings: 12 animierte Pixel-Art-Flügel (Engel, Chaos, Phönix, Galaxie, Schatten, Dämon, Drache, Fledermaus, Neon, Schmetterling, Fee, Kristall) mit 3D-Vorschau; ingame vom Chaos Client 2.2.0 gerendert und für andere Chaos-Spieler sichtbar\n- Updates und Downloads zusätzlich über GitHub (Releases + GitHub Pages) – funktioniert auch, wenn die Website offline ist\n- 3D-Vorschau: Hüte sitzen jetzt exakt wie ingame"
+    },
     {
       "version": "2.1.6",
       "date": "2026-10-03",
@@ -55,5 +60,6 @@
       "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-03"
+  "updatedAt": "2026-10-05",
+  "downloads": "github"
 }

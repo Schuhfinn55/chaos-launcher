@@ -29,6 +29,15 @@ PUBLIC = "https://chaoslauncher.duckdns.org"
 GH_REPO = os.environ.get("CHAOS_GH_REPO", "Schuhfinn55/chaos-launcher")
 PAGES_URL = "https://schuhfinn55.github.io/chaos-launcher"
 GH = shutil.which("gh") or r"C:\Program Files\GitHub CLI\gh.exe"
+# Zwischenordner im Projekt (kein %TEMP%: unter MSIX-Virtualisierung sehen Kindprozesse wie gh/git ihn sonst nicht)
+STAGING = os.path.join(ROOT, "src-tauri", "target", "publish-staging")
+
+
+def staging_dir(name):
+    d = os.path.join(STAGING, name)
+    shutil.rmtree(d, ignore_errors=True)
+    os.makedirs(d, exist_ok=True)
+    return d
 SITE_FILES = ["index.html", "style.css", "animations.css", "app.js", "animations.js", "licenses.html", "releases.json", "news.json", "SHA256SUMS", ".nojekyll"]
 
 
@@ -72,7 +81,8 @@ def collect_site():
 def publish_pages(files):
     """Website als Branch gh-pages pushen (eigenes Temp-Repo, force-push)."""
     origin = subprocess.run(["git", "-C", ROOT, "remote", "get-url", "origin"], capture_output=True, text=True, check=True).stdout.strip()
-    with tempfile.TemporaryDirectory() as tmp:
+    tmp = staging_dir("pages")
+    if True:
         for local, rel in files:
             dest = os.path.join(tmp, rel)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -96,9 +106,15 @@ def main():
     ap.add_argument("--site-only", action="store_true")
     ap.add_argument("--notes", default="")
     ap.add_argument("--client-notes", default="")
+    ap.add_argument("--notes-file", default="", help="Release-Notes aus UTF-8-Datei (umgeht Konsolen-Encoding)")
+    ap.add_argument("--client-notes-file", default="")
     ap.add_argument("--server", action="store_true", help="zusätzlich per SSH auf den eigenen Server laden")
     ap.add_argument("--no-github", action="store_true", help="kein GitHub-Release/Pages")
     args = ap.parse_args()
+    if args.notes_file:
+        args.notes = open(args.notes_file, encoding="utf-8").read().strip()
+    if args.client_notes_file:
+        args.client_notes = open(args.client_notes_file, encoding="utf-8").read().strip()
 
     pkg = json.load(open(os.path.join(ROOT, "package.json"), encoding="utf-8"))
     version = pkg["version"]
@@ -153,7 +169,8 @@ def main():
 
         if use_github:
             # Assets mit Zielnamen in Temp-Ordner (gh lädt unter dem Dateinamen hoch)
-            with tempfile.TemporaryDirectory() as tmp:
+            tmp = staging_dir("release")
+            if True:
                 paths = []
                 for local, name in assets:
                     dest = os.path.join(tmp, name)
@@ -163,12 +180,15 @@ def main():
                 paths.append(os.path.join(tmp, "SHA256SUMS"))
                 notes = (args.notes or launcher["notes"] or "").strip()
                 body = (notes + "\n\n" if notes else "") + f"**Download:** `{setup_name}` (Installer) · `{msi_name}` (MSI) · Chaos Client `{feed['channels']['stable'].get('client', {}).get('fileName', '')}`\n\nSHA-256 in `SHA256SUMS`. Website: {PAGES_URL}"
+                notes_path = os.path.join(tmp, "RELEASE_NOTES.md")
+                with open(notes_path, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(body)
                 exists = gh("release", "view", tag, "-R", GH_REPO, check=False, capture=True).returncode == 0
                 if exists:
-                    gh("release", "edit", tag, "-R", GH_REPO, "--title", f"Chaos Launcher {version}", "--notes", body)
+                    gh("release", "edit", tag, "-R", GH_REPO, "--title", f"Chaos Launcher {version}", "--notes-file", notes_path)
                     gh("release", "upload", tag, "-R", GH_REPO, "--clobber", *paths)
                 else:
-                    gh("release", "create", tag, "-R", GH_REPO, "--title", f"Chaos Launcher {version}", "--notes", body, "--latest", *paths)
+                    gh("release", "create", tag, "-R", GH_REPO, "--title", f"Chaos Launcher {version}", "--notes-file", notes_path, "--latest", *paths)
                 print(f"GitHub-Release: https://github.com/{GH_REPO}/releases/tag/{tag}")
 
     site = collect_site()
