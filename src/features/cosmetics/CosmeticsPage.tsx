@@ -14,7 +14,7 @@ import { useAccountStore, useCosmeticsStore, useProfileSkinStore, useSettingsSto
 import { toast } from "@/stores/toastStore";
 import { invoke } from "@/lib/bridge";
 import { uid, formatDate } from "@/lib/utils";
-import { CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, deleteCape, fileToBase64, getCapeDataUrl, imageSize, importCape, isAllowedCapeSize, renameCape, profileFor, setActiveCape, setCapeEnabled, setCosmetic, setVisibility, syncCosmetics, type CosmeticKind } from "@/lib/api/cosmetics";
+import { CAPE_FPS_OPTIONS, CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, capeFrames, deleteCape, fileToBase64, getCapeDataUrl, gifToCapeStrip, imageSize, importCape, isAllowedCapeSize, renameCape, profileFor, setActiveCape, setCapeEnabled, setCapeFps, setCosmetic, setVisibility, syncCosmetics, type CosmeticKind } from "@/lib/api/cosmetics";
 import { CHAOS_CAPES } from "@/lib/builtinCapes";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
@@ -106,7 +106,7 @@ export default function CosmeticsPage() {
         {/* ---------- 3D-Vorschau ---------- */}
         <aside className="chaos-card chaos-cos-preview">
           <div className="chaos-cos-preview-canvas">
-            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
+            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} capeFps={previewCape?.fps ?? 8} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
             {showCosmetics && <EffectPreview effect={shownEffect} width={300} height={400} />}
           </div>
           <div className="chaos-cos-preview-info">
@@ -374,21 +374,30 @@ function CapesSection({
       if (!files) return;
       setBusy(true);
       for (const file of Array.from(files)) {
-        if (!file.name.toLowerCase().endsWith(".png")) {
-          toast.warning("Übersprungen", `${file.name} ist keine PNG-Datei.`);
+        const lower = file.name.toLowerCase();
+        if (!lower.endsWith(".png") && !lower.endsWith(".gif")) {
+          toast.warning("Übersprungen", `${file.name} ist keine PNG- oder GIF-Datei.`);
           continue;
         }
         try {
-          const b64 = await fileToBase64(file);
-          const { w, h } = await imageSize(`data:image/png;base64,${b64}`);
-          if (!isAllowedCapeSize(w, h)) {
-            toast.error("Falsches Cape-Format", `${file.name}: ${w}×${h}. Erlaubt: ${CAPE_SIZES.map(([a, b]) => `${a}×${b}`).join(", ")}.`);
-            continue;
+          let b64: string;
+          let fps: number | undefined;
+          if (lower.endsWith(".gif")) {
+            const strip = await gifToCapeStrip(file);
+            b64 = strip.dataUrl.slice(strip.dataUrl.indexOf(",") + 1);
+            fps = strip.fps;
+          } else {
+            b64 = await fileToBase64(file);
+            const { w, h } = await imageSize(`data:image/png;base64,${b64}`);
+            if (!isAllowedCapeSize(w, h)) {
+              toast.error("Falsches Cape-Format", `${file.name}: ${w}×${h}. Erlaubt: ${CAPE_SIZES.map(([a, b]) => `${a}×${b}`).join(", ")} – oder mehrere solcher Frames untereinander (animiert).`);
+              continue;
+            }
           }
-          const cape = await importCape(file.name.replace(/\.png$/i, ""), b64, account?.uuid);
+          const cape = await importCape(file.name.replace(/\.(png|gif)$/i, ""), b64, account?.uuid, fps);
           await reload();
           onPreview(cape.id);
-          toast.success("Cape importiert", cape.name);
+          toast.success(capeFrames(cape.width, cape.height) > 1 ? "Animiertes Cape importiert" : "Cape importiert", cape.name);
         } catch (e) {
           toast.error("Import fehlgeschlagen", String(e));
         }
@@ -402,7 +411,7 @@ function CapesSection({
     setBusy(true);
     try {
       const dataUrl = b.generate();
-      const cape = await importCape(b.name, dataUrl.slice(dataUrl.indexOf(",") + 1), account?.uuid);
+      const cape = await importCape(b.name, dataUrl.slice(dataUrl.indexOf(",") + 1), account?.uuid, b.fps);
       await reload();
       onPreview(cape.id);
       toast.success("Cape hinzugefügt", b.name);
@@ -471,11 +480,11 @@ function CapesSection({
         <button className="chaos-btn chaos-btn-primary" onClick={() => fileInput.current?.click()} disabled={busy}>
           + Cape hochladen
         </button>
-        <input ref={fileInput} type="file" accept=".png" multiple style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+        <input ref={fileInput} type="file" accept=".png,.gif" multiple style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
       </div>
 
       <div className={"chaos-dropzone" + (dragOver ? " over" : "")} onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }} onClick={() => fileInput.current?.click()}>
-        Cape-PNG hierher ziehen oder klicken · Format wird vor dem Import geprüft
+        Cape-PNG oder animiertes GIF hierher ziehen oder klicken · Format wird vor dem Import geprüft
       </div>
 
       {capes.length === 0 ? (
@@ -501,8 +510,16 @@ function CapesSection({
                 <div className="chaos-cos-item-img cape">{thumbs[c.id] ? <img src={thumbs[c.id]} alt={c.name} /> : <span className="chaos-skeleton block" style={{ width: 60, height: 96 }} />}</div>
                 <strong className="chaos-truncate">{c.name}</strong>
                 <span className="chaos-faint" style={{ fontSize: 11 }}>
-                  {c.width}×{c.height} · {c.source === "custom" ? "eigenes Cape" : c.source} · {formatDate(c.createdAt)}
+                  {capeFrames(c.width, c.height) > 1 ? `${c.width}×${c.width / 2} · ▶ ${capeFrames(c.width, c.height)} Frames` : `${c.width}×${c.height}`} · {c.source === "custom" ? "eigenes Cape" : c.source} · {formatDate(c.createdAt)}
                 </span>
+                {capeFrames(c.width, c.height) > 1 && (
+                  <label className="chaos-row" style={{ gap: 6, fontSize: 11 }} onClick={(e) => e.stopPropagation()}>
+                    <span className="chaos-faint">Tempo</span>
+                    <select className="chaos-input chaos-input-sm" value={c.fps ?? 8} onChange={async (e) => { await setCapeFps(c.id, Number(e.target.value)); await reload(); if (account) syncCosmetics(account.uuid).catch(() => {}); }}>
+                      {CAPE_FPS_OPTIONS.map((f) => <option key={f} value={f}>{f} fps</option>)}
+                    </select>
+                  </label>
+                )}
                 <div className="chaos-cos-item-actions" onClick={(e) => e.stopPropagation()}>
                   {isActive ? (
                     <span className="chaos-badge chaos-badge-accent">AKTIV</span>

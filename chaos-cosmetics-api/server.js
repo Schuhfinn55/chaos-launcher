@@ -94,11 +94,12 @@ function validCape(buf) {
   if (buf.length > MAX_PNG) return false;
   const d = pngDimensions(buf);
   if (!d) return false;
-  return d.w === d.h * 2 && d.w % 64 === 0 && d.w >= 64 && d.w <= 2048;
+  const fh = d.w / 2, frames = fh > 0 && d.h % fh === 0 ? d.h / fh : 0; // animiert = mehrere 2:1-Frames untereinander
+  return d.w % 64 === 0 && d.w >= 64 && d.w <= 2048 && frames >= 1 && frames <= 64 && d.h <= 8192;
 }
 function sha1(buf) { return crypto.createHash("sha1").update(buf).digest("hex"); }
 function capeUrl(id) { return `${PUBLIC_URL}/v1/capes/${id}/texture`; }
-function remoteCape(c) { return c ? { id: c.id, name: c.name, url: capeUrl(c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom" } : null; }
+function remoteCape(c) { return c ? { id: c.id, name: c.name, url: capeUrl(c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom", fps: c.fps || 8 } : null; }
 function playerView(uuid) {
   const p = players[uuid];
   if (!p) return null;
@@ -251,16 +252,18 @@ const server = http.createServer(async (req, res) => {
       const s = bearer(req);
       if (!s) return json(res, 401, { error: "Token fehlt oder abgelaufen" });
       const body = await readBody(req);
-      let name = "Cape", png = null;
+      let name = "Cape", png = null, fps = 8;
       const ct = req.headers["content-type"] || "";
       if (ct.startsWith("multipart/form-data")) {
         const parts = parseMultipart(body, ct);
         if (!parts || !parts.file) return json(res, 400, { error: "file fehlt" });
         png = parts.file;
         if (parts.name) name = parts.name.toString("utf8");
+        if (parts.fps && Number(parts.fps.toString("utf8")) > 0) fps = Number(parts.fps.toString("utf8"));
       } else {
         const b = JSON.parse(body.toString("utf8") || "{}");
         name = b.name || name;
+        if (Number(b.fps) > 0) fps = Number(b.fps);
         png = Buffer.from(String(b.dataBase64 || "").replace(/^data:[^,]+,/, ""), "base64");
       }
       if (!validCape(png)) return json(res, 400, { error: "Ungültiges Cape-PNG (64×32 oder Vielfache, max. 4 MB)" });
@@ -272,7 +275,8 @@ const server = http.createServer(async (req, res) => {
       if (owned.length >= 50) return json(res, 400, { error: "Maximal 50 Capes pro Spieler" });
       const id = crypto.randomBytes(8).toString("hex");
       fs.writeFileSync(path.join(CAPES_DIR, id + ".png"), png);
-      capes[id] = { id, name, owner: s.uuid, sha1: hash, file: id + ".png", version: 1, kind: "custom", createdAt: now() };
+      fps = Math.max(1, Math.min(60, Math.round(fps)));
+      capes[id] = { id, name, owner: s.uuid, sha1: hash, file: id + ".png", version: 1, kind: "custom", fps, createdAt: now() };
       saveJson(CAPES_FILE, capes);
       return json(res, 200, remoteCape(capes[id]));
     }

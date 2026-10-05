@@ -38,15 +38,63 @@ export const CAPE_SIZES: Array<[number, number]> = [
   [2048, 1024],
 ];
 
+/** Frames eines Cape-Streifens (je Frame 2:1); 0 = ungültig, 1 = statisch, >1 = animiert. */
+export function capeFrames(w: number, h: number): number {
+  const fh = w / 2;
+  return fh > 0 && h % fh === 0 ? h / fh : 0;
+}
 export function isAllowedCapeSize(w: number, h: number): boolean {
-  return CAPE_SIZES.some(([a, b]) => a === w && b === h);
+  const f = capeFrames(w, h);
+  return CAPE_SIZES.some(([a]) => a === w) && f >= 1 && f <= 64 && h <= 8192;
+}
+export const CAPE_FPS_OPTIONS = [4, 6, 8, 10, 12, 15, 20, 24, 30];
+
+/**
+ * GIF → Cape-Streifen (PNG-Data-URL): jedes Frame muss ein gültiges Cape-Format haben
+ * (64×32 oder Vielfache). Nutzt die ImageDecoder-API (WebView2/Chromium).
+ */
+export async function gifToCapeStrip(file: File): Promise<{ dataUrl: string; frames: number; fps: number; w: number; h: number }> {
+  const Dec = (window as unknown as { ImageDecoder?: new (init: { data: ArrayBuffer; type: string }) => ImageDecoderLike }).ImageDecoder;
+  if (!Dec) throw new Error("GIF-Import wird von dieser WebView nicht unterstützt – bitte als PNG-Streifen importieren.");
+  const dec = new Dec({ data: await file.arrayBuffer(), type: "image/gif" });
+  await dec.tracks.ready;
+  const total = dec.tracks.selectedTrack?.frameCount ?? 1;
+  const take = Math.min(64, total);
+  const first = await dec.decode({ frameIndex: 0 });
+  const w = first.image.displayWidth, fh = first.image.displayHeight;
+  if (!CAPE_SIZES.some(([a, b]) => a === w && b === fh)) {
+    first.image.close();
+    throw new Error(`GIF-Frames haben ${w}×${fh} – erlaubt sind ${CAPE_SIZES.map(([a, b]) => `${a}×${b}`).join(", ")} je Frame.`);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = fh * take;
+  const ctx = canvas.getContext("2d")!;
+  let durSum = 0, durN = 0;
+  for (let i = 0; i < take; i++) {
+    const idx = Math.floor((i * total) / take);
+    const { image } = idx === 0 ? first : await dec.decode({ frameIndex: idx });
+    ctx.drawImage(image, 0, i * fh);
+    if (image.duration) { durSum += image.duration; durN++; }
+    image.close();
+  }
+  const avgMs = durN ? durSum / durN / 1000 : 125;
+  const fps = Math.max(1, Math.min(30, Math.round(1000 / Math.max(20, avgMs))));
+  return { dataUrl: canvas.toDataURL("image/png"), frames: take, fps, w, h: fh * take };
+}
+interface ImageDecoderLike {
+  tracks: { ready: Promise<void>; selectedTrack: { frameCount: number } | null };
+  decode(opts: { frameIndex: number }): Promise<{ image: VideoFrame }>;
 }
 
 export async function getCosmetics(): Promise<CosmeticsState> {
   return invoke<CosmeticsState>("get_cosmetics");
 }
-export async function importCape(name: string, dataBase64: string, ownerUuid?: string): Promise<Cape> {
-  return invoke<Cape>("import_cape", { name, dataBase64, ownerUuid: ownerUuid ?? null });
+export async function importCape(name: string, dataBase64: string, ownerUuid?: string, fps?: number): Promise<Cape> {
+  return invoke<Cape>("import_cape", { name, dataBase64, ownerUuid: ownerUuid ?? null, fps: fps ?? null });
+}
+export async function setCapeFps(capeId: string, fps: number): Promise<void> {
+  await invoke("set_cape_fps", { capeId, fps });
 }
 export async function importCapeFile(path: string, ownerUuid?: string): Promise<Cape> {
   return invoke<Cape>("import_cape_file", { path, name: null, ownerUuid: ownerUuid ?? null });

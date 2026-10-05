@@ -150,6 +150,7 @@ pub fn run() {
             commands::cosmetics::import_cape,
             commands::cosmetics::import_cape_file,
             commands::cosmetics::rename_cape,
+            commands::cosmetics::set_cape_fps,
             commands::cosmetics::delete_cape,
             commands::cosmetics::set_cape_enabled,
             commands::cosmetics::set_active_cape,

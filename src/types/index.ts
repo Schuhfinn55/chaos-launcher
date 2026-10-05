@@ -272,6 +272,8 @@ export interface Cape {
   width: number;
   height: number;
   sha1: string;
+  /** Bilder pro Sekunde bei animierten Capes (Frame-Streifen). */
+  fps: number;
 }
 
 /** Echter Account-Skin (vom Backend über den Mojang-Sessionserver geladen). */

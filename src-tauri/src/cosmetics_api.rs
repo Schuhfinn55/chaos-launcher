@@ -40,6 +40,9 @@ pub struct RemoteCape {
     /// "custom" | "official" | "event" | "clan".
     #[serde(default)]
     pub kind: String,
+    /// Bilder pro Sekunde (animierte Capes).
+    #[serde(default = "crate::models::default_fps")]
+    pub fps: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -279,13 +282,13 @@ pub async fn authenticate(api_url: &str, account: &Account) -> Result<String, St
 }
 
 /// Lädt ein Cape zur API hoch.
-pub async fn upload_cape(api_url: &str, token: &str, name: &str, png: Vec<u8>) -> Result<RemoteCape, String> {
+pub async fn upload_cape(api_url: &str, token: &str, name: &str, png: Vec<u8>, fps: u32) -> Result<RemoteCape, String> {
     let b = base(api_url)?;
     let client = http_client()?;
     let resp = client
         .post(format!("{b}/v1/capes"))
         .bearer_auth(token)
-        .json(&serde_json::json!({ "name": name, "dataBase64": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &png) }))
+        .json(&serde_json::json!({ "name": name, "fps": fps.clamp(1, 60), "dataBase64": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &png) }))
         .send()
         .await
         .map_err(|e| format!("Cape-Upload: {e}"))?;
@@ -358,7 +361,7 @@ pub async fn cache_player_cape(api_url: &str, uuid: &str) -> Result<Option<std::
     std::fs::write(&dest, &bytes).map_err(|e| format!("Cape-Cache: {e}"))?;
     let _ = std::fs::write(
         &meta_path,
-        serde_json::json!({ "sha1": cape.sha1, "id": cape.id, "hat": remote.hat, "effect": remote.effect, "wings": remote.wings, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string(),
+        serde_json::json!({ "sha1": cape.sha1, "id": cape.id, "fps": cape.fps, "hat": remote.hat, "effect": remote.effect, "wings": remote.wings, "name": remote.name, "cachedAt": crate::system::now_millis() }).to_string(),
     );
     Ok(Some(dest))
 }

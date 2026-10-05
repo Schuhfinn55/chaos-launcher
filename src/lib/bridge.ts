@@ -174,7 +174,7 @@ const mocks: Record<string, MockHandler> = {
   },
   async import_cape(args) {
     const state = ls<{ capes: unknown[]; profiles: unknown[]; version: number }>("chaos.cosmetics", { capes: [], profiles: [], version: 1 });
-    const cape = { id: "cape_" + Date.now(), name: args.name, fileName: "mock.png", createdAt: Date.now(), source: "custom", ownerUuid: "", enabled: true, remoteId: "", remoteUrl: "", width: 64, height: 32, sha1: "" };
+    const cape = { id: "cape_" + Date.now(), name: args.name, fileName: "mock.png", createdAt: Date.now(), source: "custom", ownerUuid: "", enabled: true, remoteId: "", remoteUrl: "", width: 64, height: 32, sha1: "", fps: (args.fps as number | null) ?? 8 };
     lsSet("chaos.cosmetics", { ...state, capes: [...state.capes, cape] });
     lsSet("chaos.capeData." + cape.id, args.dataBase64);
     return cape;
@@ -188,6 +188,9 @@ const mocks: Record<string, MockHandler> = {
     const profile = { accountUuid: String(args.accountUuid), activeCapeId: String(args.capeId), hatId: "", effectId: "", wingsId: "", visibility: "everyone", updatedAt: Date.now() };
     lsSet("chaos.cosmetics", { ...state, profiles: [...others, profile] });
     return profile;
+  },
+  async set_cape_fps() {
+    return true;
   },
   async rename_cape(args) {
     const state = ls<{ capes: { id: string; name: string }[]; profiles: unknown[]; version: number }>("chaos.cosmetics", { capes: [], profiles: [], version: 1 });

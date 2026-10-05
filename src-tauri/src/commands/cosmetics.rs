@@ -53,22 +53,30 @@ pub fn sync_ingame_state() -> Result<Vec<String>, String> {
 /// Importiert ein Cape aus Base64/Data-URL.
 #[tauri::command]
 #[allow(non_snake_case)]
-pub fn import_cape(name: String, dataBase64: String, ownerUuid: Option<String>) -> Result<Cape, String> {
+pub fn import_cape(name: String, dataBase64: String, ownerUuid: Option<String>, fps: Option<u32>) -> Result<Cape, String> {
     let bytes = super::decode_base64(&dataBase64)?;
-    cosmetics::import_cape(&name, &bytes, ownerUuid.as_deref().unwrap_or(""), "custom")
+    cosmetics::import_cape(&name, &bytes, ownerUuid.as_deref().unwrap_or(""), "custom", fps)
+}
+
+/// Bilder pro Sekunde eines animierten Capes setzen.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn set_cape_fps(capeId: String, fps: u32) -> Result<bool, String> {
+    cosmetics::set_cape_fps(&capeId, fps)?;
+    Ok(true)
 }
 
 /// Importiert ein Cape direkt aus einer Datei (Dateidialog).
 #[tauri::command]
 #[allow(non_snake_case)]
-pub fn import_cape_file(path: String, name: Option<String>, ownerUuid: Option<String>) -> Result<Cape, String> {
+pub fn import_cape_file(path: String, name: Option<String>, ownerUuid: Option<String>, fps: Option<u32>) -> Result<Cape, String> {
     let bytes = std::fs::read(&path).map_err(|e| format!("Datei lesen: {e}"))?;
     let fallback = std::path::Path::new(&path)
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("Cape")
         .to_string();
-    cosmetics::import_cape(name.as_deref().unwrap_or(&fallback), &bytes, ownerUuid.as_deref().unwrap_or(""), "custom")
+    cosmetics::import_cape(name.as_deref().unwrap_or(&fallback), &bytes, ownerUuid.as_deref().unwrap_or(""), "custom", fps)
 }
 
 #[tauri::command]
@@ -163,7 +171,7 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     if let Some(cape) = active {
         let bytes = std::fs::read(cosmetics::capes_dir().join(&cape.file_name)).map_err(|e| format!("Cape lesen: {e}"))?;
         let remote = if cape.remote_id.is_empty() {
-            let r = cosmetics_api::upload_cape(&api, &token, &cape.name, bytes).await?;
+            let r = cosmetics_api::upload_cape(&api, &token, &cape.name, bytes, cape.fps).await?;
             if let Some(c) = state.capes.iter_mut().find(|c| c.id == cape.id) {
                 c.remote_id = r.id.clone();
                 c.remote_url = r.url.clone();

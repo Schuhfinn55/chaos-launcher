@@ -479,10 +479,17 @@ pub struct Cape {
     pub height: u32,
     #[serde(default)]
     pub sha1: String,
+    /// Bilder pro Sekunde bei animierten Capes (Frame-Streifen; 1 Frame = statisch).
+    #[serde(default = "default_fps")]
+    pub fps: u32,
 }
 
 fn default_cape_source() -> String {
     "custom".to_string()
+}
+
+pub fn default_fps() -> u32 {
+    8
 }
 
 /// Cosmetics-Zustand pro Account.

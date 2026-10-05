@@ -1,0 +1,3 @@
+- Animierte Capes: PNG-Frame-Streifen oder animierte GIFs importieren, Tempo (fps) einstellen, animierte 3D-Vorschau – sechs neue animierte Chaos-Vorlagen (Chaos Flame, Chaos Pulse, Gewitter, Galaxy Drift, Red Matrix, Chaos Wave)
+- Chaos-Badge ingame: Pixel-Icon vor dem Namen über dem Kopf und in der Tab-Liste bei allen Chaos-Client-Spielern (Chaos Client 2.3.0)
+- Cosmetics-API unterstützt animierte Capes (fps wird mitgespeichert)

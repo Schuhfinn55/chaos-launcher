@@ -24,6 +24,8 @@ export interface SkinViewer3DProps {
   zoom?: number;
   /** "cape" oder "elytra" */
   backEquipment?: "cape" | "elytra";
+  /** Bilder pro Sekunde, falls capeUrl ein animierter Frame-Streifen ist */
+  capeFps?: number;
   /** Vorgefertigter Hut (Quader am Kopf) */
   hat?: BuiltinHat | null;
   /** Animierte Wings (Federn am Rücken) */
@@ -43,6 +45,7 @@ export default function SkinViewer3D({
   autoRotate = true,
   zoom = 0.85,
   backEquipment = "cape",
+  capeFps = 8,
   hat = null,
   wings = null,
   className,
@@ -123,9 +126,50 @@ export default function SkinViewer3D({
       v.resetCape();
       return;
     }
-    const r = v.loadCape(capeUrl, { backEquipment });
-    if (r && typeof (r as Promise<void>).catch === "function") (r as Promise<void>).catch(() => v.resetCape());
-  }, [capeUrl, backEquipment]);
+    let cancelled = false;
+    let raf = 0;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      const w = img.naturalWidth, fh = w / 2;
+      const n = fh > 0 && img.naturalHeight % fh === 0 ? img.naturalHeight / fh : 1;
+      if (n <= 1) {
+        const r = v.loadCape(capeUrl, { backEquipment });
+        if (r && typeof (r as Promise<void>).catch === "function") (r as Promise<void>).catch(() => v.resetCape());
+        return;
+      }
+      // Animiertes Cape: Frames ausschneiden und mit capeFps durchschalten
+      const frames: HTMLCanvasElement[] = [];
+      for (let i = 0; i < n; i++) {
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = fh;
+        c.getContext("2d")!.drawImage(img, 0, -i * fh);
+        frames.push(c);
+      }
+      const fps = Math.max(1, Math.min(60, capeFps || 8));
+      let last = -1;
+      const tick = () => {
+        if (cancelled) return;
+        const idx = Math.floor((performance.now() / 1000) * fps) % n;
+        if (idx !== last) {
+          last = idx;
+          try {
+            const r = v.loadCape(frames[idx], { backEquipment }) as unknown;
+            if (r && typeof (r as Promise<void>).catch === "function") (r as Promise<void>).catch(() => {});
+          } catch { /* Frame überspringen */ }
+        }
+        raf = requestAnimationFrame(tick);
+      };
+      tick();
+    };
+    img.onerror = () => { if (!cancelled) v.resetCape(); };
+    img.src = capeUrl;
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
+  }, [capeUrl, backEquipment, capeFps]);
 
   // Hut: Quader in Kopf-Koordinaten (MC-Modellraum, y nach unten) an den Kopf hängen
   useEffect(() => {

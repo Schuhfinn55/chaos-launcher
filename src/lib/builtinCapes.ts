@@ -11,6 +11,9 @@ export interface BuiltinCape {
   name: string;
   description: string;
   generate: () => string;
+  /** Animiert: Bilder pro Sekunde (generate liefert dann einen Frame-Streifen) */
+  fps?: number;
+  frames?: number;
 }
 
 /** Skalierung des 64×32-Layouts. 4 → 256×128 (erlaubtes Format). */
@@ -22,11 +25,28 @@ type Painter = (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
 
 /** Zeichnet die Vorderseite über `paint` (Koordinaten 0..w, 0..h) und baut den Rest der Textur. */
 function drawCape(paint: Painter): string {
+  return drawCapeCanvas(paint).toDataURL("image/png");
+}
+
+/** Animiertes Cape: `frames` Einzelbilder (paint erhält t = 0..1) untereinander als Streifen. */
+function drawAnimatedCape(frames: number, paint: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number) => void): string {
+  const strip = document.createElement("canvas");
+  strip.width = 64 * S;
+  strip.height = 32 * S * frames;
+  const ctx = strip.getContext("2d")!;
+  for (let i = 0; i < frames; i++) {
+    const frame = drawCapeCanvas((c, w, h) => paint(c, w, h, i / frames));
+    ctx.drawImage(frame, 0, i * 32 * S);
+  }
+  return strip.toDataURL("image/png");
+}
+
+function drawCapeCanvas(paint: Painter): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 64 * S;
   canvas.height = 32 * S;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return "";
+  if (!ctx) return canvas;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Vorderseite in eigenem Canvas malen
@@ -58,7 +78,7 @@ function drawCape(paint: Painter): string {
   ctx.fillRect(11 * S, 1 * S, 1 * S, FH); // rechte Kante
   ctx.fillRect(1 * S, 0, FW, 1 * S); // oben
   ctx.fillRect(11 * S, 0, FW, 1 * S); // unten
-  return canvas.toDataURL("image/png");
+  return canvas;
 }
 
 /* ---------- Hilfsfunktionen ---------- */
@@ -429,7 +449,138 @@ const amethyst = () =>
     for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo((i * 9) % w, 0); ctx.lineTo(((i * 9) % w) + 14, h); ctx.stroke(); }
   });
 
+/* ---------- Animierte Vorlagen ---------- */
+const TAU = Math.PI * 2;
+
+/** Lodernde Flammen von unten, flackernd. */
+const animFlame = () =>
+  drawAnimatedCape(12, (ctx, w, h, t) => {
+    vgrad(ctx, w, h, ["#0b0305", "#2a0a0d", "#5a0f14"]);
+    const r = rng(7);
+    for (let i = 0; i < 26; i++) {
+      const x = r() * w;
+      const phase = r() * TAU;
+      const flick = 0.5 + 0.5 * Math.sin(t * TAU * 2 + phase);
+      const fh = h * (0.35 + 0.45 * r()) * (0.7 + 0.3 * flick);
+      const g = ctx.createLinearGradient(0, h, 0, h - fh);
+      g.addColorStop(0, "rgba(255,210,80,0.95)");
+      g.addColorStop(0.45, "rgba(255,110,20,0.85)");
+      g.addColorStop(1, "rgba(225,29,46,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, h);
+      ctx.quadraticCurveTo(x + Math.sin(t * TAU + phase) * 3, h - fh * 0.6, x + Math.sin(t * TAU * 3 + phase) * 2, h - fh);
+      ctx.quadraticCurveTo(x + 4, h - fh * 0.5, x + 4, h);
+      ctx.fill();
+    }
+    chaosRing(ctx, w / 2, h * 0.3, w * 0.22, "#ffffff", "rgba(255,120,60,0.6)");
+  });
+
+/** Blitze zucken zufällig über schwarzen Himmel. */
+const animLightning = () =>
+  drawAnimatedCape(10, (ctx, w, h, t) => {
+    const flash = [0, 1, 0.3, 0, 0, 0.8, 0.2, 0, 0, 0][Math.floor(t * 10) % 10];
+    vgrad(ctx, w, h, [lerpColor("#07070a", "#3a1016", flash), "#0d0d12"]);
+    const r = rng(100 + Math.floor(t * 10));
+    if (flash > 0) {
+      ctx.strokeStyle = `rgba(255,${Math.round(90 + flash * 120)},${Math.round(100 + flash * 120)},${0.6 + flash * 0.4})`;
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = "#ff4d5e";
+      ctx.shadowBlur = 8 * flash;
+      for (let b = 0; b < 2; b++) {
+        let x = w * (0.3 + r() * 0.4), y = 0;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        while (y < h) { x += (r() - 0.5) * 10; y += 4 + r() * 6; ctx.lineTo(x, y); }
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+    }
+    trim(ctx, w, h, "#e11d2e");
+  });
+
+/** Sternenhimmel, der langsam nach oben zieht, mit pulsierenden Sternen. */
+const animGalaxy = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    dgrad(ctx, w, h, ["#120a2e", "#2a0f4f", "#0a1f4a"]);
+    const r = rng(3);
+    for (let i = 0; i < 70; i++) {
+      const x = r() * w, y0 = r() * h, size = 0.6 + r() * 1.4, ph = r() * TAU;
+      const y = (y0 - t * h + h) % h;
+      const a = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * TAU * 2 + ph));
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    const g = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, w * 0.7);
+    g.addColorStop(0, "rgba(225,29,46,0.35)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
+
+/** Chaos-C pulsiert mit rotem Glühen. */
+const animPulse = () =>
+  drawAnimatedCape(12, (ctx, w, h, t) => {
+    const p = 0.5 + 0.5 * Math.sin(t * TAU);
+    vgrad(ctx, w, h, ["#0a0a0c", "#17171c", "#0a0a0c"]);
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * (0.45 + p * 0.35));
+    g.addColorStop(0, `rgba(225,29,46,${0.25 + p * 0.45})`);
+    g.addColorStop(1, "rgba(225,29,46,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    chaosRing(ctx, w / 2, h / 2, w * (0.26 + p * 0.03), "#e11d2e", `rgba(255,77,94,${0.4 + p * 0.6})`);
+    trim(ctx, w, h, lerpColor("#3a0a10", "#e11d2e", p), 1);
+  });
+
+/** Digitaler Regen in Rot (Matrix-Stil). */
+const animMatrix = () =>
+  drawAnimatedCape(12, (ctx, w, h, t) => {
+    ctx.fillStyle = "#050507";
+    ctx.fillRect(0, 0, w, h);
+    const r = rng(11);
+    const cols = 10;
+    for (let c = 0; c < cols; c++) {
+      const x = (c + 0.5) * (w / cols);
+      const speed = 0.6 + r() * 0.8, off = r();
+      const head = ((t * speed + off) % 1) * (h + 20) - 10;
+      for (let k = 0; k < 9; k++) {
+        const y = head - k * 4.5;
+        if (y < 0 || y > h) continue;
+        const a = k === 0 ? 1 : Math.max(0, 0.8 - k * 0.1);
+        ctx.fillStyle = k === 0 ? `rgba(255,200,205,${a})` : `rgba(225,29,46,${a})`;
+        ctx.fillRect(x - 1.2, y, 2.4, 3);
+      }
+    }
+  });
+
+/** Regenbogen-Wellen in Chaos-Farben, laufen diagonal. */
+const animWave = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x += 2) {
+        const v = 0.5 + 0.5 * Math.sin((x / w) * TAU * 1.5 + (y / h) * TAU - t * TAU);
+        ctx.fillStyle = lerpColor("#1a0508", "#e11d2e", v * v);
+        ctx.fillRect(x, y, 2, 1);
+      }
+    }
+    const shine = ((t * 1.3) % 1) * (w + h);
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.beginPath();
+    ctx.moveTo(shine, 0);
+    ctx.lineTo(shine + 10, 0);
+    ctx.lineTo(shine - h + 10, h);
+    ctx.lineTo(shine - h, h);
+    ctx.fill();
+    trim(ctx, w, h, "#ffffff", 1);
+  });
+
 export const CHAOS_CAPES: BuiltinCape[] = [
+  { id: "anim-flame", name: "Chaos Flame", description: "Animiert: lodernde Flammen", generate: animFlame, fps: 10, frames: 12 },
+  { id: "anim-pulse", name: "Chaos Pulse", description: "Animiert: pulsierendes Chaos-C", generate: animPulse, fps: 12, frames: 12 },
+  { id: "anim-lightning", name: "Gewitter", description: "Animiert: zuckende Blitze", generate: animLightning, fps: 10, frames: 10 },
+  { id: "anim-galaxy", name: "Galaxy Drift", description: "Animiert: ziehender Sternenhimmel", generate: animGalaxy, fps: 8, frames: 16 },
+  { id: "anim-matrix", name: "Red Matrix", description: "Animiert: digitaler Regen", generate: animMatrix, fps: 12, frames: 12 },
+  { id: "anim-wave", name: "Chaos Wave", description: "Animiert: laufende Wellen", generate: animWave, fps: 12, frames: 16 },
   { id: "chaos-classic", name: "Chaos Cape", description: "Dunkelrot, Rautenmuster, Chaos-C", generate: chaosClassic },
   { id: "chaoscraft", name: "Chaoscraft", description: "Rot/Schwarz-Split mit weißem C", generate: chaoscraft },
   { id: "inferno", name: "Inferno", description: "Flammen und Glut", generate: inferno },

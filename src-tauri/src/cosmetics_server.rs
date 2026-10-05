@@ -58,6 +58,8 @@ struct CapeRec {
     sha1: String,
     #[serde(default)]
     file: String,
+    #[serde(default = "crate::models::default_fps")]
+    fps: u32,
     #[serde(default)]
     version: u32,
     #[serde(default)]
@@ -313,7 +315,7 @@ fn host_of(req: &Request) -> String {
 fn cape_view(host: &str, c: &CapeRec) -> serde_json::Value {
     serde_json::json!({
         "id": c.id, "name": c.name, "url": format!("http://{host}/v1/capes/{}/texture", c.id),
-        "sha1": c.sha1, "version": c.version.max(1), "kind": if c.kind.is_empty() { "custom" } else { c.kind.as_str() }
+        "sha1": c.sha1, "version": c.version.max(1), "kind": if c.kind.is_empty() { "custom" } else { c.kind.as_str() }, "fps": c.fps.max(1)
     })
 }
 fn player_view(st: &State, host: &str, uuid: &str) -> Option<serde_json::Value> {
@@ -497,6 +499,7 @@ fn handle(mut req: Request) -> Result<(), String> {
                     let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap_or_default();
                     let name = body.get("name").and_then(|v| v.as_str()).unwrap_or("Cape");
                     let name: String = name.chars().filter(|c| c.is_alphanumeric() || " ._-".contains(*c)).take(40).collect();
+                    let fps = body.get("fps").and_then(|v| v.as_u64()).map(|v| v.clamp(1, 60) as u32).unwrap_or(8);
                     let data = body.get("dataBase64").and_then(|v| v.as_str()).unwrap_or("");
                     let payload = data.split(',').last().unwrap_or("");
                     match B64.decode(payload).ok().filter(|png| crate::cosmetics::validate_cape(png).is_ok()) {
@@ -513,7 +516,7 @@ fn handle(mut req: Request) -> Result<(), String> {
                                 let id = hex_random(8);
                                 let file = format!("{id}.png");
                                 fs::write(capes_dir().join(&file), &png).map_err(|e| e.to_string())?;
-                                let rec = CapeRec { id: id.clone(), name: if name.is_empty() { "Cape".into() } else { name }, owner: uuid, sha1: sha, file, version: 1, kind: "custom".into(), created_at: now_millis() };
+                                let rec = CapeRec { id: id.clone(), name: if name.is_empty() { "Cape".into() } else { name }, owner: uuid, sha1: sha, file, fps, version: 1, kind: "custom".into(), created_at: now_millis() };
                                 st.capes.insert(id, rec.clone());
                                 persist(&st);
                                 json_resp(200, cape_view(&host, &rec))

@@ -63,16 +63,24 @@ pub fn png_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
     Ok((w, h))
 }
 
+/// Anzahl der Frames eines Cape-Streifens (je Frame 2:1); 0 = ungültig.
+pub fn cape_frames(w: u32, h: u32) -> u32 {
+    let fh = w / 2;
+    if fh == 0 || h % fh != 0 { 0 } else { h / fh }
+}
+
 /// Prüft ein Cape-PNG auf Format, Größe und Signatur.
 pub fn validate_cape(bytes: &[u8]) -> Result<(u32, u32), String> {
     if bytes.len() > MAX_FILE_BYTES {
         return Err("Die Cape-Datei ist zu groß (max. 4 MB).".to_string());
     }
     let (w, h) = png_dimensions(bytes)?;
-    if !ALLOWED_SIZES.contains(&(w, h)) {
+    // Statisch: Breite:Höhe = 2:1. Animiert: mehrere 2:1-Frames untereinander (max. 64).
+    let frames = cape_frames(w, h);
+    if !ALLOWED_SIZES.iter().any(|(a, _)| *a == w) || frames == 0 || frames > 64 || h > 8192 {
         let allowed: Vec<String> = ALLOWED_SIZES.iter().map(|(a, b)| format!("{a}×{b}")).collect();
         return Err(format!(
-            "Falsches Cape-Format: {w}×{h}. Erlaubt sind {} Pixel.",
+            "Falsches Cape-Format: {w}×{h}. Erlaubt sind {} Pixel – oder für animierte Capes mehrere solcher Frames untereinander (max. 64).",
             allowed.join(", ")
         ));
     }
@@ -110,8 +118,9 @@ pub fn save(s: &CosmeticsState) -> Result<(), String> {
 }
 
 /// Importiert ein Cape aus PNG-Bytes.
-pub fn import_cape(name: &str, bytes: &[u8], owner_uuid: &str, source: &str) -> Result<Cape, String> {
+pub fn import_cape(name: &str, bytes: &[u8], owner_uuid: &str, source: &str, fps: Option<u32>) -> Result<Cape, String> {
     let (w, h) = validate_cape(bytes)?;
+    let fps = fps.unwrap_or(8).clamp(1, 60);
     let id = new_id();
     let file_name = format!("{id}.png");
     fs::write(capes_dir().join(&file_name), bytes).map_err(|e| format!("Cape speichern: {e}"))?;
@@ -128,11 +137,23 @@ pub fn import_cape(name: &str, bytes: &[u8], owner_uuid: &str, source: &str) -> 
         width: w,
         height: h,
         sha1: sha1_hex(bytes),
+        fps,
     };
     let mut state = load()?;
     state.capes.push(cape.clone());
     save(&state)?;
     Ok(cape)
+}
+
+/// Bilder pro Sekunde eines (animierten) Capes setzen.
+pub fn set_cape_fps(id: &str, fps: u32) -> Result<(), String> {
+    let mut state = load()?;
+    let c = state.capes.iter_mut().find(|c| c.id == id).ok_or("Cape nicht gefunden")?;
+    c.fps = fps.clamp(1, 60);
+    for p in state.profiles.iter_mut() {
+        if p.active_cape_id == id { p.updated_at = now_millis(); }
+    }
+    save(&state)
 }
 
 fn clean_name(name: &str) -> String {
@@ -297,6 +318,7 @@ pub fn export_for_instance(
             if fs::copy(capes_dir().join(&c.file_name), &dest).is_ok() {
                 entry.insert("cape".into(), serde_json::json!(format!("players/{uuid}.png")));
                 entry.insert("sha1".into(), serde_json::json!(c.sha1));
+                entry.insert("fps".into(), serde_json::json!(c.fps));
             }
         }
         if !p.hat_id.is_empty() {
@@ -324,6 +346,7 @@ pub fn export_for_instance(
             if fs::copy(capes_dir().join(&c.file_name), lib_dir.join(&file)).is_ok() {
                 library.push(serde_json::json!({
                     "id": c.id, "name": c.name, "file": format!("capes/{file}"), "sha1": c.sha1, "source": c.source,
+                    "fps": c.fps, "frames": cape_frames(c.width, c.height),
                 }));
             }
         }
@@ -348,6 +371,9 @@ pub fn export_for_instance(
                             if let Some(s) = v.get("sha1").and_then(|s| s.as_str()) {
                                 entry.insert("sha1".into(), serde_json::json!(s));
                             }
+                        }
+                        if let Some(f) = v.get("fps").and_then(|f| f.as_u64()) {
+                            entry.insert("fps".into(), serde_json::json!(f.clamp(1, 60)));
                         }
                         for k in ["hat", "effect", "wings"] {
                             if let Some(s) = v.get(k).and_then(|s| s.as_str()).filter(|s| !s.is_empty()) {
@@ -377,7 +403,7 @@ pub fn export_for_instance(
         "ownerName": account_name,
         "activeCape": active.as_ref().map(|c| serde_json::json!({
             "id": c.id, "name": c.name, "file": "cape.png", "sha1": c.sha1,
-            "remoteId": c.remote_id, "remoteUrl": c.remote_url,
+            "remoteId": c.remote_id, "remoteUrl": c.remote_url, "fps": c.fps, "frames": cape_frames(c.width, c.height),
         })),
         "visibility": profile.map(|p| p.visibility.clone()).unwrap_or_else(|| "everyone".to_string()),
         "activeCapeId": active.as_ref().map(|c| c.id.clone()).unwrap_or_default(),

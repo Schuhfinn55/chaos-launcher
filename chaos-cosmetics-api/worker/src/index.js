@@ -41,7 +41,9 @@ function pngDimensions(u8) {
 function validCape(u8) {
   if (!u8 || u8.length > MAX_PNG) return false;
   const d = pngDimensions(u8);
-  return !!d && d.w === d.h * 2 && d.w % 64 === 0 && d.w >= 64 && d.w <= 2048;
+  if (!d) return false;
+  const fh = d.w / 2, frames = fh > 0 && d.h % fh === 0 ? d.h / fh : 0; // animiert = mehrere 2:1-Frames untereinander
+  return d.w % 64 === 0 && d.w >= 64 && d.w <= 2048 && frames >= 1 && frames <= 64 && d.h <= 8192;
 }
 function base64ToBytes(s) {
   const bin = atob(String(s || "").replace(/^data:[^,]+,/, "").replace(/\s+/g, ""));
@@ -58,7 +60,7 @@ const putPlayer = (env, uuid, p) => putJson(env, "player:" + uuid, p);
 const getCape = (env, id) => getJson(env, "cape:" + id);
 
 function capeUrl(origin, id) { return `${origin}/v1/capes/${id}/texture`; }
-function remoteCape(origin, c) { return c ? { id: c.id, name: c.name, url: capeUrl(origin, c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom" } : null; }
+function remoteCape(origin, c) { return c ? { id: c.id, name: c.name, url: capeUrl(origin, c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom", fps: c.fps || 8 } : null; }
 async function playerView(env, origin, uuid) {
   const p = await getPlayer(env, uuid);
   if (!p) return null;
@@ -195,7 +197,7 @@ export default {
         if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
         const len = Number(request.headers.get("content-length") || 0);
         if (len > MAX_PNG * 1.5) return json(413, { error: "Datei zu groß" });
-        let name = "Cape", png = null;
+        let name = "Cape", png = null, fps = 8;
         const ct = request.headers.get("content-type") || "";
         if (ct.startsWith("multipart/form-data")) {
           const fd = await request.formData();
@@ -204,9 +206,12 @@ export default {
           png = new Uint8Array(await file.arrayBuffer());
           const n = fd.get("name");
           if (typeof n === "string") name = n;
+          const f = fd.get("fps");
+          if (typeof f === "string" && Number(f) > 0) fps = Number(f);
         } else {
           const b = await readJson(request, MAX_PNG * 1.5);
           name = b.name || name;
+          if (Number(b.fps) > 0) fps = Number(b.fps);
           png = base64ToBytes(b.dataBase64);
         }
         if (!validCape(png)) return json(400, { error: "Ungültiges Cape-PNG (64×32 oder Vielfache, max. 4 MB)" });
@@ -219,7 +224,8 @@ export default {
         }
         if (owned.length >= 50) return json(400, { error: "Maximal 50 Capes pro Spieler" });
         const id = randomHex(8);
-        const cape = { id, name, owner: s.uuid, sha1: hash, version: 1, kind: "custom", createdAt: now() };
+        fps = Math.max(1, Math.min(60, Math.round(fps)));
+        const cape = { id, name, owner: s.uuid, sha1: hash, version: 1, kind: "custom", fps, createdAt: now() };
         await env.KV.put("capepng:" + id, png);
         await putJson(env, "cape:" + id, cape);
         await putJson(env, "owner:" + s.uuid, [...owned, id]);

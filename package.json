@@ -1,7 +1,7 @@
 {
   "name": "chaos-launcher",
   "private": true,
-  "version": "2.1.8",
+  "version": "2.1.9",
   "type": "module",
   "description": "Chaos Launcher - der Minecraft-Client-Launcher für ChaoscraftSMP mit Profilen, Mods, Cosmetics und Capes",
   "scripts": {
