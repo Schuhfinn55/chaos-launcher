@@ -2,28 +2,33 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.7",
-        "fileName": "ChaosLauncher-2.1.7-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.7/ChaosLauncher-2.1.7-setup.exe",
-        "sha256": "43f6a12918b6a01eddbf90608fb039cfb3609e9a63ff4575ac52c7be0d663fb3",
-        "size": 6647175,
+        "version": "2.1.8",
+        "fileName": "ChaosLauncher-2.1.8-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.8/ChaosLauncher-2.1.8-setup.exe",
+        "sha256": "06316d2fb8d1ebe4efd24a7cc5a2206bf2f1a3f5e198b2d07456b3a55be30077",
+        "size": 6645749,
         "publishedAt": "2026-10-05",
-        "notes": "- Wings: 12 animierte Pixel-Art-Flügel (Engel, Chaos, Phönix, Galaxie, Schatten, Dämon, Drache, Fledermaus, Neon, Schmetterling, Fee, Kristall) mit 3D-Vorschau; ingame vom Chaos Client 2.2.0 gerendert und für andere Chaos-Spieler sichtbar\n- Updates und Downloads zusätzlich über GitHub (Releases + GitHub Pages) – funktioniert auch, wenn die Website offline ist\n- 3D-Vorschau: Hüte sitzen jetzt exakt wie ingame",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.7/ChaosLauncher-2.1.7.msi",
-        "msiSha256": "95cd135a020ccea0b5d53b9acd366e828f8e50ad794cd35e673d3f3c58d7d9ae"
+        "notes": "- Cosmetics-API läuft jetzt gehostet in der Cloud (Cloudflare) – Capes, Hüte, Wings und Effekte anderer Chaos-Spieler sind immer sichtbar, unabhängig vom ChaoscraftSMP-Server. Alte Adresse wird automatisch umgestellt.\n- Website, Downloads und Updates kommen primär von GitHub (Pages + Releases)\n- Wings: kein Flackern mehr, sanfterer Flügelschlag (Chaos Client 2.2.0)",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.8/ChaosLauncher-2.1.8.msi",
+        "msiSha256": "d79a9e9a38edf4d896dc9a2c725f3f09916057649bf10f356ec5933fa2c935de"
       },
       "client": {
-        "version": "2.2.0",
-        "fileName": "chaos-client-2.2.0.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.7/chaos-client-2.2.0.jar",
-        "sha256": "e4e5826997f8dca8d8f170d51c3a1f46c175b3d0c203021402b94b65cb693d7b",
-        "size": 460111,
+        "version": "2.2.1",
+        "fileName": "chaos-client-2.2.1.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.8/chaos-client-2.2.1.jar",
+        "sha256": "310c7a0f063c7eb30dbeb308bb9cc3a6e6ed1cb343528a9148b72e3e5f1c06c2",
+        "size": 460609,
         "publishedAt": "2026-10-05",
         "notes": "Wings mit Flügelschlag-Animation, Leucht-Layer und Partikeln; Wings-Tab im Cosmetics-Menü"
       }
     }
   },
   "history": [
+    {
+      "version": "2.1.8",
+      "date": "2026-10-05",
+      "notes": "- Cosmetics-API läuft jetzt gehostet in der Cloud (Cloudflare) – Capes, Hüte, Wings und Effekte anderer Chaos-Spieler sind immer sichtbar, unabhängig vom ChaoscraftSMP-Server. Alte Adresse wird automatisch umgestellt.\n- Website, Downloads und Updates kommen primär von GitHub (Pages + Releases)\n- Wings: kein Flackern mehr, sanfterer Flügelschlag (Chaos Client 2.2.0)"
+    },
     {
       "version": "2.1.7",
       "date": "2026-10-05",
