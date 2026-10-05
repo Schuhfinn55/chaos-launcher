@@ -13,13 +13,13 @@
         "msiSha256": "aedc6ff485fc9f70ab7db9afcddac4e32f9b1868ab7de1044cb569e8991582cd"
       },
       "client": {
-        "version": "2.3.3",
-        "fileName": "chaos-client-2.3.3.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.3.3.jar",
-        "sha256": "ea2641e5636f3b9e118ae5141cb9c0b36f227c2254dfc91ac71b2c11bd660470",
-        "size": 467331,
+        "version": "2.4.0",
+        "fileName": "chaos-client-2.4.0.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.9/chaos-client-2.4.0.jar",
+        "sha256": "1bbedb7c225b66f6c3bc8e25df8532908d4d92adc8e004aee53e7ab53e7ce6d0",
+        "size": 599460,
         "publishedAt": "2026-10-05",
-        "notes": "Chaos-Badge: nur rotes C"
+        "notes": "Music Player: MP3-Wiedergabe + Lautstärkeregler; Badge: rotes C"
       }
     }
   },
