@@ -1,0 +1,15 @@
+# Chaos Cosmetics API als Cloudflare Worker
+#   npx wrangler login
+#   npx wrangler kv namespace create KV      → id unten eintragen
+#   npx wrangler deploy
+name = "chaos-cosmetics-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "KV"
+id = "b355fca6481141d7bef5d1d8ef7da158"
+
+[observability]
+enabled = true

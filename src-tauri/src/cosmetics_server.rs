@@ -2,7 +2,7 @@
 //!
 //! Dieselbe Schnittstelle wie `chaos-cosmetics-api/server.js`, direkt im
 //! Launcher: Ein Spieler (z.B. der Server-Betreiber) schaltet den Server
-//! ein, gibt Freunden die Adresse (z.B. http://chaoscraftsmp.duckdns.org:8787)
+//! ein, gibt Freunden die Adresse (z.B. http://deine-domain:8787) – optional; Standard ist die gehostete Community-API
 //! und alle sehen gegenseitig Capes, Hüte und Effekte – ohne zusätzliche
 //! Software. Daten liegen unter `<data>/cosmetics-server/`.
 //!

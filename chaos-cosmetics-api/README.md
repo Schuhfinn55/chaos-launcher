@@ -1,5 +1,8 @@
 # Chaos Cosmetics API
 
+**Standard (gehostet):** `https://chaos-cosmetics-api.chaoscraft.workers.dev` – Cloudflare Worker in `worker/` (KV-Speicher, kostenlos). Deploy: `cd worker && npx wrangler login && npx wrangler deploy`. Der Node-Server unten ist die Alternative für einen eigenen Server.
+
+
 Kleiner Server (Node.js ≥ 18, keine Abhängigkeiten), über den sich Chaos-Spieler gegenseitig **Capes, Hüte und Effekte** sehen. Launcher und Chaos Client nutzen dieselbe Schnittstelle.
 
 ## Auf dem Minecraft-Server installieren (Ubuntu/Debian, z. B. Oracle Cloud) – 1 Befehl

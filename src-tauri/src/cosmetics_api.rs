@@ -77,12 +77,15 @@ pub struct ApiInfo {
 }
 
 /// Standard-Cosmetics-API der Chaoscraft-Community (eingebauter Server beim Betreiber).
-pub const DEFAULT_API: &str = "http://chaoscraftsmp.duckdns.org:8787";
+/// Gehostete Community-API (Cloudflare Worker, immer erreichbar, HTTPS).
+pub const DEFAULT_API: &str = "https://chaos-cosmetics-api.chaoscraft.workers.dev";
+/// Frühere Standardadresse (eigener Server) – wird in Einstellungen automatisch auf die neue Adresse migriert.
+pub const LEGACY_DEFAULT_API: &str = "http://chaoscraftsmp.duckdns.org:8787";
 
 /// Konfigurierte Adresse oder Standard.
 pub fn effective_url(settings: &crate::models::Settings) -> String {
     let u = settings.cosmetics_api_url.trim().trim_end_matches('/');
-    if u.is_empty() { DEFAULT_API.to_string() } else { u.to_string() }
+    if u.is_empty() || u.trim_end_matches('/') == LEGACY_DEFAULT_API { DEFAULT_API.to_string() } else { u.to_string() }
 }
 
 /// Merkt sich, dass die API gerade nicht erreichbar ist (2 Minuten), damit

@@ -1,0 +1,241 @@
+/* ============================================================
+ * Chaos Cosmetics API – Cloudflare Worker (kostenlos, ohne eigenen Server)
+ *
+ * Gleiche Schnittstelle wie server.js (Node), aber als Worker mit KV-Speicher:
+ *   GET  /v1/version
+ *   POST /v1/auth/challenge {uuid,name}            → {serverId}
+ *   POST /v1/auth/verify    {uuid,name,serverId}   → {token,expiresAt}
+ *   GET  /v1/cosmetics/:uuid
+ *   POST /v1/cosmetics/bulk {uuids:[…]}
+ *   PUT  /v1/cosmetics/:uuid (Bearer)  {activeCape, hat, effect, wings, visibility}
+ *   POST /v1/capes (Bearer, multipart file+name oder JSON {name,dataBase64})
+ *   GET  /v1/capes/:id/texture
+ *
+ * KV-Schlüssel: player:<uuid>, cape:<id>, capepng:<id>, owner:<uuid> (Cape-IDs),
+ * chal:<serverId> (TTL 5 min), tok:<token> (TTL 24 h).
+ * Deploy: npx wrangler deploy (siehe wrangler.toml)
+ * ============================================================ */
+
+const API_VERSION = "1.2.0";
+const COSMETICS_VERSION = 2;
+const TOKEN_TTL_S = 24 * 60 * 60;
+const MAX_PNG = 4 * 1024 * 1024;
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization" };
+
+const sanitizeId = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+const normUuid = (s) => String(s || "").replace(/-/g, "").toLowerCase();
+const isUuid = (s) => /^[0-9a-f]{32}$/.test(s);
+const now = () => Date.now();
+
+function json(code, body, extra = {}) {
+  return new Response(JSON.stringify(body), { status: code, headers: { "Content-Type": "application/json; charset=utf-8", ...CORS, ...extra } });
+}
+function hex(bytes) { return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join(""); }
+function randomHex(n) { const b = new Uint8Array(n); crypto.getRandomValues(b); return hex(b); }
+async function sha1(buf) { return hex(await crypto.subtle.digest("SHA-1", buf)); }
+function pngDimensions(u8) {
+  if (u8.length < 33 || u8[0] !== 0x89 || u8[1] !== 0x50 || u8[2] !== 0x4e || u8[3] !== 0x47) return null;
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  return { w: dv.getUint32(16), h: dv.getUint32(20) };
+}
+function validCape(u8) {
+  if (!u8 || u8.length > MAX_PNG) return false;
+  const d = pngDimensions(u8);
+  return !!d && d.w === d.h * 2 && d.w % 64 === 0 && d.w >= 64 && d.w <= 2048;
+}
+function base64ToBytes(s) {
+  const bin = atob(String(s || "").replace(/^data:[^,]+,/, "").replace(/\s+/g, ""));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+/* ---------- Speicher ---------- */
+const getJson = async (env, key) => { const v = await env.KV.get(key, "json"); return v ?? null; };
+const putJson = (env, key, value, opts) => env.KV.put(key, JSON.stringify(value), opts);
+const getPlayer = (env, uuid) => getJson(env, "player:" + uuid);
+const putPlayer = (env, uuid, p) => putJson(env, "player:" + uuid, p);
+const getCape = (env, id) => getJson(env, "cape:" + id);
+
+function capeUrl(origin, id) { return `${origin}/v1/capes/${id}/texture`; }
+function remoteCape(origin, c) { return c ? { id: c.id, name: c.name, url: capeUrl(origin, c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom" } : null; }
+async function playerView(env, origin, uuid) {
+  const p = await getPlayer(env, uuid);
+  if (!p) return null;
+  const hidden = p.visibility === "none";
+  const cape = !hidden && p.activeCape ? await getCape(env, p.activeCape) : null;
+  return {
+    uuid, name: p.name || "",
+    activeCape: hidden ? null : remoteCape(origin, cape),
+    hat: hidden ? "" : p.hat || "",
+    effect: hidden ? "" : p.effect || "",
+    wings: hidden ? "" : p.wings || "",
+    visibility: p.visibility || "everyone",
+    cosmeticsVersion: COSMETICS_VERSION,
+    updatedAt: p.updatedAt || 0,
+  };
+}
+async function bearer(env, request) {
+  const h = request.headers.get("authorization") || "";
+  const t = h.startsWith("Bearer ") ? h.slice(7).trim() : "";
+  if (!/^[0-9a-f]{64}$/.test(t)) return null;
+  const s = await getJson(env, "tok:" + t);
+  if (!s || s.expiresAt < now()) return null;
+  return s;
+}
+async function mojangHasJoined(name, serverId) {
+  try {
+    const r = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${encodeURIComponent(serverId)}`, { headers: { "User-Agent": "chaos-cosmetics-api/" + API_VERSION } });
+    if (r.status !== 200) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+/* ---------- Rate-Limit (pro Isolate, best effort) ---------- */
+const hits = new Map();
+function rateLimited(ip, limit = 120) {
+  const t = Math.floor(now() / 60000);
+  const key = `${ip}:${t}`;
+  const n = (hits.get(key) || 0) + 1;
+  hits.set(key, n);
+  if (hits.size > 5000) for (const k of hits.keys()) if (!k.endsWith(":" + t)) hits.delete(k);
+  return n > limit;
+}
+
+async function readJson(request, limit) {
+  const txt = await request.text();
+  if (txt.length > limit) throw new Error("Body zu groß");
+  return txt ? JSON.parse(txt) : {};
+}
+
+export default {
+  async fetch(request, env) {
+    const ip = request.headers.get("cf-connecting-ip") || "?";
+    if (rateLimited(ip)) return json(429, { error: "Zu viele Anfragen" });
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+    const url = new URL(request.url);
+    const origin = url.origin;
+    const p = url.pathname.replace(/\/+$/, "") || "/";
+    let m;
+    try {
+      if (request.method === "GET" && (p === "/" || p === "/v1/version")) {
+        const [pl, cp] = await Promise.all([env.KV.list({ prefix: "player:", limit: 1000 }), env.KV.list({ prefix: "cape:", limit: 1000 })]);
+        return json(200, { name: "Chaos Cosmetics API", apiVersion: API_VERSION, cosmeticsVersion: COSMETICS_VERSION, players: pl.keys.length, capes: cp.keys.length, host: "cloudflare-workers" }, { "Cache-Control": "public, max-age=60" });
+      }
+
+      /* Auth */
+      if (request.method === "POST" && p === "/v1/auth/challenge") {
+        const b = await readJson(request, 4096);
+        const uuid = normUuid(b.uuid), name = String(b.name || "").slice(0, 16);
+        if (!isUuid(uuid) || !/^[A-Za-z0-9_]{2,16}$/.test(name)) return json(400, { error: "uuid/name ungültig" });
+        const serverId = randomHex(20);
+        await putJson(env, "chal:" + serverId, { uuid, name, at: now() }, { expirationTtl: 300 });
+        return json(200, { serverId });
+      }
+      if (request.method === "POST" && p === "/v1/auth/verify") {
+        const b = await readJson(request, 4096);
+        const uuid = normUuid(b.uuid), serverId = String(b.serverId || "");
+        if (!/^[0-9a-f]{40}$/.test(serverId)) return json(400, { error: "Unbekannte Challenge" });
+        const ch = await getJson(env, "chal:" + serverId);
+        if (!ch || ch.uuid !== uuid) return json(400, { error: "Unbekannte Challenge" });
+        await env.KV.delete("chal:" + serverId);
+        const joined = await mojangHasJoined(ch.name, serverId);
+        if (!joined || normUuid(joined.id) !== uuid) return json(401, { error: "Mojang-Prüfung fehlgeschlagen" });
+        const token = randomHex(32);
+        const name = joined.name || ch.name;
+        const expiresAt = Math.floor(now() / 1000) + TOKEN_TTL_S;
+        await putJson(env, "tok:" + token, { uuid, name, expiresAt: now() + TOKEN_TTL_S * 1000 }, { expirationTtl: TOKEN_TTL_S });
+        const pl = (await getPlayer(env, uuid)) || { name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };
+        pl.name = name;
+        await putPlayer(env, uuid, pl);
+        return json(200, { token, expiresAt });
+      }
+
+      /* Cosmetics lesen */
+      if (request.method === "GET" && (m = /^\/v1\/cosmetics\/([0-9a-fA-F-]{32,36})$/.exec(p))) {
+        const view = await playerView(env, origin, normUuid(m[1]));
+        return view ? json(200, view, { "Cache-Control": "no-store" }) : json(404, { error: "Unbekannter Spieler" });
+      }
+      if (request.method === "POST" && p === "/v1/cosmetics/bulk") {
+        const b = await readJson(request, 64 * 1024);
+        const list = Array.isArray(b.uuids) ? b.uuids.slice(0, 200).map(normUuid).filter(isUuid) : [];
+        const views = await Promise.all(list.map((u) => playerView(env, origin, u)));
+        return json(200, views.filter(Boolean));
+      }
+
+      /* Cosmetics setzen */
+      if (request.method === "PUT" && (m = /^\/v1\/cosmetics\/([0-9a-fA-F-]{32,36})$/.exec(p))) {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const uuid = normUuid(m[1]);
+        if (uuid !== s.uuid) return json(403, { error: "Fremde UUID" });
+        const b = await readJson(request, 16 * 1024);
+        const pl = (await getPlayer(env, uuid)) || { name: s.name };
+        if ("activeCape" in b) {
+          const id = b.activeCape ? sanitizeId(b.activeCape) : "";
+          if (id) {
+            const c = await getCape(env, id);
+            if (!c || c.owner !== uuid) return json(400, { error: "Cape gehört nicht zu diesem Spieler" });
+          }
+          pl.activeCape = id;
+        }
+        if ("hat" in b) pl.hat = sanitizeId(b.hat);
+        if ("effect" in b) pl.effect = sanitizeId(b.effect);
+        if ("wings" in b) pl.wings = sanitizeId(b.wings);
+        if ("visibility" in b) pl.visibility = ["everyone", "chaos", "none"].includes(b.visibility) ? b.visibility : "everyone";
+        pl.name = s.name;
+        pl.updatedAt = now();
+        await putPlayer(env, uuid, pl);
+        return json(200, await playerView(env, origin, uuid));
+      }
+
+      /* Capes */
+      if (request.method === "POST" && p === "/v1/capes") {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const len = Number(request.headers.get("content-length") || 0);
+        if (len > MAX_PNG * 1.5) return json(413, { error: "Datei zu groß" });
+        let name = "Cape", png = null;
+        const ct = request.headers.get("content-type") || "";
+        if (ct.startsWith("multipart/form-data")) {
+          const fd = await request.formData();
+          const file = fd.get("file");
+          if (!file || typeof file === "string") return json(400, { error: "file fehlt" });
+          png = new Uint8Array(await file.arrayBuffer());
+          const n = fd.get("name");
+          if (typeof n === "string") name = n;
+        } else {
+          const b = await readJson(request, MAX_PNG * 1.5);
+          name = b.name || name;
+          png = base64ToBytes(b.dataBase64);
+        }
+        if (!validCape(png)) return json(400, { error: "Ungültiges Cape-PNG (64×32 oder Vielfache, max. 4 MB)" });
+        name = String(name).replace(/[^\w .äöüÄÖÜß-]/g, "").trim().slice(0, 40) || "Cape";
+        const hash = await sha1(png);
+        const owned = (await getJson(env, "owner:" + s.uuid)) || [];
+        for (const id of owned) {
+          const c = await getCape(env, id);
+          if (c && c.sha1 === hash) return json(200, remoteCape(origin, c));
+        }
+        if (owned.length >= 50) return json(400, { error: "Maximal 50 Capes pro Spieler" });
+        const id = randomHex(8);
+        const cape = { id, name, owner: s.uuid, sha1: hash, version: 1, kind: "custom", createdAt: now() };
+        await env.KV.put("capepng:" + id, png);
+        await putJson(env, "cape:" + id, cape);
+        await putJson(env, "owner:" + s.uuid, [...owned, id]);
+        return json(200, remoteCape(origin, cape));
+      }
+      if (request.method === "GET" && (m = /^\/v1\/capes\/([a-z0-9_-]{1,40})\/texture$/.exec(p))) {
+        const c = await getCape(env, m[1]);
+        if (!c) return json(404, { error: "Cape nicht gefunden" });
+        const png = await env.KV.get("capepng:" + m[1], "arrayBuffer");
+        if (!png) return json(404, { error: "Datei fehlt" });
+        return new Response(png, { status: 200, headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=3600", ETag: c.sha1, ...CORS } });
+      }
+
+      return json(404, { error: "Nicht gefunden" });
+    } catch (e) {
+      return json(400, { error: String((e && e.message) || e) });
+    }
+  },
+};

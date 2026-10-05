@@ -429,7 +429,7 @@ function Cosmetics({ s, set }: P) {
           </label>
           <label className="chaos-field" style={{ flex: 1, minWidth: 260 }}>
             <span>Öffentliche Adresse (für Freunde)</span>
-            <input className="chaos-input chaos-mono" value={s.cosmeticsServerPublicUrl ?? ""} onChange={(e) => set({ cosmeticsServerPublicUrl: e.target.value.trim() })} placeholder={srv?.publicUrl ?? "http://chaoscraftsmp.duckdns.org:8787"} />
+            <input className="chaos-input chaos-mono" value={s.cosmeticsServerPublicUrl ?? ""} onChange={(e) => set({ cosmeticsServerPublicUrl: e.target.value.trim() })} placeholder={srv?.publicUrl ?? "http://deine-domain:8787"} />
           </label>
         </div>
         <div className="chaos-row chaos-wrap" style={{ gap: 8, marginTop: 10, alignItems: "center" }}>

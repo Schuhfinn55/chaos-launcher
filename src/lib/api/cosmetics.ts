@@ -99,10 +99,12 @@ export async function getRemoteCosmetics(uuid: string): Promise<RemoteCosmetics 
   return invoke<RemoteCosmetics | null>("get_remote_cosmetics", { uuid });
 }
 /** Standard-Cosmetics-API der Chaoscraft-Community (leer in den Einstellungen = dieser Wert). */
-export const DEFAULT_COSMETICS_API = "http://chaoscraftsmp.duckdns.org:8787";
+export const DEFAULT_COSMETICS_API = "https://chaos-cosmetics-api.chaoscraft.workers.dev";
 export function effectiveApiUrl(settings: { cosmeticsApiUrl?: string } | null | undefined): string {
   const u = settings?.cosmeticsApiUrl?.trim().replace(/\/+$/, "");
-  return u && u.length > 0 ? u : DEFAULT_COSMETICS_API;
+  // alte Standardadresse (eigener Server) automatisch auf die gehostete API umleiten
+  if (!u || u.length === 0 || u === "http://chaoscraftsmp.duckdns.org:8787") return DEFAULT_COSMETICS_API;
+  return u;
 }
 
 export interface CosmeticsServerStatus {

@@ -28,7 +28,8 @@ pub const WEBSITE_URL: &str = "https://chaoslauncher.duckdns.org";
 pub const GITHUB_PAGES_URL: &str = "https://schuhfinn55.github.io/chaos-launcher";
 pub const GITHUB_REPO_URL: &str = "https://github.com/Schuhfinn55/chaos-launcher";
 /// Kandidaten für Website/Feed in Reihenfolge; der erste erreichbare wird genutzt.
-pub const WEBSITE_URLS: [&str; 2] = [WEBSITE_URL, GITHUB_PAGES_URL];
+/// GitHub Pages zuerst (immer erreichbar), die eigene Domain als zweite Quelle.
+pub const WEBSITE_URLS: [&str; 2] = [GITHUB_PAGES_URL, WEBSITE_URL];
 pub const FEED_URL: &str = "https://chaoslauncher.duckdns.org/releases.json";
 
 static ACTIVE_SITE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);

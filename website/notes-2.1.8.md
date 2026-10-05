@@ -1,0 +1,3 @@
+- Cosmetics-API läuft jetzt gehostet in der Cloud (Cloudflare) – Capes, Hüte, Wings und Effekte anderer Chaos-Spieler sind immer sichtbar, unabhängig vom ChaoscraftSMP-Server. Alte Adresse wird automatisch umgestellt.
+- Website, Downloads und Updates kommen primär von GitHub (Pages + Releases)
+- Wings: kein Flackern mehr, sanfterer Flügelschlag (Chaos Client 2.2.0)
