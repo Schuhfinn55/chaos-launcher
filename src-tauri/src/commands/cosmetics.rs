@@ -151,6 +151,14 @@ pub struct SyncResult {
 #[tauri::command]
 #[allow(non_snake_case)]
 pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
+    let r = sync_cosmetics_inner(accountUuid).await;
+    if let Err(e) = &r {
+        crate::launch::log_step(format!("Cosmetics-Sync fehlgeschlagen: {e}"));
+    }
+    r
+}
+
+async fn sync_cosmetics_inner(accountUuid: String) -> Result<SyncResult, String> {
     let settings = storage::load_settings().unwrap_or_default();
     let api = cosmetics_api::effective_url(&settings);
     let account = storage::load_accounts()?
@@ -170,7 +178,9 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     let mut remote_id = String::new();
     if let Some(cape) = active {
         let bytes = std::fs::read(cosmetics::capes_dir().join(&cape.file_name)).map_err(|e| format!("Cape lesen: {e}"))?;
-        let remote = if cape.remote_id.is_empty() {
+        // Remote-ID nur verwenden, wenn sie von DIESER API stammt (alte IDs vom früheren Server sind ungültig)
+        let same_api = !cape.remote_url.is_empty() && cape.remote_url.starts_with(api.trim_end_matches('/'));
+        let remote = if cape.remote_id.is_empty() || !same_api {
             let r = cosmetics_api::upload_cape(&api, &token, &cape.name, bytes, cape.fps).await?;
             if let Some(c) = state.capes.iter_mut().find(|c| c.id == cape.id) {
                 c.remote_id = r.id.clone();
@@ -186,6 +196,7 @@ pub async fn sync_cosmetics(accountUuid: String) -> Result<SyncResult, String> {
     } else {
         cosmetics_api::set_active(&api, &token, &accountUuid, None, &hat, &effect, &wings, &visibility).await?;
     }
+    crate::launch::log_step(format!("Cosmetics synchronisiert ({api}): Cape={} Hut={} Wings={} Effekt={}", if remote_id.is_empty() { "-" } else { remote_id.as_str() }, hat, wings, effect));
     Ok(SyncResult { synced: true, message: "Cape, Hut, Wings und Effekt synchronisiert – andere Chaos-Spieler sehen sie jetzt.".to_string(), remote_cape_id: remote_id })
 }
 

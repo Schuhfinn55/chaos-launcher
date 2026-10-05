@@ -16,7 +16,7 @@
  * Deploy: npx wrangler deploy (siehe wrangler.toml)
  * ============================================================ */
 
-const API_VERSION = "1.2.0";
+const API_VERSION = "1.3.0";
 const COSMETICS_VERSION = 2;
 const TOKEN_TTL_S = 24 * 60 * 60;
 const MAX_PNG = 4 * 1024 * 1024;
@@ -31,6 +31,44 @@ function json(code, body, extra = {}) {
   return new Response(JSON.stringify(body), { status: code, headers: { "Content-Type": "application/json; charset=utf-8", ...CORS, ...extra } });
 }
 function hex(bytes) { return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join(""); }
+/* ---------- Zustandslose Auth (HMAC) – KV ist nur „eventually consistent“, deshalb keine Challenge/Token-Keys ---------- */
+const enc = new TextEncoder();
+async function hmacHex(env, data) {
+  const secret = env.SECRET || "chaos-cosmetics-default-secret-change-me";
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return hex(await crypto.subtle.sign("HMAC", key, enc.encode(data)));
+}
+const b64u = (s) => btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const b64uDecode = (s) => atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4));
+/** serverId = nonce(8) + ts(8, Sekunden hex) + hmac(24) = 40 Hex-Zeichen (wie ein Vanilla-Server-Hash). */
+async function makeChallenge(env, uuid, name) {
+  const nonce = randomHex(4), ts = Math.floor(now() / 1000).toString(16).padStart(8, "0");
+  const mac = (await hmacHex(env, `chal|${uuid}|${name.toLowerCase()}|${nonce}|${ts}`)).slice(0, 24);
+  return nonce + ts + mac;
+}
+async function checkChallenge(env, uuid, name, serverId) {
+  if (!/^[0-9a-f]{40}$/.test(serverId)) return false;
+  const nonce = serverId.slice(0, 8), ts = serverId.slice(8, 16), mac = serverId.slice(16);
+  const age = Math.floor(now() / 1000) - parseInt(ts, 16);
+  if (!(age >= -60 && age <= 600)) return false;
+  const expect = (await hmacHex(env, `chal|${uuid}|${name.toLowerCase()}|${nonce}|${ts}`)).slice(0, 24);
+  return expect === mac;
+}
+async function makeToken(env, uuid, name, expiresAtMs) {
+  const payload = b64u(JSON.stringify({ u: uuid, n: name, e: expiresAtMs }));
+  return payload + "." + (await hmacHex(env, "tok|" + payload)).slice(0, 32);
+}
+async function parseToken(env, token) {
+  const i = token.indexOf(".");
+  if (i <= 0) return null;
+  const payload = token.slice(0, i), mac = token.slice(i + 1);
+  if ((await hmacHex(env, "tok|" + payload)).slice(0, 32) !== mac) return null;
+  try {
+    const o = JSON.parse(b64uDecode(payload));
+    if (!isUuid(o.u) || typeof o.e !== "number" || o.e < now()) return null;
+    return { uuid: o.u, name: String(o.n || ""), expiresAt: o.e };
+  } catch { return null; }
+}
 function randomHex(n) { const b = new Uint8Array(n); crypto.getRandomValues(b); return hex(b); }
 async function sha1(buf) { return hex(await crypto.subtle.digest("SHA-1", buf)); }
 function pngDimensions(u8) {
@@ -65,7 +103,8 @@ async function playerView(env, origin, uuid) {
   const p = await getPlayer(env, uuid);
   if (!p) return null;
   const hidden = p.visibility === "none";
-  const cape = !hidden && p.activeCape ? await getCape(env, p.activeCape) : null;
+  let cape = !hidden && p.activeCape ? await getCape(env, p.activeCape) : null;
+  if (cape && cape.owner !== uuid) cape = null; // Besitz wird beim Lesen geprüft
   return {
     uuid, name: p.name || "",
     activeCape: hidden ? null : remoteCape(origin, cape),
@@ -80,10 +119,8 @@ async function playerView(env, origin, uuid) {
 async function bearer(env, request) {
   const h = request.headers.get("authorization") || "";
   const t = h.startsWith("Bearer ") ? h.slice(7).trim() : "";
-  if (!/^[0-9a-f]{64}$/.test(t)) return null;
-  const s = await getJson(env, "tok:" + t);
-  if (!s || s.expiresAt < now()) return null;
-  return s;
+  if (!t || t.length > 512) return null;
+  return parseToken(env, t);
 }
 async function mojangHasJoined(name, serverId) {
   try {
@@ -130,23 +167,18 @@ export default {
         const b = await readJson(request, 4096);
         const uuid = normUuid(b.uuid), name = String(b.name || "").slice(0, 16);
         if (!isUuid(uuid) || !/^[A-Za-z0-9_]{2,16}$/.test(name)) return json(400, { error: "uuid/name ungültig" });
-        const serverId = randomHex(20);
-        await putJson(env, "chal:" + serverId, { uuid, name, at: now() }, { expirationTtl: 300 });
+        const serverId = await makeChallenge(env, uuid, name);
         return json(200, { serverId });
       }
       if (request.method === "POST" && p === "/v1/auth/verify") {
         const b = await readJson(request, 4096);
-        const uuid = normUuid(b.uuid), serverId = String(b.serverId || "");
-        if (!/^[0-9a-f]{40}$/.test(serverId)) return json(400, { error: "Unbekannte Challenge" });
-        const ch = await getJson(env, "chal:" + serverId);
-        if (!ch || ch.uuid !== uuid) return json(400, { error: "Unbekannte Challenge" });
-        await env.KV.delete("chal:" + serverId);
-        const joined = await mojangHasJoined(ch.name, serverId);
+        const uuid = normUuid(b.uuid), serverId = String(b.serverId || ""), chName = String(b.name || "").slice(0, 16);
+        if (!isUuid(uuid) || !(await checkChallenge(env, uuid, chName, serverId))) return json(400, { error: "Unbekannte oder abgelaufene Challenge" });
+        const joined = await mojangHasJoined(chName, serverId);
         if (!joined || normUuid(joined.id) !== uuid) return json(401, { error: "Mojang-Prüfung fehlgeschlagen" });
-        const token = randomHex(32);
-        const name = joined.name || ch.name;
+        const name = joined.name || chName;
         const expiresAt = Math.floor(now() / 1000) + TOKEN_TTL_S;
-        await putJson(env, "tok:" + token, { uuid, name, expiresAt: now() + TOKEN_TTL_S * 1000 }, { expirationTtl: TOKEN_TTL_S });
+        const token = await makeToken(env, uuid, name, now() + TOKEN_TTL_S * 1000);
         const pl = (await getPlayer(env, uuid)) || { name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };
         pl.name = name;
         await putPlayer(env, uuid, pl);
@@ -174,12 +206,8 @@ export default {
         const b = await readJson(request, 16 * 1024);
         const pl = (await getPlayer(env, uuid)) || { name: s.name };
         if ("activeCape" in b) {
-          const id = b.activeCape ? sanitizeId(b.activeCape) : "";
-          if (id) {
-            const c = await getCape(env, id);
-            if (!c || c.owner !== uuid) return json(400, { error: "Cape gehört nicht zu diesem Spieler" });
-          }
-          pl.activeCape = id;
+          // Besitz wird beim Lesen (playerView) geprüft – KV-Schreibvorgänge sind nicht sofort überall sichtbar
+          pl.activeCape = b.activeCape ? sanitizeId(b.activeCape) : "";
         }
         if ("hat" in b) pl.hat = sanitizeId(b.hat);
         if ("effect" in b) pl.effect = sanitizeId(b.effect);
@@ -220,9 +248,9 @@ export default {
         const owned = (await getJson(env, "owner:" + s.uuid)) || [];
         for (const id of owned) {
           const c = await getCape(env, id);
-          if (c && c.sha1 === hash) return json(200, remoteCape(origin, c));
+          if (c && c.sha1 === hash && (c.fps || 8) === fps) return json(200, remoteCape(origin, c));
         }
-        if (owned.length >= 50) return json(400, { error: "Maximal 50 Capes pro Spieler" });
+        if (owned.length >= 100) return json(400, { error: "Maximal 100 Capes pro Spieler" });
         const id = randomHex(8);
         fps = Math.max(1, Math.min(60, Math.round(fps)));
         const cape = { id, name, owner: s.uuid, sha1: hash, version: 1, kind: "custom", fps, createdAt: now() };

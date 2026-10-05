@@ -1,0 +1,2 @@
+- Cosmetics anderer Spieler wieder sichtbar: Sync zur neuen Cosmetics-API repariert (alte Cape-IDs vom früheren Server werden neu hochgeladen, Fehler landen im launch.log), API-Login zustandslos (keine Aussetzer mehr)
+- Chaos Client 2.4.1: prüft alle 2 Minuten erneut, ob Mitspieler inzwischen Cosmetics haben
