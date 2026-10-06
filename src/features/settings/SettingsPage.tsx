@@ -106,6 +106,7 @@ function General({ s, set }: P) {
       </Section>
       <Section title="Startverhalten">
         <Toggle checked={s.autoSelectLastInstance !== false} onChange={(v) => set({ autoSelectLastInstance: v })} label="Zuletzt verwendetes Profil automatisch auswählen" />
+        <Toggle checked={s.fpsBoost !== false} onChange={(v) => set({ fpsBoost: v })} label="FPS-Boost: Minecraft mit hoher Prozesspriorität starten und Java die Grafikkarte zuweisen" />
         <div className="chaos-field" style={{ marginTop: 10 }}>
           <span>Launcher beim Spielstart</span>
           <select className="onyx-select" value={s.launchBehavior ?? "keep"} onChange={(e) => set({ launchBehavior: e.target.value as "keep" })}>

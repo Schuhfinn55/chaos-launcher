@@ -5,6 +5,7 @@
 
 import { invoke } from "@/lib/bridge";
 import type {
+  FpsReport,
   AppInfo,
   CacheInfo,
   InstanceStatus,
@@ -52,6 +53,8 @@ export const duplicateInstance = (instanceId: string, newName: string) =>
   invoke<import("@/types").Instance>("duplicate_instance", { instanceId, newName });
 
 export const preflightCheck = (instanceId: string) => invoke<PreflightReport>("preflight_check", { instanceId });
+export const fpsReport = (instanceId: string) => invoke<FpsReport>("fps_report", { instanceId });
+export const applyFpsBoost = (instanceId: string) => invoke<string[]>("apply_fps_boost", { instanceId });
 export const launchInstance = (instanceId: string) => invoke<string>("launch_instance", { instanceId });
 export const stopInstance = (instanceId: string) => invoke<boolean>("stop_instance", { instanceId });
 export const cancelLaunch = () => invoke<boolean>("cancel_launch");

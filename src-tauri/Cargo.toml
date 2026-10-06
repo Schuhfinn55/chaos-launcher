@@ -1,6 +1,6 @@
 [package]
 name = "chaos-launcher"
-version = "2.1.11"
+version = "2.1.12"
 description = "Chaos Launcher - der Minecraft-Client-Launcher für ChaoscraftSMP"
 authors = ["ChaoscraftSMP"]
 edition = "2021"
@@ -46,6 +46,7 @@ windows = { version = "0.61", features = [
   "Win32_Security_Cryptography",
   "Win32_System_Memory",
   "Win32_System_SystemInformation",
+  "Win32_Graphics_Gdi",
 ] }
 
 [features]

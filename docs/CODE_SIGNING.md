@@ -25,7 +25,7 @@ Die Website selbst ist korrekt per HTTPS ausgeliefert; am Hosting liegt es nicht
 
 ## So ist der Build vorbereitet
 
-`src-tauri/tauri.conf.json` ruft für jede EXE/MSI `scripts/sign.ps1` auf. Ohne Zertifikat passiert nichts.
+`src-tauri/tauri.conf.json` ruft für jede EXE/MSI `scripts/sign.ps1` auf (als Zeichenkette mit **absolutem Pfad**, weil der NSIS-Schritt in einem anderen Arbeitsverzeichnis läuft – auf einem anderen Rechner den Pfad in `bundle.windows.signCommand` anpassen). Ohne Zertifikat passiert nichts.
 Mit Zertifikat genügt eine Umgebungsvariable (neue Konsole öffnen, dann `npm run tauri build`):
 
 ```powershell

@@ -122,6 +122,12 @@ const mocks: Record<string, MockHandler> = {
   async check_all_instances() {
     return [];
   },
+  async fps_report() {
+    return { totalRamMb: 16384, availableRamMb: 6000, heapMb: 4096, displayWidth: 1920, displayHeight: 1080, displayHz: 144, gpus: ["Mock GPU"], gpuUsed: "Mock GPU", gpuPreferenceSet: true, maxFps: 260, vsync: false, entityShadows: false, renderDistance: 10, fpsBoostEnabled: true, heavyMods: [], hints: [] };
+  },
+  async apply_fps_boost() {
+    return ["FPS-Limit: unbegrenzt"];
+  },
   async preflight_check() {
     return { ok: true, accountOk: true, accountName: "Dev", profileOk: true, javaOk: true, javaRequired: 21, javaFound: 21, modsMissing: [], installed: false, needsDownload: true, problems: [], status: null };
   },

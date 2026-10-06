@@ -647,6 +647,7 @@ pub async fn launch_instance(
         "-XX:SurvivorRatio=32",
         "-XX:+PerfDisableSharedMem",
         "-XX:MaxTenuringThreshold=1",
+        "-XX:+UseStringDeduplication",
     ] {
         jvm_args.push(f.to_string());
     }
@@ -774,7 +775,20 @@ pub async fn launch_instance(
     {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
+        const HIGH_PRIORITY_CLASS: u32 = 0x0000_0080;
+        let boost = crate::storage::load_settings().map(|s| s.fps_boost).unwrap_or(true);
+        cmd.creation_flags(if boost { CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS } else { CREATE_NO_WINDOW });
+        if boost {
+            // Java die Hochleistungs-GPU zuweisen (Laptops/APUs starten sonst auf der integrierten Grafik)
+            let jp = java.path.to_string_lossy().to_string();
+            if !crate::fps::gpu_preference_set(&jp) {
+                match crate::fps::set_gpu_preference(&jp) {
+                    Ok(()) => log_step("FPS-Boost: Hochleistungs-GPU für Java hinterlegt"),
+                    Err(e) => log_step(format!("FPS-Boost: GPU-Präferenz nicht gesetzt ({e})")),
+                }
+            }
+            log_step("FPS-Boost: hohe Prozesspriorität");
+        }
     }
     fs::create_dir_all(home.join("saves")).ok();
     let _ = fs::write(home.join("launcher_profiles.json"), r#"{"profiles":{}}"#).ok();

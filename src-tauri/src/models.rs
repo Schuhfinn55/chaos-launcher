@@ -220,6 +220,9 @@ pub struct Settings {
     /// Verhalten beim Spielstart: "keep" | "minimize" | "close".
     #[serde(default = "default_launch_behavior")]
     pub launch_behavior: String,
+    /// FPS-Boost: Minecraft mit hoher Prozesspriorität starten, Java die Hochleistungs-GPU zuweisen.
+    #[serde(default = "default_true")]
+    pub fps_boost: bool,
 
     // ---- Darstellung ----
     /// Akzentfarbe als Hex (leer = Chaos-Rot).
@@ -356,6 +359,7 @@ impl Default for Settings {
             animations: true,
             notifications: true,
             launch_behavior: default_launch_behavior(),
+            fps_boost: true,
             accent_color: String::new(),
             panel_transparency: 0,
             ui_scale: 100,

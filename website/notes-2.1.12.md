@@ -1,0 +1,3 @@
+- FPS-Boost auf der Spielen-Seite: zeigt RAM-Auslastung, genutzte Grafikkarte, Monitor-Hz, FPS-Limit/VSync und schwere Mods (Voxy, Flashback, …) mit Ein-Klick-Deaktivierung; „Boost anwenden“ setzt FPS-Limit unbegrenzt, VSync/Entity-Schatten aus, weist Java die Hochleistungs-GPU zu
+- Minecraft startet mit hoher Prozesspriorität (abschaltbar unter Einstellungen → Startverhalten)
+- Java: String-Deduplication für weniger RAM-Verbrauch

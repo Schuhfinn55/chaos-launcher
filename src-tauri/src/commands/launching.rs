@@ -69,6 +69,20 @@ pub async fn preflight_check(instanceId: String) -> Result<PreflightReport, Stri
     Ok(rep)
 }
 
+/// FPS-Diagnose für ein Profil (RAM, GPU, Display, Optionen, schwere Mods).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn fps_report(instanceId: String) -> Result<crate::fps::FpsReport, String> {
+    crate::fps::report(&instanceId)
+}
+
+/// FPS-Optimierungen anwenden (options.txt, GPU-Zuweisung, Prozesspriorität).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn apply_fps_boost(instanceId: String) -> Result<Vec<String>, String> {
+    crate::fps::apply(&instanceId)
+}
+
 /// Startet eine Instanz. Fortschritt über Event "launch://progress".
 #[tauri::command]
 #[allow(non_snake_case)]

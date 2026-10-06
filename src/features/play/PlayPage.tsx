@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LaunchPanel from "@/components/LaunchPanel";
 import CrashAnalyzer from "@/components/CrashAnalyzer";
+import FpsBoostCard from "@/components/FpsBoostCard";
 import { Empty, PageHead } from "@/components/ui";
 import { useInstanceStore, useStatusStore } from "@/stores/useStore";
 import { checkInstance, getLaunchLog, getMinecraftLog, openPath, repairInstance, formatBytes } from "@/lib/api/launcher";
@@ -130,6 +131,8 @@ export default function PlayPage() {
                 )}
               </div>
             )}
+
+            {active && <FpsBoostCard instance={active} />}
 
             <div className="chaos-row chaos-wrap" style={{ gap: 8 }}>
               {active && <CrashAnalyzer instanceId={active.id} instanceName={active.name} />}

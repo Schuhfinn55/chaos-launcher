@@ -168,6 +168,8 @@ export interface Settings {
   animations?: boolean;
   notifications?: boolean;
   launchBehavior?: "keep" | "minimize" | "close";
+  /** FPS-Boost: hohe Prozesspriorität + Hochleistungs-GPU für Java */
+  fpsBoost?: boolean;
   // Darstellung
   accentColor?: string;
   panelTransparency?: number;
@@ -274,6 +276,32 @@ export interface Cape {
   sha1: string;
   /** Bilder pro Sekunde bei animierten Capes (Frame-Streifen). */
   fps: number;
+}
+
+export interface HeavyMod {
+  id: string;
+  title: string;
+  fileName: string;
+  reason: string;
+  enabled: boolean;
+}
+export interface FpsReport {
+  totalRamMb: number;
+  availableRamMb: number;
+  heapMb: number;
+  displayWidth: number;
+  displayHeight: number;
+  displayHz: number;
+  gpus: string[];
+  gpuUsed: string;
+  gpuPreferenceSet: boolean;
+  maxFps: number;
+  vsync: boolean;
+  entityShadows: boolean;
+  renderDistance: number;
+  fpsBoostEnabled: boolean;
+  heavyMods: HeavyMod[];
+  hints: string[];
 }
 
 /** Echter Account-Skin (vom Backend über den Mojang-Sessionserver geladen). */

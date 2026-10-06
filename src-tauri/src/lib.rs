@@ -24,6 +24,7 @@ pub mod cosmetics_api;
 pub mod cosmetics_server;
 pub mod discord;
 pub mod forge;
+pub mod fps;
 pub mod import;
 pub mod integrity;
 pub mod java;
@@ -214,6 +215,8 @@ pub fn run() {
             commands::system::discord_status,
             // Launch
             commands::launching::preflight_check,
+            commands::launching::fps_report,
+            commands::launching::apply_fps_boost,
             commands::launching::launch_instance,
             commands::launching::stop_instance,
             commands::launching::is_instance_running,
