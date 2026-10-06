@@ -1,14 +1,14 @@
-# Chaos Launcher – Code-Signierung (wird von `npm run tauri build` für jede EXE/MSI aufgerufen).
-# Ohne Zertifikat passiert nichts (Exit 0), der Build läuft normal durch.
+﻿# Chaos Launcher - Code-Signierung (wird von `npm run tauri build` fuer jede EXE/MSI aufgerufen).
+# Ohne Zertifikat passiert nichts (Exit 0), der Build laeuft normal durch.
 #
-# Zertifikat aktivieren – eine der Varianten:
+# Zertifikat aktivieren - eine der Varianten:
 #   1) Zertifikat im Windows-Zertifikatspeicher (z. B. Certum/Sectigo/SSL.com, Token oder PFX importiert):
 #        setx CHAOS_SIGN_THUMBPRINT <Thumbprint>
 #   2) PFX-Datei:
 #        setx CHAOS_SIGN_PFX  D:\keys\chaos.pfx
 #        setx CHAOS_SIGN_PFX_PASSWORD <Passwort>      (oder leer lassen -> Abfrage)
 #   3) Azure Trusted Signing / SignPath: CHAOS_SIGN_COMMAND = eigener Befehl mit {file} als Platzhalter
-# Danach: neue Konsole öffnen und bauen.
+# Danach: neue Konsole oeffnen und bauen.
 param([Parameter(Mandatory = $true)][string]$File)
 
 $ErrorActionPreference = "Stop"
@@ -49,5 +49,5 @@ if ($env:CHAOS_SIGN_PFX) {
     exit 0
 }
 
-Write-Host "[sign] Kein Zertifikat konfiguriert – $([System.IO.Path]::GetFileName($File)) bleibt unsigniert."
+Write-Host "[sign] Kein Zertifikat konfiguriert - $([System.IO.Path]::GetFileName($File)) bleibt unsigniert."
 exit 0
