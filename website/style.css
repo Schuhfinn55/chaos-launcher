@@ -130,3 +130,9 @@ main { position: relative; z-index: 1; }
   .stats .stat:first-child { grid-column: 1 / -1; }
   .nav-links { display: none; }
 }
+
+/* Download-Sicherheitshinweis */
+.safety { margin-top: 14px; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; }
+.safety summary { cursor: pointer; font-weight: 600; color: var(--accent-light); font-size: 14px; }
+.safety ol { margin: 10px 0 4px 18px; padding: 0; color: var(--text); font-size: 14px; line-height: 1.55; }
+.safety li { margin: 6px 0; }

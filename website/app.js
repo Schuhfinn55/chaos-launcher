@@ -31,6 +31,7 @@
       $("btn-sub").textContent = `v${l.version} · ${fmtBytes(l.size || 0)} · ${fmtDate(l.publishedAt)}`;
       $("dl-meta").textContent = `Chaos Launcher ${l.version} · ${fmtBytes(l.size || 0)} · ${fmtDate(l.publishedAt)} · Windows x64`;
       $("dl-sha").textContent = l.sha256 || "–";
+      if (l.sha256) $("dl-vt").href = "https://www.virustotal.com/gui/search/" + l.sha256;
       $("stat-version").textContent = "v" + l.version;
       for (const id of ["btn-msi", "btn-msi-2"]) { const a = $(id); if (l.msiUrl) { a.href = msiUrl; if (counted) a.removeAttribute("download"); } else a.style.display = "none"; }
     }

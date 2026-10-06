@@ -36,6 +36,22 @@
     ],
     "resources": [
       "resources/chaos-client.jar"
-    ]
+    ],
+    "publisher": "ChaoscraftSMP",
+    "copyright": "© 2026 ChaoscraftSMP – MIT License",
+    "windows": {
+      "timestampUrl": "http://timestamp.digicert.com",
+      "digestAlgorithm": "sha256",
+      "signCommand": {
+        "cmd": "powershell",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-Command",
+          "& (Join-Path (git rev-parse --show-toplevel) 'scripts/sign.ps1') -File '%1'"
+        ]
+      }
+    }
   }
 }

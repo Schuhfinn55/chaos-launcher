@@ -206,7 +206,16 @@
         <div>
           <h2>Jetzt herunterladen</h2>
           <p class="muted" id="dl-meta">Version wird geladen …</p>
-          <p class="muted small">SHA-256: <code id="dl-sha">–</code></p>
+          <p class="muted small">SHA-256: <code id="dl-sha">–</code> · <a id="dl-vt" href="https://www.virustotal.com" target="_blank" rel="noopener">auf VirusTotal prüfen ↗</a></p>
+          <details class="safety">
+            <summary>Browser oder Windows warnt beim Download? Das ist normal bei neuen Programmen – so geht's weiter</summary>
+            <ol>
+              <li><b>Chrome/Edge:</b> Beim Download auf „Behalten“ bzw. „Trotzdem beibehalten“ klicken (Edge: „…“ → „Beibehalten“ → „Trotzdem beibehalten“). Die Meldung „wird nicht häufig heruntergeladen“ bedeutet nur: die Datei ist neu und noch nicht oft verbreitet.</li>
+              <li><b>Windows SmartScreen</b> („Der Computer wurde durch Windows geschützt“): auf <b>„Weitere Informationen“</b> und dann <b>„Trotzdem ausführen“</b> klicken.</li>
+              <li>Prüfen kannst du die Datei jederzeit: SHA-256 oben vergleichen oder den VirusTotal-Link öffnen. Der komplette Quellcode ist offen auf <a href="https://github.com/Schuhfinn55/chaos-launcher" target="_blank" rel="noopener">GitHub</a>.</li>
+            </ol>
+            <p class="muted small">Hintergrund: Der Installer ist (noch) nicht mit einem kostenpflichtigen Code-Signing-Zertifikat signiert. Die Warnung ist eine Reputationsprüfung, kein Virenfund.</p>
+          </details>
         </div>
         <div class="dl-actions">
           <a class="btn btn-primary btn-lg btn-shine" id="btn-download-2" href="#" download>Setup (.exe)</a>
