@@ -2,20 +2,20 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.11",
-        "fileName": "ChaosLauncher-2.1.11-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.11/ChaosLauncher-2.1.11-setup.exe",
-        "sha256": "e323fe60c3a38bfd4a7eab648547f262347dfb9ffb876c688514a790382af992",
-        "size": 6865992,
+        "version": "2.1.12",
+        "fileName": "ChaosLauncher-2.1.12-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.12/ChaosLauncher-2.1.12-setup.exe",
+        "sha256": "c319a7f8e392223b0ecc3566d60d4406e3764d8bb56ae69857144951536d456e",
+        "size": 6900240,
         "publishedAt": "2026-10-06",
-        "notes": "- Cosmetics-Sync funktioniert wieder: Anmeldung an der Cosmetics-API läuft jetzt über Mojangs Spieler-Zertifikat (Mojang blockiert Anfragen aus der Cloud). Dein Minecraft-Token geht weiterhin nur an Mojang.\n- Cosmetics werden beim Launcher-Start und nach dem Login automatisch hochgeladen – andere sehen Cape, Hut, Wings, Effekt und Badge ohne Zutun\n- Fehlermeldungen der API werden im Klartext angezeigt",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.11/ChaosLauncher-2.1.11.msi",
-        "msiSha256": "1e9dd69721e5ab3d1732ab0ca25e2337a4eb45e2446b379a90e6d0195c6c99ce"
+        "notes": "- FPS-Boost auf der Spielen-Seite: zeigt RAM-Auslastung, genutzte Grafikkarte, Monitor-Hz, FPS-Limit/VSync und schwere Mods (Voxy, Flashback, …) mit Ein-Klick-Deaktivierung; „Boost anwenden“ setzt FPS-Limit unbegrenzt, VSync/Entity-Schatten aus, weist Java die Hochleistungs-GPU zu\n- Minecraft startet mit hoher Prozesspriorität (abschaltbar unter Einstellungen → Startverhalten)\n- Java: String-Deduplication für weniger RAM-Verbrauch",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.12/ChaosLauncher-2.1.12.msi",
+        "msiSha256": "5035e86ae64011dbc417e76d967033ffba2b19a9591d3fcef64e3fc43c83dfcf"
       },
       "client": {
         "version": "2.4.1",
         "fileName": "chaos-client-2.4.1.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.11/chaos-client-2.4.1.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.12/chaos-client-2.4.1.jar",
         "sha256": "704ff365b33c099767462d870610b6d012f3af908d805805e8675912a025ce39",
         "size": 599551,
         "publishedAt": "2026-10-06",
@@ -24,6 +24,11 @@
     }
   },
   "history": [
+    {
+      "version": "2.1.12",
+      "date": "2026-10-06",
+      "notes": "- FPS-Boost auf der Spielen-Seite: zeigt RAM-Auslastung, genutzte Grafikkarte, Monitor-Hz, FPS-Limit/VSync und schwere Mods (Voxy, Flashback, …) mit Ein-Klick-Deaktivierung; „Boost anwenden“ setzt FPS-Limit unbegrenzt, VSync/Entity-Schatten aus, weist Java die Hochleistungs-GPU zu\n- Minecraft startet mit hoher Prozesspriorität (abschaltbar unter Einstellungen → Startverhalten)\n- Java: String-Deduplication für weniger RAM-Verbrauch"
+    },
     {
       "version": "2.1.11",
       "date": "2026-10-06",
