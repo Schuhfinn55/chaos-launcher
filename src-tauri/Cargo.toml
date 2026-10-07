@@ -1,6 +1,6 @@
 [package]
 name = "chaos-launcher"
-version = "2.1.12"
+version = "2.1.13"
 description = "Chaos Launcher - der Minecraft-Client-Launcher für ChaoscraftSMP"
 authors = ["ChaoscraftSMP"]
 edition = "2021"

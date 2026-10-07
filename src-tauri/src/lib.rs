@@ -17,6 +17,7 @@
 //! - `commands/*`    alle Tauri-Befehle
 
 pub mod auth;
+pub mod bridge;
 pub mod client_update;
 pub mod commands;
 pub mod cosmetics;
@@ -69,6 +70,12 @@ pub fn run() {
             if let Err(e) = storage::ensure_data_dir() {
                 log::warn!("[Chaos] Datenverzeichnis konnte nicht erstellt werden: {e}");
             }
+            // Launcher-Bridge (127.0.0.1): Token-Erneuerung für den Chaos Client im Spiel
+            std::thread::spawn(|| {
+                if let Err(e) = bridge::start() {
+                    log::warn!("[Bridge] Start fehlgeschlagen: {e}");
+                }
+            });
             // Eingebauter Cosmetics-Server (optional)
             if let Ok(settings) = storage::load_settings() {
                 if settings.cosmetics_server_enabled {

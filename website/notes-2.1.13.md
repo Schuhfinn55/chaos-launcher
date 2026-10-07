@@ -1,0 +1,1 @@
+- „Ungültige Sitzung“ behoben: Minecraft-Token wird vor jedem Start erneuert; im Spiel holt der Chaos Client 2.4.2 bei abgelaufener Sitzung automatisch ein neues Token vom Launcher und verbindet neu – kein Neustart mehr nötig

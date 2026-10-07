@@ -100,6 +100,23 @@ pub async fn launch_instance(instanceId: String, app: tauri::AppHandle) -> Resul
             .details(e)
             .actions(&["login"])
     })?;
+    // Minecraft-Token vor dem Start erneuern, wenn es abgelaufen ist oder bald abläuft (sonst „Ungültige Sitzung“ beim Beitreten)
+    let account = {
+        let now = crate::system::now_secs();
+        let exp = crate::bridge::expires_secs(&account);
+        if exp < now + 3600 {
+            launch::log_step(format!("Minecraft-Token für {} wird erneuert (läuft ab / abgelaufen)", account.username));
+            match super::accounts::refresh_account(&account.uuid).await {
+                Ok(a) => a,
+                Err(e) => {
+                    launch::log_step(format!("Token-Erneuerung fehlgeschlagen, starte mit altem Token: {e}"));
+                    account
+                }
+            }
+        } else {
+            account
+        }
+    };
     let access_token = account.access_token.clone().filter(|t| !t.is_empty()).ok_or_else(|| {
         LaunchError::new("auth", "Anmeldung erforderlich", "Für den Account ist kein Spiel-Token vorhanden.").actions(&["login"])
     })?;

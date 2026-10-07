@@ -86,6 +86,8 @@ pub fn export_shared(home: &Path, instance: &Instance, account_name: &str, accou
         "accountName": account_name,
         "accountUuid": account_uuid.replace('-', "").to_lowercase(),
         "chaoscraftAddress": chaoscraft,
+        "bridgePort": crate::bridge::info().map(|(p, _)| p).unwrap_or(0),
+        "bridgeSecret": crate::bridge::info().map(|(_, s)| s).unwrap_or_default(),
         "servers": servers,
         "friends": friends,
         "cosmeticsEnabled": settings.cosmetics_enabled,
