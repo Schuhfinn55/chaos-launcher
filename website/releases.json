@@ -2,28 +2,33 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.13",
-        "fileName": "ChaosLauncher-2.1.13-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.13/ChaosLauncher-2.1.13-setup.exe",
-        "sha256": "ac7f1e92d6a8c9f591335613b49e49b8c15a81c32fcfa45f4ee9607459b4b7ab",
-        "size": 6931015,
+        "version": "2.2.0",
+        "fileName": "ChaosLauncher-2.2.0-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0-setup.exe",
+        "sha256": "cad93d3adaebcad58b1d7dd8f6a87f654b38e090e2e224a6e60501c70b9c47b9",
+        "size": 7018599,
         "publishedAt": "2026-10-07",
-        "notes": "- „Ungültige Sitzung“ behoben: Minecraft-Token wird vor jedem Start erneuert; im Spiel holt der Chaos Client 2.4.2 bei abgelaufener Sitzung automatisch ein neues Token vom Launcher und verbindet neu – kein Neustart mehr nötig",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.13/ChaosLauncher-2.1.13.msi",
-        "msiSha256": "546a27a9e8a283e2a378666690c33398eeaef9793994ec7287178a1a814273d6"
+        "notes": "- Cosmetics-Update: 7 neue Wings (Void, Inferno-Drache, Cyber, Frost, Blutengel, Gold, Seraphim) mit zweilagigem Flügelmodell, Sprung-/Fall-Animation und Leucht-Pulsieren\n- 13 neue Hüte (Drachenhelm, Chaos-Visor, Katzen-/Wolfsohren, Piratenhut, Geweih, Flammenkrone, Astronautenhelm, Pilz, Ritterhelm, Blumenkranz, Neon-Ring, Eiskrone) – Hüte können jetzt leuchten, rotieren und schweben\n- 10 neue Effekte (Chaos-Sturm, Gewitter, Void-Riss, Galaxie, Blutmond, Irrlichter, Engelsring, Feuerwerksspur, Regenbogen, Frost-Aura)\n- 6 neue animierte Capes (Blutmond, Chaos-Sturm, Drachenauge, Hologramm, Lavastrom, Void-Portal)\n- Chaos Client 2.5.0",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0.msi",
+        "msiSha256": "e67e3e96a6d5f27ddad5cab99c19e67b583e60898ea1569dfcd579cdbe01f28c"
       },
       "client": {
-        "version": "2.4.2",
-        "fileName": "chaos-client-2.4.2.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.13/chaos-client-2.4.2.jar",
-        "sha256": "05fd78d10656b8f651ae6ee2fc23e6e59268530329a48c945e7f5fe0f81c94c5",
-        "size": 607985,
+        "version": "2.5.0",
+        "fileName": "chaos-client-2.5.0.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/chaos-client-2.5.0.jar",
+        "sha256": "294478ba52828846795177fad598c775544c02b80eb224e4f4075b1f2be54566",
+        "size": 649671,
         "publishedAt": "2026-10-07",
-        "notes": "Selbstheilung bei „Ungültige Sitzung“"
+        "notes": "Cosmetics-Update: Wings, Hüte, Effekte"
       }
     }
   },
   "history": [
+    {
+      "version": "2.2.0",
+      "date": "2026-10-07",
+      "notes": "- Cosmetics-Update: 7 neue Wings (Void, Inferno-Drache, Cyber, Frost, Blutengel, Gold, Seraphim) mit zweilagigem Flügelmodell, Sprung-/Fall-Animation und Leucht-Pulsieren\n- 13 neue Hüte (Drachenhelm, Chaos-Visor, Katzen-/Wolfsohren, Piratenhut, Geweih, Flammenkrone, Astronautenhelm, Pilz, Ritterhelm, Blumenkranz, Neon-Ring, Eiskrone) – Hüte können jetzt leuchten, rotieren und schweben\n- 10 neue Effekte (Chaos-Sturm, Gewitter, Void-Riss, Galaxie, Blutmond, Irrlichter, Engelsring, Feuerwerksspur, Regenbogen, Frost-Aura)\n- 6 neue animierte Capes (Blutmond, Chaos-Sturm, Drachenauge, Hologramm, Lavastrom, Void-Portal)\n- Chaos Client 2.5.0"
+    },
     {
       "version": "2.1.13",
       "date": "2026-10-07",
