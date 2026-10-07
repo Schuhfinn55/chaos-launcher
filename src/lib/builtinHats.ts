@@ -1,11 +1,13 @@
 /* ============================================================
  * Chaos Launcher - Vorgefertigte Hüte
  *
- * Jeder Hut besteht aus wenigen farbigen Quadern in Kopf-Koordinaten
+ * GENERIERT von scripts/gen_hats.py – nicht von Hand bearbeiten.
+ * Jeder Hut besteht aus farbigen Quadern in Kopf-Koordinaten
  * (Minecraft-Modellraum: Kopf = x −4..4, y −8..0 (oben = negativ),
  * z −4..4, Einheit 1 = 1/16 Block). Dieselbe Definition ist im Chaos
  * Client (HatCatalog.java) hinterlegt – Launcher-Vorschau und Spiel
- * zeigen damit exakt denselben Hut.
+ * zeigen damit exakt denselben Hut. glow = leuchtet, spin = Grad/Tick,
+ * bob = Schwebe-Amplitude.
  * ============================================================ */
 
 export interface HatBox {
@@ -23,6 +25,9 @@ export interface BuiltinHat {
   name: string;
   description: string;
   icon: string;
+  glow?: boolean;
+  spin?: number;
+  bob?: number;
   boxes: HatBox[];
 }
 
@@ -34,15 +39,15 @@ export const CHAOS_HATS: BuiltinHat[] = [
     boxes: [B(-6, -9, -6, 12, 1, 12, "#111113"), B(-4, -16, -4, 8, 7, 8, "#1a1a1e"), B(-4.3, -11, -4.3, 8.6, 2, 8.6, "#e11d2e")],
   },
   {
-    id: "chaos-crown", name: "Chaos-Krone", description: "Schwarze Krone mit roten Zacken.", icon: "👑",
+    id: "chaos-crown", name: "Chaos-Krone", description: "Schwarze Krone mit glühenden roten Zacken.", icon: "👑",
     boxes: [B(-4.5, -11, -4.5, 9, 3, 9, "#1a0a0d"), B(-4.5, -13, -4.5, 2, 2, 2, "#e11d2e"), B(2.5, -13, -4.5, 2, 2, 2, "#e11d2e"), B(-4.5, -13, 2.5, 2, 2, 2, "#e11d2e"), B(2.5, -13, 2.5, 2, 2, 2, "#e11d2e"), B(-1, -14, -4.5, 2, 3, 1, "#ff4d5e")],
   },
   {
-    id: "gold-crown", name: "Goldkrone", description: "Königliche Krone aus Gold.", icon: "👑",
+    id: "gold-crown", name: "Goldkrone", description: "Königliche Krone aus Gold mit rotem Rubin.", icon: "👑",
     boxes: [B(-4.5, -11, -4.5, 9, 3, 9, "#f5c342"), B(-4.5, -13, -4.5, 2, 2, 2, "#f5c342"), B(2.5, -13, -4.5, 2, 2, 2, "#f5c342"), B(-4.5, -13, 2.5, 2, 2, 2, "#f5c342"), B(2.5, -13, 2.5, 2, 2, 2, "#f5c342"), B(-1, -13, -4.6, 2, 2, 1, "#e11d2e")],
   },
   {
-    id: "halo", name: "Heiligenschein", description: "Leuchtender Ring über dem Kopf.", icon: "😇",
+    id: "halo", name: "Heiligenschein", description: "Leuchtender Ring, der langsam über dem Kopf schwebt und rotiert.", icon: "😇", glow: true, spin: 1.2, bob: 0.35,
     boxes: [B(-4, -11, -4, 8, 0.6, 1, "#fff1b8"), B(-4, -11, 3, 8, 0.6, 1, "#fff1b8"), B(-4, -11, -3, 1, 0.6, 6, "#fff1b8"), B(3, -11, -3, 1, 0.6, 6, "#fff1b8")],
   },
   {
@@ -71,11 +76,63 @@ export const CHAOS_HATS: BuiltinHat[] = [
   },
   {
     id: "propeller", name: "Propellerkappe", description: "Bunte Kappe mit Propeller.", icon: "🚁",
-    boxes: [B(-4.5, -9.5, -4.5, 9, 2.5, 9, "#e11d2e"), B(-4.5, -9.5, -4.5, 4.5, 2.5, 4.5, "#fbbf24"), B(4.5 - 4.5, -9.5, 0, 4.5, 2.5, 4.5, "#3b82f6"), B(-0.4, -11.5, -0.4, 0.8, 2, 0.8, "#111113"), B(-4, -12, -0.4, 8, 0.5, 0.8, "#f4f1f2")],
+    boxes: [B(-4.5, -9.5, -4.5, 9, 2.5, 9, "#e11d2e"), B(-4.5, -9.5, -4.5, 4.5, 2.5, 4.5, "#fbbf24"), B(0, -9.5, 0, 4.5, 2.5, 4.5, "#3b82f6"), B(-0.4, -11.5, -0.4, 0.8, 2, 0.8, "#111113"), B(-4, -12, -0.4, 8, 0.5, 0.8, "#f4f1f2")],
   },
   {
     id: "santa", name: "Weihnachtsmütze", description: "Rote Mütze mit weißem Bommel.", icon: "🎅",
     boxes: [B(-4.6, -9.5, -4.6, 9.2, 2, 9.2, "#f4f1f2"), B(-4, -13, -4, 8, 3.5, 8, "#e11d2e"), B(-2.5, -15.5, -2.5, 5, 2.5, 5, "#e11d2e"), B(-0.5, -17, 1, 3, 2, 3, "#e11d2e"), B(1, -18.5, 2.5, 2.5, 2.5, 2.5, "#f4f1f2")],
+  },
+  {
+    id: "dragon-helm", name: "Drachenhelm", description: "Dunkler Schuppenhelm mit Stachelkamm, geschwungenen Hörnern und glühenden Augen.", icon: "🐲",
+    boxes: [B(-4.6, -9.2, -4.6, 9.2, 4, 9.2, "#1f2937"), B(-4.8, -6.2, -5, 9.6, 1, 1, "#111827"), B(-0.6, -11, -3, 1.2, 2, 1.2, "#334155"), B(-0.6, -11.5, -0.5, 1.2, 2.5, 1.2, "#334155"), B(-0.6, -11, 2, 1.2, 2, 1.2, "#334155"), B(-3, -6.5, -5.1, 2, 1, 0.5, "#ff2d44"), B(1, -6.5, -5.1, 2, 1, 0.5, "#ff2d44"), B(-6.2, -9.5, -1, 2, 2, 2, "#0f172a"), B(-6.8, -11.5, -0.8, 1.6, 2.2, 1.6, "#1e293b"), B(-7.6, -13.3, -0.6, 1.2, 2, 1.2, "#334155"), B(4.2, -9.5, -1, 2, 2, 2, "#0f172a"), B(5.2, -11.5, -0.8, 1.6, 2.2, 1.6, "#1e293b"), B(6.4, -13.3, -0.6, 1.2, 2, 1.2, "#334155")],
+  },
+  {
+    id: "chaos-visor", name: "Chaos-Visor", description: "Cyber-Visor mit grell leuchtendem Streifen in Chaos-Rot.", icon: "🕶", glow: true,
+    boxes: [B(-4.8, -5, -4.9, 9.6, 2.4, 1.2, "#0b0b10"), B(-4.9, -5, -4.5, 0.8, 2.4, 6, "#0b0b10"), B(4.1, -5, -4.5, 0.8, 2.4, 6, "#0b0b10"), B(-4.4, -4.3, -5.2, 8.8, 0.8, 0.4, "#ff1f3d"), B(-4.6, -4.6, 3.6, 9.2, 1.4, 1, "#1a1a1e")],
+  },
+  {
+    id: "cat-ears", name: "Katzenohren", description: "Schwarze Katzenohren mit rosa Innenseite.", icon: "🐱",
+    boxes: [B(-4.2, -10.5, -1, 2.8, 3, 1.6, "#111113"), B(-3.6, -12.5, -0.7, 1.6, 2.2, 1, "#111113"), B(-3.4, -10.2, -1.3, 1.2, 2, 0.4, "#f472b6"), B(1.4, -10.5, -1, 2.8, 3, 1.6, "#111113"), B(2, -12.5, -0.7, 1.6, 2.2, 1, "#111113"), B(2.2, -10.2, -1.3, 1.2, 2, 0.4, "#f472b6")],
+  },
+  {
+    id: "wolf-ears", name: "Wolfsohren", description: "Graue Wolfsohren mit hellem Fell.", icon: "🐺",
+    boxes: [B(-4.4, -10.8, -1.2, 2.6, 3.2, 2, "#4b5563"), B(-3.8, -12.6, -0.9, 1.4, 2, 1.4, "#374151"), B(-3.6, -10.5, -1.5, 1.2, 2.2, 0.4, "#d1d5db"), B(1.8, -10.8, -1.2, 2.6, 3.2, 2, "#4b5563"), B(2.4, -12.6, -0.9, 1.4, 2, 1.4, "#374151"), B(2.4, -10.5, -1.5, 1.2, 2.2, 0.4, "#d1d5db")],
+  },
+  {
+    id: "pirate", name: "Piratenhut", description: "Schwarzer Dreispitz mit Totenkopf und Goldborte.", icon: "🏴‍☠️",
+    boxes: [B(-6.5, -9, -6.5, 13, 1, 13, "#111113"), B(-4.2, -12.5, -4.2, 8.4, 3.5, 8.4, "#1a1a1e"), B(-7, -11.5, -2, 1.2, 3.5, 6, "#1a1a1e"), B(5.8, -11.5, -2, 1.2, 3.5, 6, "#1a1a1e"), B(-5, -11.8, -5.2, 10, 3.2, 1.2, "#1a1a1e"), B(-1.2, -11.2, -5.6, 2.4, 2, 0.5, "#f4f1f2"), B(-0.9, -10.8, -5.8, 0.6, 0.6, 0.3, "#111113"), B(0.3, -10.8, -5.8, 0.6, 0.6, 0.3, "#111113"), B(-5, -8.8, -5.3, 10, 0.4, 1.3, "#f5c342")],
+  },
+  {
+    id: "antlers", name: "Geweih", description: "Braunes Hirschgeweih mit verzweigten Enden.", icon: "🦌",
+    boxes: [B(-3.8, -13, -0.6, 1.2, 5, 1.2, "#6b4423"), B(-6, -12, -0.5, 2.4, 1, 1, "#7c4f2a"), B(-6.2, -14.5, -0.5, 1, 3, 1, "#7c4f2a"), B(-3.2, -15.5, -0.5, 1, 3, 1, "#8b5a2b"), B(-1.6, -13.5, -0.5, 1.6, 1, 1, "#7c4f2a"), B(2.6, -13, -0.6, 1.2, 5, 1.2, "#6b4423"), B(3.6, -12, -0.5, 2.4, 1, 1, "#7c4f2a"), B(5.2, -14.5, -0.5, 1, 3, 1, "#7c4f2a"), B(2.2, -15.5, -0.5, 1, 3, 1, "#8b5a2b"), B(-0, -13.5, -0.5, 1.6, 1, 1, "#7c4f2a")],
+  },
+  {
+    id: "flame-crown", name: "Flammenkrone", description: "Lodernde Krone aus glühenden Flammen – schwebt leicht.", icon: "🔥", glow: true, bob: 0.3,
+    boxes: [B(-4.5, -10.5, -4.5, 9, 2, 9, "#7a0f17"), B(-3.5, -13.5, -4.6, 1.4, 3, 1, "#ff6a00"), B(-0.7, -15, -4.6, 1.4, 4.5, 1, "#ffd166"), B(2.1, -13.5, -4.6, 1.4, 3, 1, "#ff6a00"), B(-4.6, -13, -0.7, 1, 2.5, 1.4, "#ff6a00"), B(3.6, -13, -0.7, 1, 2.5, 1.4, "#ff6a00"), B(-0.7, -13.5, 3.6, 1.4, 3, 1, "#ff8a1f"), B(-4.6, -12.5, -4.6, 1, 2, 1, "#e11d2e"), B(3.6, -12.5, -4.6, 1, 2, 1, "#e11d2e"), B(-4.6, -12.5, 3.6, 1, 2, 1, "#e11d2e"), B(3.6, -12.5, 3.6, 1, 2, 1, "#e11d2e")],
+  },
+  {
+    id: "astronaut", name: "Astronautenhelm", description: "Weißer Raumhelm mit dunklem Visier und roter Antenne.", icon: "👩‍🚀",
+    boxes: [B(-5.5, -9.5, -5.5, 11, 10.5, 11, "#f4f1f2"), B(-4, -7, -6, 8, 5, 0.8, "#1e293b"), B(-3, -6, -6.2, 2, 1, 0.3, "#93c5fd"), B(-5.8, 0.8, -5.8, 11.6, 1, 11.6, "#9ca3af"), B(5.4, -11, -0.4, 0.6, 3, 0.8, "#9ca3af"), B(5.2, -11.6, -0.6, 1, 0.8, 1.2, "#e11d2e")],
+  },
+  {
+    id: "mushroom", name: "Pilzhut", description: "Roter Fliegenpilz mit weißen Punkten.", icon: "🍄",
+    boxes: [B(-6.5, -11.5, -6.5, 13, 3.5, 13, "#e11d2e"), B(-4.5, -13.5, -4.5, 9, 2, 9, "#e11d2e"), B(-4.5, -8.2, -4.5, 9, 0.4, 9, "#f5e0c3"), B(-5, -11.6, -6.7, 2, 2, 0.4, "#f4f1f2"), B(2, -12.6, -6.7, 2.4, 2.4, 0.4, "#f4f1f2"), B(-2, -13.7, -2, 3, 0.4, 3, "#f4f1f2"), B(-6.7, -11, 0, 0.4, 2, 2.4, "#f4f1f2"), B(6.3, -12, -3, 0.4, 2, 2, "#f4f1f2"), B(-1, -11.5, 6.3, 2, 2, 0.4, "#f4f1f2")],
+  },
+  {
+    id: "knight-helm", name: "Ritterhelm", description: "Stahlhelm mit Visierschlitz und rotem Federbusch.", icon: "🛡",
+    boxes: [B(-4.6, -9.5, -4.6, 9.2, 5, 9.2, "#9ca3af"), B(-4.7, -4.6, -5, 9.4, 3.6, 1, "#6b7280"), B(-3.5, -3.4, -5.2, 7, 0.6, 0.3, "#111113"), B(-0.4, -10.5, -4.6, 0.8, 1, 9.2, "#d1d5db"), B(-4.8, -4.6, -2, 0.6, 4, 6, "#6b7280"), B(4.2, -4.6, -2, 0.6, 4, 6, "#6b7280"), B(-0.6, -14.5, -1, 1.2, 5, 2, "#e11d2e"), B(-0.6, -14, 1, 1.2, 3, 3, "#b91c1c"), B(-0.6, -13, 4, 1.2, 2, 2, "#e11d2e")],
+  },
+  {
+    id: "flower-crown", name: "Blumenkranz", description: "Grüner Kranz mit rosa, gelben und weißen Blüten.", icon: "🌸",
+    boxes: [B(-4.5, -9, -4.8, 9, 1, 1, "#2e7d32"), B(-4.5, -9, 3.8, 9, 1, 1, "#2e7d32"), B(-4.8, -9, -3.8, 1, 1, 7.6, "#2e7d32"), B(3.8, -9, -3.8, 1, 1, 7.6, "#2e7d32"), B(-3.5, -10, -5.2, 1.6, 1.6, 1.4, "#f472b6"), B(0.8, -10.2, -5.2, 1.6, 1.8, 1.4, "#fbbf24"), B(-1.4, -9.8, -5.3, 1.2, 1.2, 1.4, "#f4f1f2"), B(-5.4, -10, -1, 1.4, 1.6, 1.6, "#f472b6"), B(4, -10, 0.5, 1.4, 1.6, 1.6, "#fbbf24"), B(3.6, -9.8, -3, 1.2, 1.2, 1.2, "#f4f1f2"), B(-1, -9.9, 4, 1.6, 1.4, 1.4, "#f472b6"), B(-4, -9.3, -5.1, 1, 0.5, 1, "#4ade80"), B(2.6, -9.4, -5.1, 1, 0.5, 1, "#4ade80")],
+  },
+  {
+    id: "neon-halo", name: "Neon-Ring", description: "Rotierender Chaos-roter Neonring – leuchtet im Dunkeln.", icon: "⭕", glow: true, spin: 2.5, bob: 0.4,
+    boxes: [B(-5, -11.5, -5, 10, 0.5, 1, "#ff1f3d"), B(-5, -11.5, 4, 10, 0.5, 1, "#ff1f3d"), B(-5, -11.5, -4, 1, 0.5, 8, "#ff1f3d"), B(4, -11.5, -4, 1, 0.5, 8, "#ff1f3d"), B(-1, -12.2, -5.3, 2, 0.4, 0.6, "#ffffff")],
+  },
+  {
+    id: "ice-crown", name: "Eiskrone", description: "Kristallkrone aus leuchtendem Eis.", icon: "❄", glow: true,
+    boxes: [B(-4.5, -10.5, -4.5, 9, 2, 9, "#bae6fd"), B(-4.4, -13, -4.4, 1.4, 2.5, 1.4, "#e0f2fe"), B(3, -13, -4.4, 1.4, 2.5, 1.4, "#e0f2fe"), B(-4.4, -13, 3, 1.4, 2.5, 1.4, "#e0f2fe"), B(3, -13, 3, 1.4, 2.5, 1.4, "#e0f2fe"), B(-0.8, -15, -4.4, 1.6, 4.5, 1.2, "#f0f9ff"), B(-0.5, -16.5, -4.2, 1, 1.5, 0.8, "#ffffff")],
   },
 ];
 

@@ -19,6 +19,18 @@ export interface BuiltinEffect {
 }
 
 export const CHAOS_EFFECTS: BuiltinEffect[] = [
+  // ---- Premium
+  { id: "chaos-storm", name: "Chaos-Sturm", description: "Doppelte Helix aus rotem und schwarzem Staub, die um dich aufsteigt.", icon: "🌪", colors: ["#e11d2e", "#111113", "#ff4d5e"], pattern: "ring" },
+  { id: "lightning", name: "Gewitter", description: "Elektrische Entladungen und helle Blitzsäulen um dich herum.", icon: "⚡", colors: ["#7dd3fc", "#ffffff", "#fde047"], pattern: "burst" },
+  { id: "void-rift", name: "Void-Riss", description: "Dunkler Portalstrudel am Boden, der violette Splitter nach oben zieht.", icon: "🕳", colors: ["#4c1d95", "#7c3aed", "#1e1b4b"], pattern: "ring" },
+  { id: "galaxy", name: "Galaxie", description: "Sternenspirale aus Licht und Runen, die um dich kreist.", icon: "🌌", colors: ["#818cf8", "#f8fafc", "#c084fc"], pattern: "orbit" },
+  { id: "blood-moon", name: "Blutmond", description: "Blutroter Nebel, der aus dem Boden aufsteigt, mit Glutfunken.", icon: "🌑", colors: ["#8a0f1c", "#ff6a00", "#e11d2e"], pattern: "rise" },
+  { id: "wisps", name: "Irrlichter", description: "Blaue Seelen, die um deinen Kopf schweben.", icon: "👻", colors: ["#60a5fa", "#38bdf8", "#dbeafe"], pattern: "orbit" },
+  { id: "angel-ring", name: "Engelsring", description: "Leuchtender Lichtring über dem Kopf mit sanftem Funkeln.", icon: "😇", colors: ["#fff1b8", "#ffffff", "#fde68a"], pattern: "orbit" },
+  { id: "firework-trail", name: "Feuerwerksspur", description: "Funkelnde Feuerwerksspur hinter dir beim Laufen.", icon: "🎆", colors: ["#fbbf24", "#f472b6", "#60a5fa", "#4ade80"], pattern: "feet" },
+  { id: "rainbow", name: "Regenbogen", description: "Regenbogenfarbene Helix, die um dich tanzt.", icon: "🌈", colors: ["#f43f5e", "#fbbf24", "#4ade80", "#3b82f6", "#a855f7"], pattern: "orbit" },
+  { id: "frost-aura", name: "Frost-Aura", description: "Schneeflocken und Eisstaub, die um dich kreisen.", icon: "❄", colors: ["#bae6fd", "#ffffff", "#7dd3fc"], pattern: "ring" },
+  // ---- Klassiker
   { id: "chaos-aura", name: "Chaos-Aura", description: "Roter Partikelring, der um dich kreist.", icon: "🔴", colors: ["#e11d2e", "#ff4d5e", "#7a0f17"], pattern: "ring" },
   { id: "flame-feet", name: "Flammenschritte", description: "Flammen an deinen Füßen.", icon: "🔥", colors: ["#ff6a00", "#ffd166", "#e11d2e"], pattern: "feet" },
   { id: "soul-fire", name: "Seelenfeuer", description: "Blaue Seelenflammen um dich.", icon: "💙", colors: ["#38bdf8", "#67e8f9", "#1d4ed8"], pattern: "rise" },

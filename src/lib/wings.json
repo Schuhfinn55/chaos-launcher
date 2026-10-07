@@ -228,6 +228,132 @@
       "scale": 1.0,
       "glow": false,
       "particle": "snowflake"
+    },
+    {
+      "id": "void",
+      "name": "Void-Schwingen",
+      "description": "Tiefschwarze Federn mit violettem Leuchten und funkelnden Sternen – aus dem Nichts.",
+      "icon": "🕳",
+      "colors": [
+        "#0B0612",
+        "#6D28D9",
+        "#A78BFA"
+      ],
+      "flapSpeed": 0.07,
+      "flapAmp": 18,
+      "openAngle": 42,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "portal"
+    },
+    {
+      "id": "inferno",
+      "name": "Inferno-Drache",
+      "description": "Glühende Lavamembran auf verkohlten Knochen – brennt und funkelt.",
+      "icon": "🌋",
+      "colors": [
+        "#FF6A00",
+        "#7A0F0F",
+        "#FFD166"
+      ],
+      "flapSpeed": 0.065,
+      "flapAmp": 26,
+      "openAngle": 42,
+      "tilt": 6,
+      "scale": 1.18,
+      "glow": true,
+      "particle": "flame"
+    },
+    {
+      "id": "cyber",
+      "name": "Cyber-Flügel",
+      "description": "Fast schwarze Membran mit leuchtenden Cyan-Schaltkreisen – Neon aus der Zukunft.",
+      "icon": "🤖",
+      "colors": [
+        "#050A12",
+        "#00E5FF",
+        "#7DF9FF"
+      ],
+      "flapSpeed": 0.09,
+      "flapAmp": 18,
+      "openAngle": 40,
+      "tilt": 8,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "dust_cyan"
+    },
+    {
+      "id": "frost",
+      "name": "Frostflügel",
+      "description": "Eisblaue Federn mit weißem Glitzer – kühl leuchtend, mit Schneeflocken.",
+      "icon": "🧊",
+      "colors": [
+        "#E0F2FE",
+        "#38BDF8",
+        "#FFFFFF"
+      ],
+      "flapSpeed": 0.065,
+      "flapAmp": 16,
+      "openAngle": 40,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "snowflake"
+    },
+    {
+      "id": "blood-angel",
+      "name": "Blutengel",
+      "description": "Weiße Engelsfedern, deren Spitzen in Blut getaucht sind.",
+      "icon": "🩸",
+      "colors": [
+        "#F4F6FA",
+        "#B91C1C",
+        "#FF2D44"
+      ],
+      "flapSpeed": 0.075,
+      "flapAmp": 18,
+      "openAngle": 42,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": false,
+      "particle": "dust_red"
+    },
+    {
+      "id": "golden",
+      "name": "Goldene Schwingen",
+      "description": "Federn aus poliertem Gold mit hellem Glanz – leuchten warm.",
+      "icon": "🏆",
+      "colors": [
+        "#FDE68A",
+        "#B45309",
+        "#FFF7CC"
+      ],
+      "flapSpeed": 0.07,
+      "flapAmp": 16,
+      "openAngle": 40,
+      "tilt": 12,
+      "scale": 1.0,
+      "glow": true,
+      "particle": "dust_gold"
+    },
+    {
+      "id": "seraph",
+      "name": "Seraphim",
+      "description": "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.",
+      "icon": "👼",
+      "colors": [
+        "#FFFFFF",
+        "#F5C342",
+        "#FFF8E1"
+      ],
+      "flapSpeed": 0.06,
+      "flapAmp": 14,
+      "openAngle": 44,
+      "tilt": 14,
+      "scale": 1.12,
+      "glow": true,
+      "particle": "glow"
     }
   ]
 }

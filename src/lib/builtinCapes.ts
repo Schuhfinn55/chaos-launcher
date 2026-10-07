@@ -574,7 +574,192 @@ const animWave = () =>
     trim(ctx, w, h, "#ffffff", 1);
   });
 
+/** Blutmond geht über schwarzen Bergen auf, Wolken ziehen vorbei. */
+const animBloodMoon = () =>
+  drawAnimatedCape(20, (ctx, w, h, t) => {
+    vgrad(ctx, w, h, ["#05030a", "#1a0610", "#3a0a14"]);
+    const my = h * (0.62 - t * 0.28);
+    const g = ctx.createRadialGradient(w / 2, my, 0, w / 2, my, w * 0.6);
+    g.addColorStop(0, "rgba(225,29,46,0.55)");
+    g.addColorStop(1, "rgba(225,29,46,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#ff3b4e";
+    ctx.beginPath();
+    ctx.arc(w / 2, my, w * 0.22, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = "#e11d2e";
+    ctx.beginPath();
+    ctx.arc(w / 2 - 3, my - 2, w * 0.06, 0, TAU);
+    ctx.arc(w / 2 + 4, my + 3, w * 0.04, 0, TAU);
+    ctx.fill();
+    // Wolken
+    ctx.fillStyle = "rgba(10,5,12,0.75)";
+    for (let i = 0; i < 3; i++) {
+      const cx = ((t * 1.3 + i * 0.37) % 1.2) * (w + 20) - 10;
+      ctx.beginPath();
+      ctx.ellipse(cx, h * (0.45 + i * 0.12), 9, 3, 0, 0, TAU);
+      ctx.fill();
+    }
+    // Berge
+    ctx.fillStyle = "#07060a";
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    ctx.lineTo(0, h * 0.78);
+    ctx.lineTo(w * 0.25, h * 0.6);
+    ctx.lineTo(w * 0.45, h * 0.74);
+    ctx.lineTo(w * 0.7, h * 0.56);
+    ctx.lineTo(w, h * 0.76);
+    ctx.lineTo(w, h);
+    ctx.fill();
+  });
+
+/** Gewittersturm: Regen, zuckende Blitze, roter Himmel. */
+const animStorm = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    const flash = [0, 0, 1, 0.4, 0, 0, 0, 0, 0.9, 0.2, 0, 0, 0, 0, 0, 0][Math.floor(t * 16) % 16];
+    vgrad(ctx, w, h, [lerpColor("#07070a", "#4a1018", flash), "#120a0e", "#05050a"]);
+    const r = rng(42);
+    ctx.strokeStyle = "rgba(200,200,220,0.5)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 40; i++) {
+      const x = r() * w, y0 = r() * h;
+      const y = (y0 + t * h * 2) % h;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 1, y + 5);
+      ctx.stroke();
+    }
+    if (flash > 0) {
+      const rr = rng(7 + Math.floor(t * 16));
+      ctx.strokeStyle = `rgba(255,${Math.round(120 + flash * 100)},${Math.round(130 + flash * 100)},${0.7 + flash * 0.3})`;
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = "#ff4d5e";
+      ctx.shadowBlur = 10 * flash;
+      let x = w * (0.3 + rr() * 0.4), y = 0;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      while (y < h * 0.8) { x += (rr() - 0.5) * 12; y += 5 + rr() * 6; ctx.lineTo(x, y); }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    chaosRing(ctx, w / 2, h * 0.5, w * 0.2, "#ffffff", "rgba(225,29,46,0.5)");
+  });
+
+/** Drachenauge, das umherblickt und blinzelt. */
+const animDragonEye = () =>
+  drawAnimatedCape(24, (ctx, w, h, t) => {
+    dgrad(ctx, w, h, ["#0c0507", "#2a0a0d", "#0c0507"]);
+    // Schuppen
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    for (let y = 0; y < h; y += 6) for (let x = (y / 6) % 2 ? 3 : 0; x < w; x += 6) { ctx.beginPath(); ctx.arc(x, y, 3, 0, TAU); ctx.fill(); }
+    const cx = w / 2, cy = h * 0.42, rx = w * 0.4, ry = h * 0.17;
+    const blink = t > 0.86 ? Math.max(0.08, 1 - Math.abs((t - 0.93) / 0.07) ) : 0;
+    const lid = 1 - blink;
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry * lid, 0, 0, TAU);
+    ctx.clip();
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+    g.addColorStop(0, "#ffd166");
+    g.addColorStop(0.5, "#ff6a00");
+    g.addColorStop(1, "#7a0f0f");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const look = Math.sin(t * TAU) * rx * 0.3;
+    ctx.fillStyle = "#0a0305";
+    ctx.beginPath();
+    ctx.ellipse(cx + look, cy, rx * 0.12, ry * 0.95, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.beginPath();
+    ctx.ellipse(cx + look - 4, cy - ry * 0.4, 2, 1.2, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = "#1a0608";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry * lid, 0, 0, TAU);
+    ctx.stroke();
+    trim(ctx, w, h, "#7a0f17", 1);
+  });
+
+/** Hologramm: Scanlines, Flackern, Chaos-C als Projektion. */
+const animHologram = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    vgrad(ctx, w, h, ["#030810", "#06182a", "#030810"]);
+    const flick = 0.8 + 0.2 * Math.sin(t * TAU * 3);
+    const scan = (t * h) % h;
+    ctx.fillStyle = `rgba(0,229,255,${0.06 * flick})`;
+    for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
+    ctx.fillStyle = "rgba(0,229,255,0.28)";
+    ctx.fillRect(0, scan, w, 2);
+    ctx.save();
+    ctx.globalAlpha = 0.9 * flick;
+    chaosRing(ctx, w / 2, h / 2, w * 0.27, "#00e5ff", "rgba(0,229,255,0.6)");
+    ctx.restore();
+    // Glitch-Versatz
+    if (Math.floor(t * 16) % 5 === 0) {
+      const img = ctx.getImageData(0, h * 0.3, w, 4);
+      ctx.putImageData(img, 3, h * 0.3);
+    }
+    trim(ctx, w, h, "#00e5ff", 1);
+  });
+
+/** Fließende Lava mit dunklen Krusten. */
+const animLava = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x += 2) {
+        const v1 = Math.sin((x / w) * TAU * 1.2 + (y / h) * TAU * 2 - t * TAU);
+        const v2 = Math.sin((x / w) * TAU * 2.3 - (y / h) * TAU * 1.1 + t * TAU * 2);
+        const v = 0.5 + 0.25 * v1 + 0.25 * v2;
+        ctx.fillStyle = v > 0.72 ? "#ffd166" : v > 0.55 ? "#ff6a00" : v > 0.4 ? "#b91c1c" : "#1a0608";
+        ctx.fillRect(x, y, 2, 1);
+      }
+    }
+    trim(ctx, w, h, "#0a0305", 1);
+  });
+
+/** Void-Portal: rotierender Strudel aus Violett und Schwarz. */
+const animVoid = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    ctx.fillStyle = "#06030a";
+    ctx.fillRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2;
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = i % 2 ? "#6d28d9" : "#c4b5fd";
+      ctx.lineWidth = 2.2 - i * 0.3;
+      ctx.beginPath();
+      for (let a = 0; a < TAU * 2.5; a += 0.15) {
+        const r = (a / (TAU * 2.5)) * w * 0.55;
+        const ang = a + t * TAU + (i * TAU) / 4;
+        const px = cx + Math.cos(ang) * r, py = cy + Math.sin(ang) * r * 1.3;
+        if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.3);
+    g.addColorStop(0, "rgba(0,0,0,1)");
+    g.addColorStop(0.5, "rgba(20,5,40,0.8)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const r = rng(5);
+    for (let i = 0; i < 30; i++) {
+      const a = 0.5 + 0.5 * Math.sin(t * TAU * 2 + r() * TAU);
+      ctx.fillStyle = `rgba(221,214,254,${a})`;
+      ctx.fillRect(r() * w, r() * h, 1, 1);
+    }
+  });
+
 export const CHAOS_CAPES: BuiltinCape[] = [
+  { id: "anim-blood-moon", name: "Blutmond", description: "Animiert: Blutmond steigt über Bergen auf", generate: animBloodMoon, fps: 8, frames: 20 },
+  { id: "anim-storm", name: "Chaos-Sturm", description: "Animiert: Regen und Blitze", generate: animStorm, fps: 12, frames: 16 },
+  { id: "anim-dragon-eye", name: "Drachenauge", description: "Animiert: blickendes, blinzelndes Auge", generate: animDragonEye, fps: 12, frames: 24 },
+  { id: "anim-hologram", name: "Hologramm", description: "Animiert: Cyan-Projektion mit Scanlines", generate: animHologram, fps: 12, frames: 16 },
+  { id: "anim-lava", name: "Lavastrom", description: "Animiert: fließende Lava", generate: animLava, fps: 10, frames: 16 },
+  { id: "anim-void", name: "Void-Portal", description: "Animiert: rotierender Strudel", generate: animVoid, fps: 12, frames: 16 },
   { id: "anim-flame", name: "Chaos Flame", description: "Animiert: lodernde Flammen", generate: animFlame, fps: 10, frames: 12 },
   { id: "anim-pulse", name: "Chaos Pulse", description: "Animiert: pulsierendes Chaos-C", generate: animPulse, fps: 12, frames: 12 },
   { id: "anim-lightning", name: "Gewitter", description: "Animiert: zuckende Blitze", generate: animLightning, fps: 10, frames: 10 },

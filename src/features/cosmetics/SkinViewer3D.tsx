@@ -189,13 +189,29 @@ export default function SkinViewer3D({
     if (!hat) return;
     const g = new Group();
     for (const b of hat.boxes) {
-      const mesh = new Mesh(new BoxGeometry(b.w, b.h, b.d), new MeshStandardMaterial({ color: b.color, roughness: 0.75, metalness: 0.05 }));
+      const mat = hat.glow
+        ? new MeshStandardMaterial({ color: b.color, emissive: b.color, emissiveIntensity: 0.9, roughness: 0.4, metalness: 0.05 })
+        : new MeshStandardMaterial({ color: b.color, roughness: 0.75, metalness: 0.05 });
+      const mesh = new Mesh(new BoxGeometry(b.w, b.h, b.d), mat);
       // MC: y nach unten (Kopf -8..0), z nach hinten → three: x gleich, y/z gekippt, Kopf-Box zentriert (y -4..4)
       mesh.position.set(b.x + b.w / 2, -(b.y + b.h / 2) - 4, -(b.z + b.d / 2));
       g.add(mesh);
     }
     head.add(g);
     hatRef.current = g;
+    // Animation: spin (Grad/Tick um die Hochachse), bob (Schweben) – wie im Chaos Client
+    const spin = hat.spin ?? 0, bob = hat.bob ?? 0;
+    if (!spin && !bob) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = () => {
+      const t = (performance.now() - t0) / 50;
+      g.rotation.y = (t * spin * Math.PI) / 180;
+      g.position.y = Math.sin(t * 0.09) * bob;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [hat]);
 
   // Wings: zwei flache Textur-Ebenen am Rücken, Pivot an der Flügelwurzel, Auf-/Zuklappen per rAF.

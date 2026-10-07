@@ -1,0 +1,5 @@
+- Cosmetics-Update: 7 neue Wings (Void, Inferno-Drache, Cyber, Frost, Blutengel, Gold, Seraphim) mit zweilagigem Flügelmodell, Sprung-/Fall-Animation und Leucht-Pulsieren
+- 13 neue Hüte (Drachenhelm, Chaos-Visor, Katzen-/Wolfsohren, Piratenhut, Geweih, Flammenkrone, Astronautenhelm, Pilz, Ritterhelm, Blumenkranz, Neon-Ring, Eiskrone) – Hüte können jetzt leuchten, rotieren und schweben
+- 10 neue Effekte (Chaos-Sturm, Gewitter, Void-Riss, Galaxie, Blutmond, Irrlichter, Engelsring, Feuerwerksspur, Regenbogen, Frost-Aura)
+- 6 neue animierte Capes (Blutmond, Chaos-Sturm, Drachenauge, Hologramm, Lavastrom, Void-Portal)
+- Chaos Client 2.5.0

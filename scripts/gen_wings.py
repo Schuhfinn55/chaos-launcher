@@ -369,6 +369,28 @@ DESIGNS = [
     W_("crystal", "Kristallflügel", "Kantige Eiskristalle, klar und kühl – mit Schneeschimmer.", "❄",
        lambda L: draw_crystal(L, rgba("#E0F2FE"), rgba("#7DD3FC"), rgba("#0369A1"), rgba("#F0F9FF")),
        ["#E0F2FE", "#7DD3FC", "#0369A1"], flapSpeed=0.06, flapAmp=10, openAngle=38, tilt=12, particle="snowflake"),
+    # ---- Premium
+    W_("void", "Void-Schwingen", "Tiefschwarze Federn mit violettem Leuchten und funkelnden Sternen – aus dem Nichts.", "🕳",
+       lambda L: draw_feathered(L, rgba("#0B0612"), rgba("#6D28D9"), rgba("#1B1030"), outline_f=0.4, stars=((221, 214, 254, 255), 26, (139, 92, 246, 255)), tip_glow=rgba("#A78BFA")),
+       ["#0B0612", "#6D28D9", "#A78BFA"], flapSpeed=0.07, flapAmp=18, openAngle=42, tilt=12, glow=True, particle="portal"),
+    W_("inferno", "Inferno-Drache", "Glühende Lavamembran auf verkohlten Knochen – brennt und funkelt.", "🌋",
+       lambda L: draw_membrane(L, rgba("#FF6A00"), rgba("#7A0F0F"), rgba("#1A0A0D"), rgba("#FFD166"), rgba("#120508"), glow_c=rgba("#FFB347")),
+       ["#FF6A00", "#7A0F0F", "#FFD166"], flapSpeed=0.065, flapAmp=26, openAngle=42, tilt=6, scale=1.18, glow=True, particle="flame"),
+    W_("cyber", "Cyber-Flügel", "Fast schwarze Membran mit leuchtenden Cyan-Schaltkreisen – Neon aus der Zukunft.", "🤖",
+       lambda L: draw_membrane(L, rgba("#050A12"), rgba("#071A24"), rgba("#0B2A36"), rgba("#00E5FF"), rgba("#00FFF0"), glow_c=rgba("#7DF9FF"), mem_alpha=220),
+       ["#050A12", "#00E5FF", "#7DF9FF"], flapSpeed=0.09, flapAmp=18, openAngle=40, tilt=8, glow=True, particle="dust_cyan"),
+    W_("frost", "Frostflügel", "Eisblaue Federn mit weißem Glitzer – kühl leuchtend, mit Schneeflocken.", "🧊",
+       lambda L: draw_feathered(L, rgba("#E0F2FE"), rgba("#38BDF8"), rgba("#FFFFFF"), outline_f=0.6, stars=((255, 255, 255, 255), 20, (186, 230, 253, 255))),
+       ["#E0F2FE", "#38BDF8", "#FFFFFF"], flapSpeed=0.065, flapAmp=16, openAngle=40, tilt=12, glow=True, particle="snowflake"),
+    W_("blood-angel", "Blutengel", "Weiße Engelsfedern, deren Spitzen in Blut getaucht sind.", "🩸",
+       lambda L: draw_feathered(L, rgba("#F4F6FA"), rgba("#B91C1C"), rgba("#FFFFFF"), outline_f=0.55, tip_glow=rgba("#FF2D44")),
+       ["#F4F6FA", "#B91C1C", "#FF2D44"], flapSpeed=0.075, flapAmp=18, openAngle=42, tilt=12, particle="dust_red"),
+    W_("golden", "Goldene Schwingen", "Federn aus poliertem Gold mit hellem Glanz – leuchten warm.", "🏆",
+       lambda L: draw_feathered(L, rgba("#FDE68A"), rgba("#B45309"), rgba("#FFF7CC"), outline_f=0.6, stars=((255, 255, 255, 255), 30, (253, 224, 71, 255))),
+       ["#FDE68A", "#B45309", "#FFF7CC"], flapSpeed=0.07, flapAmp=16, openAngle=40, tilt=12, glow=True, particle="dust_gold"),
+    W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
+       lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
+       ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),
 ]
 
 
@@ -402,7 +424,7 @@ def main():
         with open(p, "w", encoding="utf-8", newline="\n") as f:
             f.write(js + "\n")
     # Vorschau-Kontaktbogen
-    sheet = Image.new("RGBA", (TEX[0] * 4, TEX[1] * 3), (30, 30, 36, 255))
+    sheet = Image.new("RGBA", (TEX[0] * 4, TEX[1] * ((len(DESIGNS) + 3) // 4)), (30, 30, 36, 255))
     for i, d in enumerate(DESIGNS):
         t = Image.open(os.path.join(OUT_L, d["id"] + ".png"))
         sheet.alpha_composite(t, ((i % 4) * TEX[0], (i // 4) * TEX[1]))
