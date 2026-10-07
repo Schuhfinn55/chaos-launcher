@@ -2,28 +2,33 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.1.12",
-        "fileName": "ChaosLauncher-2.1.12-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.12/ChaosLauncher-2.1.12-setup.exe",
-        "sha256": "c319a7f8e392223b0ecc3566d60d4406e3764d8bb56ae69857144951536d456e",
-        "size": 6900240,
-        "publishedAt": "2026-10-06",
-        "notes": "- FPS-Boost auf der Spielen-Seite: zeigt RAM-Auslastung, genutzte Grafikkarte, Monitor-Hz, FPS-Limit/VSync und schwere Mods (Voxy, Flashback, …) mit Ein-Klick-Deaktivierung; „Boost anwenden“ setzt FPS-Limit unbegrenzt, VSync/Entity-Schatten aus, weist Java die Hochleistungs-GPU zu\n- Minecraft startet mit hoher Prozesspriorität (abschaltbar unter Einstellungen → Startverhalten)\n- Java: String-Deduplication für weniger RAM-Verbrauch",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.12/ChaosLauncher-2.1.12.msi",
-        "msiSha256": "5035e86ae64011dbc417e76d967033ffba2b19a9591d3fcef64e3fc43c83dfcf"
+        "version": "2.1.13",
+        "fileName": "ChaosLauncher-2.1.13-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.13/ChaosLauncher-2.1.13-setup.exe",
+        "sha256": "ac7f1e92d6a8c9f591335613b49e49b8c15a81c32fcfa45f4ee9607459b4b7ab",
+        "size": 6931015,
+        "publishedAt": "2026-10-07",
+        "notes": "- „Ungültige Sitzung“ behoben: Minecraft-Token wird vor jedem Start erneuert; im Spiel holt der Chaos Client 2.4.2 bei abgelaufener Sitzung automatisch ein neues Token vom Launcher und verbindet neu – kein Neustart mehr nötig",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.13/ChaosLauncher-2.1.13.msi",
+        "msiSha256": "546a27a9e8a283e2a378666690c33398eeaef9793994ec7287178a1a814273d6"
       },
       "client": {
-        "version": "2.4.1",
-        "fileName": "chaos-client-2.4.1.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.12/chaos-client-2.4.1.jar",
-        "sha256": "704ff365b33c099767462d870610b6d012f3af908d805805e8675912a025ce39",
-        "size": 599551,
-        "publishedAt": "2026-10-06",
-        "notes": "Mitspieler alle 2 Minuten erneut prüfen"
+        "version": "2.4.2",
+        "fileName": "chaos-client-2.4.2.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.1.13/chaos-client-2.4.2.jar",
+        "sha256": "05fd78d10656b8f651ae6ee2fc23e6e59268530329a48c945e7f5fe0f81c94c5",
+        "size": 607985,
+        "publishedAt": "2026-10-07",
+        "notes": "Selbstheilung bei „Ungültige Sitzung“"
       }
     }
   },
   "history": [
+    {
+      "version": "2.1.13",
+      "date": "2026-10-07",
+      "notes": "- „Ungültige Sitzung“ behoben: Minecraft-Token wird vor jedem Start erneuert; im Spiel holt der Chaos Client 2.4.2 bei abgelaufener Sitzung automatisch ein neues Token vom Launcher und verbindet neu – kein Neustart mehr nötig"
+    },
     {
       "version": "2.1.12",
       "date": "2026-10-06",
@@ -85,6 +90,6 @@
       "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-06",
+  "updatedAt": "2026-10-07",
   "downloads": "github"
 }
