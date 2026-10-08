@@ -410,6 +410,7 @@ pub fn export_for_instance(
         "hat": if settings.cosmetics_enabled { profile.map(|p| p.hat_id.clone()).unwrap_or_default() } else { String::new() },
         "effect": if settings.cosmetics_enabled { profile.map(|p| p.effect_id.clone()).unwrap_or_default() } else { String::new() },
         "wings": if settings.cosmetics_enabled { profile.map(|p| p.wings_id.clone()).unwrap_or_default() } else { String::new() },
+        "unlocks": profile.map(|p| p.unlocks.clone()).unwrap_or_default(),
         "library": library,
         "players": players,
         "exportedAt": now_millis(),
@@ -529,6 +530,16 @@ pub fn sanitize_id(id: &str) -> String {
 }
 
 /// Setzt Hut ("hat"), Effekt ("effect") oder Wings ("wings") eines Accounts.
+/// Freischaltungen (von der API bestätigt) im Profil speichern.
+pub fn set_unlocks(account_uuid: &str, unlocks: &[String]) -> Result<CosmeticsProfile, String> {
+    let mut state = load()?;
+    let profile = profile_mut(&mut state, account_uuid);
+    profile.unlocks = unlocks.iter().map(|u| sanitize_id(u)).filter(|u| !u.is_empty()).collect();
+    let out = profile.clone();
+    save(&state)?;
+    Ok(out)
+}
+
 pub fn set_cosmetic(account_uuid: &str, kind: &str, id: &str) -> Result<CosmeticsProfile, String> {
     let mut state = load()?;
     let clean = sanitize_id(id);

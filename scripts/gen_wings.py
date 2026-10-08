@@ -175,7 +175,7 @@ def clamp_len(base, ang, length, margin=1.0):
     return length
 
 
-def draw_feathered(L, base_c, tip_c, shoulder_c, outline_f=0.55, stars=None, tip_glow=None):
+def draw_feathered(L, base_c, tip_c, shoulder_c, outline_f=0.55, stars=None, tip_glow=None, seed=0):
     R, E, Wr = (3, 24), (16, 7), (36, 9)
 
     def arm(t):
@@ -224,8 +224,8 @@ def draw_feathered(L, base_c, tip_c, shoulder_c, outline_f=0.55, stars=None, tip
     L.paint(m, gradient(shade(shoulder_c, 1.05), base_c, (R[0] + 2, R[1] - 6), 18))
     L.edge(m, lambda x, y: shade(shoulder_c, 0.72))
     if stars:
-        L.dots(L.mask(), stars[0], every=stars[1], seed=7)
-        L.dots(L.mask(), stars[2], every=stars[1] * 3, seed=11)
+        L.dots(L.mask(), stars[0], every=stars[1], seed=7 + seed)
+        L.dots(L.mask(), stars[2], every=stars[1] * 3, seed=11 + seed)
 
 
 def draw_membrane(L, mem_top, mem_bot, bone_c, vein_c, outline_c, glow_c=None, mem_alpha=255, scale=1.0):
@@ -328,8 +328,62 @@ def draw_crystal(L, c_light, c_dark, c_edge, c_core):
 
 
 # ---------------------------------------------------------------- Designs
-def W_(id, name, desc, icon, draw, colors, flapSpeed=0.08, flapAmp=18, openAngle=38, tilt=10, scale=1.0, glow=False, particle=""):
-    return dict(id=id, name=name, description=desc, icon=icon, draw=draw, colors=colors, flapSpeed=flapSpeed, flapAmp=flapAmp, openAngle=openAngle, tilt=tilt, scale=scale, glow=glow, particle=particle)
+def W_(id, name, desc, icon, draw, colors, flapSpeed=0.08, flapAmp=18, openAngle=38, tilt=10, scale=1.0, glow=False, particle="", frames=1, fps=10, exclusive=False):
+    return dict(id=id, name=name, description=desc, icon=icon, draw=draw, colors=colors, flapSpeed=flapSpeed, flapAmp=flapAmp, openAngle=openAngle, tilt=tilt, scale=scale, glow=glow, particle=particle, frames=frames, fps=fps, exclusive=exclusive)
+
+
+# ---------------------------------------------------------------- Legendär (animierte Texturen, nur per Code)
+def _mem_points():
+    R, E = (3, 26), (15, 8)
+    T1, T2, T3, B = (50, 4), (50, 32), (37, 52), (5, 46)
+    return R, E, T1, T2, T3, B
+
+
+def draw_overlord(L, k, n):
+    """Chaos Overlord: schwarze Drachenschwinge, blutrote Membran, Energieadern, die nach außen pulsieren, Blitze."""
+    t = k / n
+    pulse = 0.5 + 0.5 * math.sin(t * math.tau)
+    glow = mix(rgba("#FF1F3D"), rgba("#FFE4E8"), pulse * 0.7)
+    draw_membrane(L, rgba("#4A0810"), rgba("#14050A"), rgba("#0B0608"), rgba("#8A1020"), rgba("#060305"), glow_c=glow)
+    R, E, T1, T2, T3, B = _mem_points()
+    rnd = random.Random(100 + k)
+    # Energie-Impulse wandern entlang der Adern (Ellbogen → Spitzen)
+    for i, T in enumerate((T1, T2, T3, mid(T2, T3), mid(T3, B))):
+        f = (t + i * 0.2) % 1.0
+        px, py = E[0] + (T[0] - E[0]) * f, E[1] + (T[1] - E[1]) * f
+        L.paint(ellipse(px, py, 2.2, 2.2), lambda x, y: rgba("#FFF1F3"))
+        f2 = (f - 0.12) % 1.0
+        qx, qy = E[0] + (T[0] - E[0]) * f2, E[1] + (T[1] - E[1]) * f2
+        L.paint(ellipse(qx, qy, 1.4, 1.4), lambda x, y: rgba("#FF5A6E"))
+    # Blitze: kurze gezackte Linien über der Membran
+    for _ in range(3 if pulse > 0.5 else 1):
+        x0, y0 = rnd.uniform(18, 46), rnd.uniform(8, 44)
+        pts = [(x0, y0)]
+        for _s in range(4):
+            pts.append((pts[-1][0] + rnd.uniform(-5, 5), pts[-1][1] + rnd.uniform(-5, 5)))
+        for a, b in zip(pts, pts[1:]):
+            L.paint(intersect(line(a, b, 1), L.mask()), lambda x, y: rgba("#FFD6DC"))
+    # Glut an den Spitzen
+    for T in (T1, T2, T3):
+        L.paint(intersect(ellipse(T[0], T[1], 4, 4), L.mask()), lambda x, y: mix(rgba("#FF2D44"), rgba("#FFFFFF"), pulse * 0.6))
+
+
+def draw_celestial(L, k, n):
+    """Celestial Seraph: schillernde Federn (Cyan → Violett → Gold → Rosé), funkelnde Sterne, weißes Spitzenleuchten."""
+    t = k / n
+    pal = [(rgba("#E0F7FF"), rgba("#38BDF8")), (rgba("#EDE9FE"), rgba("#8B5CF6")), (rgba("#FFF7CC"), rgba("#F5C342")), (rgba("#FCE7F3"), rgba("#F472B6"))]
+    seg = t * len(pal)
+    i = int(seg) % len(pal)
+    j = (i + 1) % len(pal)
+    f = seg - int(seg)
+    base = mix(pal[i][0], pal[j][0], f)
+    tip = mix(pal[i][1], pal[j][1], f)
+    draw_feathered(L, base, tip, rgba("#FFFFFF"), outline_f=0.68, stars=((255, 255, 255, 255), 14, tip), tip_glow=rgba("#FFFFFF"), seed=k * 3)
+    # Lichtbogen über der Schulter
+    rnd = random.Random(500 + k)
+    for _ in range(6):
+        x, y = rnd.uniform(4, 30), rnd.uniform(4, 30)
+        L.paint(intersect(ellipse(x, y, 1.2, 1.2), L.mask()), lambda x_, y_: rgba("#FFFFFF"))
 
 
 DESIGNS = [
@@ -388,15 +442,23 @@ DESIGNS = [
     W_("golden", "Goldene Schwingen", "Federn aus poliertem Gold mit hellem Glanz – leuchten warm.", "🏆",
        lambda L: draw_feathered(L, rgba("#FDE68A"), rgba("#B45309"), rgba("#FFF7CC"), outline_f=0.6, stars=((255, 255, 255, 255), 30, (253, 224, 71, 255))),
        ["#FDE68A", "#B45309", "#FFF7CC"], flapSpeed=0.07, flapAmp=16, openAngle=40, tilt=12, glow=True, particle="dust_gold"),
+    # ---- Legendär (nur per Code)
+    W_("overlord", "Chaos Overlord", "LEGENDÄR · Schwarze Drachenschwingen mit pulsierenden Energieadern, Blitzen und Glut – nur mit Code.", "👑",
+       draw_overlord, ["#4A0810", "#FF1F3D", "#FFE4E8"], flapSpeed=0.06, flapAmp=28, openAngle=44, tilt=6, scale=1.32, glow=True, particle="overlord", frames=8, fps=10, exclusive=True),
+    W_("celestial", "Celestial Seraph", "LEGENDÄR · Schillernde Federn, die ihre Farbe wechseln, mit Sternenstaub und Lichtspuren – nur mit Code.", "🌟",
+       draw_celestial, ["#E0F7FF", "#8B5CF6", "#F5C342"], flapSpeed=0.065, flapAmp=18, openAngle=46, tilt=14, scale=1.3, glow=True, particle="celestial", frames=8, fps=8, exclusive=True),
     W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
        lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
        ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),
 ]
 
 
-def build(design):
+def build(design, frame=0):
     L = Layer()
-    design["draw"](L)
+    if design.get("frames", 1) > 1:
+        design["draw"](L, frame, design["frames"])
+    else:
+        design["draw"](L)
     a = L.img  # Original: Wurzel links
     tex = Image.new("RGBA", TEX, (0, 0, 0, 0))
     tex.paste(a.transpose(Image.FLIP_LEFT_RIGHT), (0, 0))  # Region 1 (Nordseite): Wurzel rechts
@@ -414,11 +476,17 @@ def main():
         "wings": [],
     }
     for d in DESIGNS:
-        tex = build(d)
-        tex.save(os.path.join(OUT_L, d["id"] + ".png"))
-        tex.save(os.path.join(OUT_M, d["id"] + ".png"))
-        out["wings"].append({k: d[k] for k in ("id", "name", "description", "icon", "colors", "flapSpeed", "flapAmp", "openAngle", "tilt", "scale", "glow", "particle")})
-        print("ok", d["id"])
+        n = d.get("frames", 1)
+        for k in range(n):
+            tex = build(d, k)
+            names = [d["id"] + ".png"] if k == 0 else []
+            if n > 1:
+                names.append("%s_f%d.png" % (d["id"], k))
+            for nm in names:
+                tex.save(os.path.join(OUT_L, nm))
+                tex.save(os.path.join(OUT_M, nm))
+        out["wings"].append({k: d[k] for k in ("id", "name", "description", "icon", "colors", "flapSpeed", "flapAmp", "openAngle", "tilt", "scale", "glow", "particle", "frames", "fps", "exclusive")})
+        print("ok", d["id"], "(%d Frames)" % n if n > 1 else "")
     js = json.dumps(out, ensure_ascii=False, indent=2)
     for p in (os.path.join(LAUNCHER, "src", "lib", "wings.json"), os.path.join(MOD, "src", "main", "resources", "assets", "chaosclient", "wings.json")):
         with open(p, "w", encoding="utf-8", newline="\n") as f:

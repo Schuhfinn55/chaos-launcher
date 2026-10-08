@@ -43,6 +43,58 @@ pub fn set_cosmetic(accountUuid: String, kind: String, id: String) -> Result<Cos
     cosmetics::set_cosmetic(&accountUuid, &kind, &id)
 }
 
+/// Code für exklusive Wings einlösen (Freischaltung wird von der API bestätigt und lokal gespeichert).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn redeem_cosmetic_code(accountUuid: String, code: String) -> Result<cosmetics_api::RedeemResult, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    let api = cosmetics_api::effective_url(&settings);
+    let account = storage::load_accounts()?.into_iter().find(|a| a.uuid == accountUuid).ok_or("Account nicht gefunden")?;
+    let token = cosmetics_api::authenticate(&api, &account).await?;
+    let r = cosmetics_api::redeem_code(&api, &token, &code).await?;
+    cosmetics::set_unlocks(&accountUuid, &r.unlocks)?;
+    crate::launch::log_step(format!("Cosmetics-Code eingelöst: {} freigeschaltet", r.unlocked));
+    Ok(r)
+}
+
+/// Freischaltungen von der API neu laden.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn refresh_unlocks(accountUuid: String) -> Result<Vec<String>, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    let api = cosmetics_api::effective_url(&settings);
+    let account = storage::load_accounts()?.into_iter().find(|a| a.uuid == accountUuid).ok_or("Account nicht gefunden")?;
+    let token = cosmetics_api::authenticate(&api, &account).await?;
+    let me = cosmetics_api::fetch_me(&api, &token).await?;
+    cosmetics::set_unlocks(&accountUuid, &me.unlocks)?;
+    Ok(me.unlocks)
+}
+
+/// Admin: Codes auflisten.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn admin_codes_list(adminKey: String) -> Result<Vec<cosmetics_api::CosmeticCode>, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    cosmetics_api::admin_codes_list(&cosmetics_api::effective_url(&settings), &adminKey).await
+}
+
+/// Admin: Code anlegen.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn admin_codes_create(adminKey: String, code: String, wings: String, maxUses: u32, note: String) -> Result<cosmetics_api::CosmeticCode, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    cosmetics_api::admin_codes_create(&cosmetics_api::effective_url(&settings), &adminKey, &code, &wings, maxUses, &note).await
+}
+
+/// Admin: Code löschen.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn admin_codes_delete(adminKey: String, code: String) -> Result<bool, String> {
+    let settings = storage::load_settings().unwrap_or_default();
+    cosmetics_api::admin_codes_delete(&cosmetics_api::effective_url(&settings), &adminKey, &code).await?;
+    Ok(true)
+}
+
 /// Übernimmt Cape-Wechsel aus dem Chaos Client (ingame-state.json aller Profile).
 /// Liefert die Namen der übernommenen Capes.
 #[tauri::command]
@@ -168,6 +220,13 @@ async fn sync_cosmetics_inner(accountUuid: String) -> Result<SyncResult, String>
     let mut state = cosmetics::load()?;
     let active = cosmetics::active_cape(&state, &accountUuid);
     let token = cosmetics_api::authenticate(&api, &account).await?;
+    // Freischaltungen von der API übernehmen (exklusive Wings nur, wenn freigeschaltet)
+    if let Ok(me) = cosmetics_api::fetch_me(&api, &token).await {
+        if let Some(p) = state.profiles.iter_mut().find(|p| p.account_uuid == accountUuid) {
+            p.unlocks = me.unlocks.clone();
+        }
+        let _ = cosmetics::set_unlocks(&accountUuid, &me.unlocks);
+    }
     let (visibility, hat, effect, wings) = state
         .profiles
         .iter()

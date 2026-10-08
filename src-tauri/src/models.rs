@@ -223,6 +223,9 @@ pub struct Settings {
     /// FPS-Boost: Minecraft mit hoher Prozesspriorität starten, Java die Hochleistungs-GPU zuweisen.
     #[serde(default = "default_true")]
     pub fps_boost: bool,
+    /// Admin-Schlüssel der Cosmetics-API (nur für den Betreiber: Codes für exklusive Wings verwalten).
+    #[serde(default)]
+    pub cosmetics_admin_key: String,
 
     // ---- Darstellung ----
     /// Akzentfarbe als Hex (leer = Chaos-Rot).
@@ -360,6 +363,7 @@ impl Default for Settings {
             notifications: true,
             launch_behavior: default_launch_behavior(),
             fps_boost: true,
+            cosmetics_admin_key: String::new(),
             accent_color: String::new(),
             panel_transparency: 0,
             ui_scale: 100,
@@ -509,6 +513,9 @@ pub struct CosmeticsProfile {
     pub effect_id: String,
     #[serde(default)]
     pub wings_id: String,
+    /// Per Code freigeschaltete exklusive Cosmetics (Wings-IDs), von der API bestätigt.
+    #[serde(default)]
+    pub unlocks: Vec<String>,
     /// "everyone" | "chaos" | "none".
     #[serde(default = "default_visibility")]
     pub visibility: String,

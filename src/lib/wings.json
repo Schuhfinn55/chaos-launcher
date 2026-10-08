@@ -29,7 +29,10 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": false,
-      "particle": ""
+      "particle": "",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "chaos",
@@ -47,7 +50,10 @@
       "tilt": 10,
       "scale": 1.0,
       "glow": false,
-      "particle": "dust_red"
+      "particle": "dust_red",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "phoenix",
@@ -65,7 +71,10 @@
       "tilt": 14,
       "scale": 1.0,
       "glow": true,
-      "particle": "flame"
+      "particle": "flame",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "galaxy",
@@ -83,7 +92,10 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": true,
-      "particle": "end_rod"
+      "particle": "end_rod",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "shadow",
@@ -101,7 +113,10 @@
       "tilt": 8,
       "scale": 1.0,
       "glow": false,
-      "particle": "smoke"
+      "particle": "smoke",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "demon",
@@ -119,7 +134,10 @@
       "tilt": 6,
       "scale": 1.1,
       "glow": false,
-      "particle": ""
+      "particle": "",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "dragon",
@@ -137,7 +155,10 @@
       "tilt": 4,
       "scale": 1.15,
       "glow": false,
-      "particle": ""
+      "particle": "",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "bat",
@@ -155,7 +176,10 @@
       "tilt": 4,
       "scale": 0.8,
       "glow": false,
-      "particle": ""
+      "particle": "",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "neon",
@@ -173,7 +197,10 @@
       "tilt": 8,
       "scale": 1.0,
       "glow": true,
-      "particle": ""
+      "particle": "",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "butterfly",
@@ -191,7 +218,10 @@
       "tilt": 6,
       "scale": 1.0,
       "glow": false,
-      "particle": ""
+      "particle": "",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "fairy",
@@ -209,7 +239,10 @@
       "tilt": 10,
       "scale": 1.0,
       "glow": true,
-      "particle": "end_rod"
+      "particle": "end_rod",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "crystal",
@@ -227,7 +260,10 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": false,
-      "particle": "snowflake"
+      "particle": "snowflake",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "void",
@@ -245,7 +281,10 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": true,
-      "particle": "portal"
+      "particle": "portal",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "inferno",
@@ -263,7 +302,10 @@
       "tilt": 6,
       "scale": 1.18,
       "glow": true,
-      "particle": "flame"
+      "particle": "flame",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "cyber",
@@ -281,7 +323,10 @@
       "tilt": 8,
       "scale": 1.0,
       "glow": true,
-      "particle": "dust_cyan"
+      "particle": "dust_cyan",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "frost",
@@ -299,7 +344,10 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": true,
-      "particle": "snowflake"
+      "particle": "snowflake",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "blood-angel",
@@ -317,7 +365,10 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": false,
-      "particle": "dust_red"
+      "particle": "dust_red",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     },
     {
       "id": "golden",
@@ -335,7 +386,52 @@
       "tilt": 12,
       "scale": 1.0,
       "glow": true,
-      "particle": "dust_gold"
+      "particle": "dust_gold",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
+    },
+    {
+      "id": "overlord",
+      "name": "Chaos Overlord",
+      "description": "LEGENDÄR · Schwarze Drachenschwingen mit pulsierenden Energieadern, Blitzen und Glut – nur mit Code.",
+      "icon": "👑",
+      "colors": [
+        "#4A0810",
+        "#FF1F3D",
+        "#FFE4E8"
+      ],
+      "flapSpeed": 0.06,
+      "flapAmp": 28,
+      "openAngle": 44,
+      "tilt": 6,
+      "scale": 1.32,
+      "glow": true,
+      "particle": "overlord",
+      "frames": 8,
+      "fps": 10,
+      "exclusive": true
+    },
+    {
+      "id": "celestial",
+      "name": "Celestial Seraph",
+      "description": "LEGENDÄR · Schillernde Federn, die ihre Farbe wechseln, mit Sternenstaub und Lichtspuren – nur mit Code.",
+      "icon": "🌟",
+      "colors": [
+        "#E0F7FF",
+        "#8B5CF6",
+        "#F5C342"
+      ],
+      "flapSpeed": 0.065,
+      "flapAmp": 18,
+      "openAngle": 46,
+      "tilt": 14,
+      "scale": 1.3,
+      "glow": true,
+      "particle": "celestial",
+      "frames": 8,
+      "fps": 8,
+      "exclusive": true
     },
     {
       "id": "seraph",
@@ -353,7 +449,10 @@
       "tilt": 14,
       "scale": 1.12,
       "glow": true,
-      "particle": "glow"
+      "particle": "glow",
+      "frames": 1,
+      "fps": 10,
+      "exclusive": false
     }
   ]
 }

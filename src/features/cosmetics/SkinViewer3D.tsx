@@ -241,13 +241,21 @@ export default function SkinViewer3D({
     const url = wingsTextureUrl(wings.id);
     if (!url) return;
     const { w: W, h: H, top: TOP, texW, texH } = WINGS_PLANE;
-    const tex = new TextureLoader().load(url);
-    tex.magFilter = NearestFilter;
-    tex.minFilter = NearestFilter;
-    tex.colorSpace = SRGBColorSpace;
-    // Region 2 (Original, Wurzel links) ausschneiden: u W..2W, v 0..H (Bildkoordinaten, three: v von unten)
-    tex.offset.set(W / texW, 1 - H / texH);
-    tex.repeat.set(W / texW, H / texH);
+    const loadTex = (u: string) => {
+      const t = new TextureLoader().load(u);
+      t.magFilter = NearestFilter;
+      t.minFilter = NearestFilter;
+      t.colorSpace = SRGBColorSpace;
+      // Region 2 (Original, Wurzel links) ausschneiden: u W..2W, v 0..H (Bildkoordinaten, three: v von unten)
+      t.offset.set(W / texW, 1 - H / texH);
+      t.repeat.set(W / texW, H / texH);
+      return t;
+    };
+    const tex = loadTex(url);
+    // Animierte Textur (legendäre Wings): alle Frames vorladen und im Takt wechseln
+    const frameTex: ReturnType<typeof loadTex>[] = [];
+    const nFrames = wings.frames ?? 1;
+    if (nFrames > 1) for (let i = 0; i < nFrames; i++) { const fu = wingsTextureUrl(wings.id, i); if (fu) frameTex.push(loadTex(fu)); }
     const root = new Group();
     root.scale.setScalar(wings.scale ?? 1);
     const sides: { g: Group; sx: number }[] = [];
@@ -285,10 +293,20 @@ export default function SkinViewer3D({
     const rad = Math.PI / 180;
     let raf = 0;
     const t0 = performance.now();
+    const mats: MeshStandardMaterial[] = [];
+    root.traverse((o) => { if (o instanceof Mesh) mats.push(o.material as MeshStandardMaterial); });
+    let lastFrame = -1;
     const tick = () => {
       const t = (performance.now() - t0) / 50; // Minecraft-Ticks
       const phase = t * speed;
       const flap = Math.sin(phase);
+      if (frameTex.length > 1) {
+        const fi = Math.floor((performance.now() / 1000) * (wings.fps ?? 10)) % frameTex.length;
+        if (fi !== lastFrame) {
+          lastFrame = fi;
+          for (const m of mats) { m.map = frameTex[fi]; if (m.emissiveMap) m.emissiveMap = frameTex[fi]; m.needsUpdate = true; }
+        }
+      }
       // Hauptschlag = Heben/Senken der Spitzen (Roll), Auf-/Zuklappen (Yaw) nur dezent – wie im Chaos Client
       let open = wings.openAngle * 0.6 + flap * amp * 0.25 + (gliding ? 15 : 0) + (moving ? 3 : 0);
       open = Math.min(50, Math.max(10, open));

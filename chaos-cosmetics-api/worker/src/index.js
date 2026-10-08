@@ -16,7 +16,7 @@
  * Deploy: npx wrangler deploy (siehe wrangler.toml)
  * ============================================================ */
 
-const API_VERSION = "1.4.0";
+const API_VERSION = "1.5.0";
 const COSMETICS_VERSION = 2;
 const TOKEN_TTL_S = 24 * 60 * 60;
 const MAX_PNG = 4 * 1024 * 1024;
@@ -130,10 +130,20 @@ const getCape = (env, id) => getJson(env, "cape:" + id);
 
 function capeUrl(origin, id) { return `${origin}/v1/capes/${id}/texture`; }
 function remoteCape(origin, c) { return c ? { id: c.id, name: c.name, url: capeUrl(origin, c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom", fps: c.fps || 8 } : null; }
+/* ---------- Exklusive Wings (nur mit Code) ---------- */
+const EXCLUSIVE_WINGS = new Set(["overlord", "celestial"]);
+const normCode = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+function genCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; const b = crypto.getRandomValues(new Uint8Array(8)); let s = ""; for (let i = 0; i < 8; i++) s += a[b[i] % a.length]; return "CHAOS" + s.slice(0, 4) + s.slice(4); }
+const fmtCode = (c) => c.length === 13 && c.startsWith("CHAOS") ? `CHAOS-${c.slice(5, 9)}-${c.slice(9)}` : c;
+function isAdmin(env, request) { const k = request.headers.get("x-admin-key") || ""; return !!env.ADMIN_KEY && k.length > 0 && k === env.ADMIN_KEY; }
+function codeView(c) { return { code: fmtCode(c.code), wings: c.wings, maxUses: c.maxUses, uses: c.uses || 0, note: c.note || "", createdAt: c.createdAt, redeemedBy: c.redeemedBy || [] }; }
+
 async function playerView(env, origin, uuid) {
   const p = await getPlayer(env, uuid);
   if (!p) return null;
   const hidden = p.visibility === "none";
+  const unlocks = Array.isArray(p.unlocks) ? p.unlocks : [];
+  if (p.wings && EXCLUSIVE_WINGS.has(p.wings) && !unlocks.includes(p.wings)) p.wings = ""; // Besitz beim Lesen prüfen
   let cape = !hidden && p.activeCape ? await getCape(env, p.activeCape) : null;
   if (cape && cape.owner !== uuid) cape = null; // Besitz wird beim Lesen geprüft
   return {
@@ -142,6 +152,7 @@ async function playerView(env, origin, uuid) {
     hat: hidden ? "" : p.hat || "",
     effect: hidden ? "" : p.effect || "",
     wings: hidden ? "" : p.wings || "",
+    unlocks,
     visibility: p.visibility || "everyone",
     cosmeticsVersion: COSMETICS_VERSION,
     updatedAt: p.updatedAt || 0,
@@ -261,12 +272,80 @@ export default {
         }
         if ("hat" in b) pl.hat = sanitizeId(b.hat);
         if ("effect" in b) pl.effect = sanitizeId(b.effect);
-        if ("wings" in b) pl.wings = sanitizeId(b.wings);
+        if ("wings" in b) {
+          const w = sanitizeId(b.wings);
+          if (w && EXCLUSIVE_WINGS.has(w) && !(Array.isArray(pl.unlocks) && pl.unlocks.includes(w))) return json(403, { error: "Diese Wings sind exklusiv – bitte zuerst einen Code einlösen." });
+          pl.wings = w;
+        }
         if ("visibility" in b) pl.visibility = ["everyone", "chaos", "none"].includes(b.visibility) ? b.visibility : "everyone";
         pl.name = s.name;
         pl.updatedAt = now();
         await putPlayer(env, uuid, pl);
         return json(200, await playerView(env, origin, uuid));
+      }
+
+      /* Eigener Datensatz (inkl. Freischaltungen) */
+      if (request.method === "GET" && p === "/v1/me") {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const view = await playerView(env, origin, s.uuid);
+        return json(200, view || { uuid: s.uuid, name: s.name, unlocks: [] }, { "Cache-Control": "no-store" });
+      }
+
+      /* Code einlösen → exklusive Wings freischalten */
+      if (request.method === "POST" && p === "/v1/codes/redeem") {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const b = await readJson(request, 4 * 1024);
+        const code = normCode(b.code);
+        if (code.length < 6) return json(400, { error: "Ungültiger Code" });
+        const rec = await getJson(env, "code:" + code);
+        if (!rec) return json(404, { error: "Dieser Code existiert nicht." });
+        const pl = (await getPlayer(env, s.uuid)) || { name: s.name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };
+        pl.unlocks = Array.isArray(pl.unlocks) ? pl.unlocks : [];
+        if (pl.unlocks.includes(rec.wings)) return json(200, { ok: true, already: true, unlocked: rec.wings, unlocks: pl.unlocks });
+        if (rec.maxUses > 0 && (rec.uses || 0) >= rec.maxUses) return json(410, { error: "Dieser Code wurde bereits vollständig eingelöst." });
+        rec.uses = (rec.uses || 0) + 1;
+        rec.redeemedBy = [...(rec.redeemedBy || []), { uuid: s.uuid, name: s.name, at: now() }].slice(-200);
+        await putJson(env, "code:" + code, rec);
+        pl.unlocks.push(rec.wings);
+        pl.updatedAt = now();
+        await putPlayer(env, s.uuid, pl);
+        return json(200, { ok: true, unlocked: rec.wings, unlocks: pl.unlocks });
+      }
+
+      /* Admin: Codes verwalten (Header X-Admin-Key) */
+      if (p === "/v1/admin/codes" || p.startsWith("/v1/admin/codes/")) {
+        if (!isAdmin(env, request)) return json(403, { error: "Kein Admin-Zugriff" });
+        if (request.method === "GET" && p === "/v1/admin/codes") {
+          // KV-list ist nur eventually consistent → zusätzlich Index-Schlüssel (sofort lesbar nach dem Anlegen)
+          const [l, idx] = await Promise.all([env.KV.list({ prefix: "code:", limit: 1000 }), getJson(env, "codes:index")]);
+          const names = new Set([...l.keys.map((k) => k.name), ...((idx || []).map((c) => "code:" + c))]);
+          const items = (await Promise.all([...names].map((k) => getJson(env, k)))).filter(Boolean).map(codeView).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          return json(200, { codes: items, exclusiveWings: [...EXCLUSIVE_WINGS] });
+        }
+        if (request.method === "POST" && p === "/v1/admin/codes") {
+          const b = await readJson(request, 4 * 1024);
+          const wings = sanitizeId(b.wings);
+          if (!wings) return json(400, { error: "wings fehlt" });
+          let code = normCode(b.code) || genCode();
+          if (code.length < 6 || code.length > 32) return json(400, { error: "Code muss 6–32 Zeichen (Buchstaben/Zahlen) haben" });
+          if (await getJson(env, "code:" + code)) return json(409, { error: "Code existiert bereits" });
+          const rec = { code, wings, maxUses: Math.max(0, Math.min(100000, Number(b.maxUses) || 0)), uses: 0, note: String(b.note || "").slice(0, 80), createdAt: now(), redeemedBy: [] };
+          await putJson(env, "code:" + code, rec);
+          const idx = (await getJson(env, "codes:index")) || [];
+          if (!idx.includes(code)) await putJson(env, "codes:index", [...idx, code].slice(-2000));
+          return json(200, codeView(rec));
+        }
+        const dm = /^\/v1\/admin\/codes\/([A-Za-z0-9-]+)$/.exec(p);
+        if (request.method === "DELETE" && dm) {
+          const c = normCode(dm[1]);
+          await env.KV.delete("code:" + c);
+          const idx = (await getJson(env, "codes:index")) || [];
+          await putJson(env, "codes:index", idx.filter((x) => x !== c));
+          return json(200, { ok: true });
+        }
+        return json(404, { error: "unbekannt" });
       }
 
       /* Capes */

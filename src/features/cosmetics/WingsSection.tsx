@@ -7,8 +7,11 @@
  * Cosmetics-API.
  * ============================================================ */
 
+import { useState } from "react";
 import { Empty } from "@/components/ui";
-import { CHAOS_WINGS, WINGS_PLANE, wingsTextureUrl, type BuiltinWings } from "@/lib/builtinWings";
+import { CHAOS_WINGS, WINGS_PLANE, isWingsUnlocked, wingsTextureUrl, type BuiltinWings } from "@/lib/builtinWings";
+import { redeemCosmeticCode } from "@/lib/api/cosmetics";
+import { toast } from "@/stores/toastStore";
 import type { Account, CosmeticsProfile } from "@/types";
 
 interface Props {
@@ -19,10 +22,32 @@ interface Props {
   onPreview: (id: string | null) => void;
   previewId: string | null;
   onLogin: () => void;
+  /** Nach erfolgreicher Code-Einlösung (Profil neu laden) */
+  onUnlocked?: () => Promise<void>;
 }
 
 export function WingsSection(p: Props) {
   const activeId = p.profile?.wingsId ?? "";
+  const unlocks = p.profile?.unlocks ?? [];
+  const [code, setCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  const redeem = async () => {
+    if (!p.account || !code.trim()) return;
+    setRedeeming(true);
+    try {
+      const r = await redeemCosmeticCode(p.account.uuid, code.trim());
+      const name = CHAOS_WINGS.find((w) => w.id === r.unlocked)?.name ?? r.unlocked;
+      toast.success(r.already ? "Bereits freigeschaltet" : "Freigeschaltet!", `${name} gehört jetzt dir.`);
+      setCode("");
+      await p.onUnlocked?.();
+    } catch (e) {
+      toast.error("Code ungültig", String(e));
+    } finally {
+      setRedeeming(false);
+    }
+  };
+  const legendary = CHAOS_WINGS.filter((w) => w.exclusive);
+  const regular = CHAOS_WINGS.filter((w) => !w.exclusive);
   return (
     <div className="chaos-cos-section">
       <div className="chaos-row chaos-wrap" style={{ justifyContent: "space-between", alignItems: "center" }}>
@@ -40,8 +65,27 @@ export function WingsSection(p: Props) {
       <p className="chaos-faint" style={{ fontSize: 12, margin: 0 }}>
         Klick = animierte 3D-Vorschau · „Anlegen“ = ingame aktivieren. Die Flügel schlagen im Stand ruhig, beim Laufen schneller, spannen sich beim Gleiten weit auf und klappen beim Schleichen ein.
       </p>
+      {legendary.length > 0 && (
+        <div className="chaos-legendary">
+          <div className="chaos-row chaos-wrap" style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+            <div>
+              <span className="chaos-section-title" style={{ color: "#f5c342" }}>👑 Legendär – nur mit Code</span>
+              <p className="chaos-faint" style={{ fontSize: 12, margin: "2px 0 0" }}>Animierte Texturen, Spezialeffekte, größer als alle anderen. Codes gibt es nur vom Chaos-Team.</p>
+            </div>
+            <form className="chaos-row" style={{ gap: 6 }} onSubmit={(e) => { e.preventDefault(); void redeem(); }}>
+              <input className="chaos-input chaos-mono" style={{ width: 190 }} placeholder="CHAOS-XXXX-XXXX" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} disabled={!p.account || redeeming} />
+              <button className="chaos-btn chaos-btn-sm chaos-btn-primary" type="submit" disabled={!p.account || redeeming || !code.trim()}>{redeeming ? "Prüfe …" : "Code einlösen"}</button>
+            </form>
+          </div>
+          <div className="chaos-cos-grid" style={{ marginTop: 10 }}>
+            {legendary.map((w) => (
+              <WingsCard key={w.id} wings={w} active={w.id === activeId} preview={p.previewId === w.id} busy={p.busy || !p.account} locked={!isWingsUnlocked(w, unlocks)} onPreview={() => p.onPreview(p.previewId === w.id ? null : w.id)} onWear={() => p.onSelect(w.id)} />
+            ))}
+          </div>
+        </div>
+      )}
       <div className="chaos-cos-grid">
-        {CHAOS_WINGS.map((w) => (
+        {regular.map((w) => (
           <WingsCard key={w.id} wings={w} active={w.id === activeId} preview={p.previewId === w.id} busy={p.busy || !p.account} onPreview={() => p.onPreview(p.previewId === w.id ? null : w.id)} onWear={() => p.onSelect(w.id)} />
         ))}
       </div>
@@ -49,18 +93,23 @@ export function WingsSection(p: Props) {
   );
 }
 
-function WingsCard({ wings, active, preview, busy, onPreview, onWear }: { wings: BuiltinWings; active: boolean; preview: boolean; busy: boolean; onPreview: () => void; onWear: () => void }) {
+function WingsCard({ wings, active, preview, busy, locked, onPreview, onWear }: { wings: BuiltinWings; active: boolean; preview: boolean; busy: boolean; locked?: boolean; onPreview: () => void; onWear: () => void }) {
   return (
-    <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "")} onClick={onPreview}>
+    <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "") + (wings.exclusive ? " legendary" : "") + (locked ? " locked" : "")} onClick={onPreview}>
       <div className={"chaos-cos-item-img wings" + (wings.glow ? " glow" : "")}>
         <WingsThumb wings={wings} />
+        {locked && <span className="chaos-lock" title="Nur mit Code">🔒</span>}
       </div>
       <strong>{wings.icon} {wings.name}</strong>
       <span className="chaos-faint" style={{ fontSize: 11 }}>{wings.description}</span>
       <div className="chaos-cos-item-actions" onClick={(e) => e.stopPropagation()}>
-        <button className={"chaos-btn chaos-btn-sm" + (active ? "" : " chaos-btn-primary")} disabled={busy || active} onClick={onWear}>
-          {active ? "Angelegt" : "Anlegen"}
-        </button>
+        {locked ? (
+          <span className="chaos-badge" title="Code oben eingeben">🔒 Code nötig</span>
+        ) : (
+          <button className={"chaos-btn chaos-btn-sm" + (active ? "" : " chaos-btn-primary")} disabled={busy || active} onClick={onWear}>
+            {active ? "Angelegt" : "Anlegen"}
+          </button>
+        )}
       </div>
     </div>
   );

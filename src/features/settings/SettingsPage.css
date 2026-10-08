@@ -41,3 +41,7 @@
 .chaos-license-table th { text-align: left; font-weight: 600; color: var(--chaos-text-dim); padding: 6px 8px; border-bottom: 1px solid var(--chaos-border); }
 .chaos-license-table td { padding: 7px 8px; border-bottom: 1px solid var(--chaos-border); vertical-align: top; }
 .chaos-license-table tr:last-child td { border-bottom: none; }
+
+.chaos-table { border-collapse: collapse; }
+.chaos-table th, .chaos-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--chaos-border); vertical-align: middle; }
+.chaos-table th { color: var(--chaos-text-dim); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }

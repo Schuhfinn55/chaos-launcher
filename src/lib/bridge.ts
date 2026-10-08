@@ -217,6 +217,21 @@ const mocks: Record<string, MockHandler> = {
   async cosmetics_api_info() {
     return { reachable: false, apiVersion: "", cosmeticsVersion: 0, message: "Browser-Dev" };
   },
+  async redeem_cosmetic_code(args) {
+    return { ok: true, unlocked: "overlord", unlocks: ["overlord"], code: args.code };
+  },
+  async refresh_unlocks() {
+    return [];
+  },
+  async admin_codes_list() {
+    return [{ code: "CHAOS-TEST-1234", wings: "overlord", maxUses: 5, uses: 1, note: "Mock", createdAt: Date.now(), redeemedBy: [] }];
+  },
+  async admin_codes_create(args) {
+    return { code: args.code || "CHAOS-NEU0-0000", wings: args.wings, maxUses: args.maxUses, uses: 0, note: args.note, createdAt: Date.now(), redeemedBy: [] };
+  },
+  async admin_codes_delete() {
+    return true;
+  },
   async sync_cosmetics() {
     return { synced: false, message: "Browser-Dev", remoteCapeId: "" };
   },

@@ -8,7 +8,9 @@
  * ============================================================ */
 
 import { invoke } from "@/lib/bridge";
-import type { Cape, CosmeticsApiInfo, CosmeticsProfile, CosmeticsState, PlayerSkin } from "@/types";
+import type {
+  RedeemResult,
+  CosmeticCode, Cape, CosmeticsApiInfo, CosmeticsProfile, CosmeticsState, PlayerSkin } from "@/types";
 
 export interface CosmeticKind {
   id: "skin" | "cape" | "hat" | "wings" | "effect";
@@ -173,6 +175,21 @@ export interface CosmeticsServerStatus {
 export const cosmeticsServerStatus = () => invoke<CosmeticsServerStatus>("cosmetics_server_status");
 export const cosmeticsServerStart = (port?: number) => invoke<CosmeticsServerStatus>("cosmetics_server_start", { port: port ?? null });
 export const cosmeticsServerStop = () => invoke<CosmeticsServerStatus>("cosmetics_server_stop");
+export async function redeemCosmeticCode(accountUuid: string, code: string): Promise<RedeemResult> {
+  return invoke<RedeemResult>("redeem_cosmetic_code", { accountUuid, code });
+}
+export async function refreshUnlocks(accountUuid: string): Promise<string[]> {
+  return invoke<string[]>("refresh_unlocks", { accountUuid });
+}
+export async function adminCodesList(adminKey: string): Promise<CosmeticCode[]> {
+  return invoke<CosmeticCode[]>("admin_codes_list", { adminKey });
+}
+export async function adminCodesCreate(adminKey: string, code: string, wings: string, maxUses: number, note: string): Promise<CosmeticCode> {
+  return invoke<CosmeticCode>("admin_codes_create", { adminKey, code, wings, maxUses, note });
+}
+export async function adminCodesDelete(adminKey: string, code: string): Promise<void> {
+  await invoke("admin_codes_delete", { adminKey, code });
+}
 export async function syncCosmetics(accountUuid: string): Promise<{ synced: boolean; message: string; remoteCapeId: string }> {
   return invoke("sync_cosmetics", { accountUuid });
 }

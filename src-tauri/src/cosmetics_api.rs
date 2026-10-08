@@ -60,6 +60,8 @@ pub struct RemoteCosmetics {
     #[serde(default)]
     pub wings: String,
     #[serde(default)]
+    pub unlocks: Vec<String>,
+    #[serde(default)]
     pub visibility: String,
     #[serde(default)]
     pub cosmetics_version: u32,
@@ -364,6 +366,115 @@ fn sign_challenge(cert: &PlayerCert, server_id: &str) -> Result<String, String> 
     let signing = rsa::pkcs1v15::SigningKey::<sha2::Sha256>::new(key);
     let sig = signing.sign(server_id.as_bytes());
     Ok(base64::Engine::encode(&base64::engine::general_purpose::STANDARD, sig.to_vec()))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RedeemResult {
+    #[serde(default)]
+    pub ok: bool,
+    #[serde(default)]
+    pub already: bool,
+    #[serde(default)]
+    pub unlocked: String,
+    #[serde(default)]
+    pub unlocks: Vec<String>,
+    #[serde(default)]
+    pub error: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CosmeticCode {
+    pub code: String,
+    #[serde(default)]
+    pub wings: String,
+    #[serde(default)]
+    pub max_uses: u32,
+    #[serde(default)]
+    pub uses: u32,
+    #[serde(default)]
+    pub note: String,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub redeemed_by: Vec<serde_json::Value>,
+}
+
+/// Eigener Datensatz (inkl. Freischaltungen).
+pub async fn fetch_me(api_url: &str, token: &str) -> Result<RemoteCosmetics, String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client.get(format!("{b}/v1/me")).bearer_auth(token).send().await.map_err(|e| format!("Profil laden: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Profil laden HTTP {}", resp.status()));
+    }
+    resp.json::<RemoteCosmetics>().await.map_err(|e| format!("Profil JSON: {e}"))
+}
+
+/// Code für exklusive Wings einlösen.
+pub async fn redeem_code(api_url: &str, token: &str, code: &str) -> Result<RedeemResult, String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client
+        .post(format!("{b}/v1/codes/redeem"))
+        .bearer_auth(token)
+        .json(&serde_json::json!({ "code": code }))
+        .send()
+        .await
+        .map_err(|e| format!("Code einlösen: {e}"))?;
+    let status = resp.status();
+    let r: RedeemResult = resp.json().await.map_err(|e| format!("Code-Antwort: {e}"))?;
+    if !status.is_success() {
+        return Err(if r.error.is_empty() { format!("Code einlösen HTTP {status}") } else { r.error });
+    }
+    Ok(r)
+}
+
+/// Admin: Codes auflisten.
+pub async fn admin_codes_list(api_url: &str, key: &str) -> Result<Vec<CosmeticCode>, String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client.get(format!("{b}/v1/admin/codes")).header("X-Admin-Key", key).send().await.map_err(|e| format!("Codes laden: {e}"))?;
+    if resp.status().as_u16() == 403 {
+        return Err("Admin-Schlüssel falsch.".to_string());
+    }
+    if !resp.status().is_success() {
+        return Err(format!("Codes laden HTTP {}", resp.status()));
+    }
+    let v: serde_json::Value = resp.json().await.map_err(|e| format!("Codes JSON: {e}"))?;
+    serde_json::from_value(v.get("codes").cloned().unwrap_or(serde_json::Value::Array(vec![]))).map_err(|e| format!("Codes: {e}"))
+}
+
+/// Admin: Code anlegen (leerer Code = automatisch erzeugen).
+pub async fn admin_codes_create(api_url: &str, key: &str, code: &str, wings: &str, max_uses: u32, note: &str) -> Result<CosmeticCode, String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client
+        .post(format!("{b}/v1/admin/codes"))
+        .header("X-Admin-Key", key)
+        .json(&serde_json::json!({ "code": code, "wings": wings, "maxUses": max_uses, "note": note }))
+        .send()
+        .await
+        .map_err(|e| format!("Code anlegen: {e}"))?;
+    let status = resp.status();
+    let v: serde_json::Value = resp.json().await.map_err(|e| format!("Code JSON: {e}"))?;
+    if !status.is_success() {
+        return Err(v.get("error").and_then(|e| e.as_str()).unwrap_or("Code anlegen fehlgeschlagen").to_string());
+    }
+    serde_json::from_value(v).map_err(|e| format!("Code: {e}"))
+}
+
+/// Admin: Code löschen.
+pub async fn admin_codes_delete(api_url: &str, key: &str, code: &str) -> Result<(), String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let clean: String = code.chars().filter(|c| c.is_ascii_alphanumeric()).collect();
+    let resp = client.delete(format!("{b}/v1/admin/codes/{clean}")).header("X-Admin-Key", key).send().await.map_err(|e| format!("Code löschen: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Code löschen HTTP {}", resp.status()));
+    }
+    Ok(())
 }
 
 /// Setzt Cape, Hut, Effekt und Sichtbarkeit in der API.

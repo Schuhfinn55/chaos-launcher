@@ -170,6 +170,8 @@ export interface Settings {
   launchBehavior?: "keep" | "minimize" | "close";
   /** FPS-Boost: hohe Prozesspriorität + Hochleistungs-GPU für Java */
   fpsBoost?: boolean;
+  /** Admin-Schlüssel der Cosmetics-API (Codes für exklusive Wings) */
+  cosmeticsAdminKey?: string;
   // Darstellung
   accentColor?: string;
   panelTransparency?: number;
@@ -285,6 +287,21 @@ export interface HeavyMod {
   reason: string;
   enabled: boolean;
 }
+export interface RedeemResult {
+  ok: boolean;
+  already?: boolean;
+  unlocked: string;
+  unlocks: string[];
+}
+export interface CosmeticCode {
+  code: string;
+  wings: string;
+  maxUses: number;
+  uses: number;
+  note: string;
+  createdAt: number;
+  redeemedBy: { uuid: string; name: string; at: number }[];
+}
 export interface FpsReport {
   totalRamMb: number;
   availableRamMb: number;
@@ -319,6 +336,8 @@ export interface CosmeticsProfile {
   hatId: string;
   effectId: string;
   wingsId: string;
+  /** Per Code freigeschaltete exklusive Wings */
+  unlocks?: string[];
   visibility: "everyone" | "chaos" | "none" | string;
   updatedAt: number;
 }

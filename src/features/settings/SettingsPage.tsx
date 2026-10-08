@@ -9,6 +9,7 @@ import { useSearchParams } from "react-router-dom";
 import { PageHead, Toggle } from "@/components/ui";
 import ImageCropper from "@/components/ImageCropper";
 import ClientSettings from "./ClientSettings";
+import CodesAdmin from "./CodesAdmin";
 import { useInstanceStore, useSettingsStore, useStatusStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import { invoke, listen } from "@/lib/bridge";
@@ -399,6 +400,13 @@ function Cosmetics({ s, set }: P) {
         <Toggle checked={s.showCapes !== false} onChange={(v) => set({ showCapes: v })} label="Capes anzeigen" description="Eigenes Cape ingame rendern." />
         <Toggle checked={s.showOtherCapes !== false} onChange={(v) => set({ showOtherCapes: v })} label="Fremde Capes anzeigen" description="Capes anderer Chaos-Launcher-Spieler über die Cosmetics-API laden." />
         <Toggle checked={s.autoLoadCapes !== false} onChange={(v) => set({ autoLoadCapes: v })} label="Eigene Capes automatisch laden" description="Aktives Cape beim Start automatisch bereitstellen." />
+      </Section>
+      <Section title="Exklusive Wings – Codes (nur Betreiber)" desc="Mit dem Admin-Schlüssel der Cosmetics-API kannst du Codes für legendäre Wings anlegen, ansehen und löschen. Spieler lösen die Codes unter Cosmetics › Wings ein.">
+        <div className="chaos-field">
+          <span>Admin-Schlüssel</span>
+          <input className="chaos-input chaos-mono" type="password" value={s.cosmeticsAdminKey ?? ""} onChange={(e) => set({ cosmeticsAdminKey: e.target.value.trim() })} placeholder="leer = kein Admin" autoComplete="off" />
+        </div>
+        {s.cosmeticsAdminKey ? <CodesAdmin adminKey={s.cosmeticsAdminKey} /> : null}
       </Section>
       <Section title="Cosmetics anderer Spieler sehen" desc={`Alle Chaos Launcher nutzen automatisch die Community-Adresse ${DEFAULT_COSMETICS_API}. Der Server-Betreiber schaltet hier einmal den eingebauten Server ein – Portfreigabe und Prüfung der Adresse erledigt der Launcher selbst. Deine Freunde müssen nichts einstellen.`}>
         <Toggle

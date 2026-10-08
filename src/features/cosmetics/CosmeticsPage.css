@@ -61,3 +61,10 @@
 .chaos-cos-item-img.wings.glow .chaos-wings-thumb { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35)); }
 .chaos-wings-thumb { background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; animation: chaos-wing-flap var(--dur, 1.4s) ease-in-out infinite alternate; transform-origin: 50% 55%; }
 @keyframes chaos-wing-flap { from { transform: scaleX(0.82); } to { transform: scaleX(1); } }
+
+/* Legendäre Wings (nur per Code) */
+.chaos-legendary { border: 1px solid rgba(245, 195, 66, 0.45); background: linear-gradient(135deg, rgba(245, 195, 66, 0.08), rgba(225, 29, 46, 0.06)); border-radius: 12px; padding: 12px 14px; }
+.chaos-cos-item.legendary { border-color: rgba(245, 195, 66, 0.55); box-shadow: 0 0 18px rgba(245, 195, 66, 0.12); }
+.chaos-cos-item.legendary.locked { opacity: 0.85; }
+.chaos-cos-item-img { position: relative; }
+.chaos-lock { position: absolute; right: 6px; top: 6px; font-size: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8)); }
