@@ -309,7 +309,7 @@ export default function SkinViewer3D({
       }
       // Hauptschlag = Heben/Senken der Spitzen (Roll), Auf-/Zuklappen (Yaw) nur dezent – wie im Chaos Client
       let open = wings.openAngle * 0.6 + flap * amp * 0.25 + (gliding ? 15 : 0) + (moving ? 3 : 0);
-      open = Math.min(50, Math.max(10, open));
+      open = Math.min(62, Math.max(18, open));
       const tilt = Math.min(24, Math.max(-8, wings.tilt * 0.6 + flap * amp * 0.35 + (gliding ? 8 : 0))) + Math.sin(t * 0.045) * 1.0;
       const pitch = gliding ? -6 : 0;
       for (const s of sides) {

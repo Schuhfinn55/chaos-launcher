@@ -467,7 +467,7 @@ def main():
     os.makedirs(OUT_M, exist_ok=True)
     out = {
         "_doc": "Chaos Wings – gemeinsame Definition für Launcher (3D-Vorschau) und Chaos Client. Flügel = flache Textur-Ebene (plane.w × plane.h Einheiten, Oberkante plane.top über der Wurzel), Textur 2 px/Einheit, links gespiegelt (Nordseite), rechts Original (Südseite). Generiert von scripts/gen_wings.py.",
-        "root": {"x": 2.0, "y": 1.5, "z": 2.3},
+        "root": {"x": 4.2, "y": 2.0, "z": 3.1},
         "plane": {"w": W, "h": H, "top": TOP, "texW": TEX[0] // PX, "texH": TEX[1] // PX},
         "wings": [],
     }
