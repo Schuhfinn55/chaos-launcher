@@ -123,7 +123,7 @@ export default function HomePage() {
       <section className="chaos-home-player chaos-card">
         <div className="chaos-home-player-3d">
           <SkinViewer3D
-            skinUrl={profileSkin?.dataUrl ?? (account ? `https://crafatar.com/skins/${account.uuid}` : null)}
+            skinUrl={profileSkin?.dataUrl ?? (account ? `https://mc-heads.net/skin/${account.uuid}` : null)}
             model={profileSkin?.model}
             capeUrl={capeUrl}
             hat={hatById(profileFor(cosmetics, account?.uuid)?.hatId)}

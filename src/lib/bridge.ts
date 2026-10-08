@@ -11,6 +11,20 @@ import type { LaunchError } from "@/types";
 /** Läuft die App gerade in Tauri (also mit Rust-Backend)? */
 export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
+// Dev-Server: `?demo=1` füllt den Mock-Speicher mit Beispieldaten (für Screenshots/Release-Video)
+if (!isTauri && typeof window !== "undefined" && import.meta.env.DEV && new URLSearchParams(window.location.search).get("demo")) {
+  const now = Date.now();
+  const mod = (id: string, title: string) => ({ id, title, source: "modrinth", fileName: id + ".jar", enabled: true, projectType: "mod", projectId: "", versionId: "", versionNumber: "", mcVersions: [] });
+  localStorage.setItem("chaos.tutorialDone", "true");
+  localStorage.setItem("chaos.accounts", JSON.stringify([{ uuid: "2a05b91e5af6403c9bbf5d0e16c29ed9", username: "YtChaosfabi44", active: true, kind: "microsoft", addedAt: now }]));
+  localStorage.setItem("chaos.instances", JSON.stringify([
+    { id: "i1", name: "Chaoscraft SMP", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "", ramMb: 6144, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#e11d2e", createdAt: now - 86400000 * 20, lastPlayed: now - 3600000, playtimeSeconds: 154000, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [mod("sodium", "Sodium"), mod("fabric-api", "Fabric API"), mod("lithium", "Lithium"), mod("iris", "Iris Shaders"), mod("simple-voice-chat", "Simple Voice Chat"), mod("appleskin", "AppleSkin")] },
+    { id: "i2", name: "PvP 1.21.11", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "", ramMb: 4096, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#3b82f6", createdAt: now - 86400000 * 5, lastPlayed: now - 86400000, playtimeSeconds: 32000, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [mod("sodium", "Sodium")] },
+    { id: "i3", name: "Vanilla 1.21.11", mcVersion: "1.21.11", loader: "vanilla", loaderVersion: "", ramMb: 4096, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#22c55e", createdAt: now - 86400000 * 2, lastPlayed: 0, playtimeSeconds: 0, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [] },
+  ]));
+  localStorage.setItem("chaos.cosmetics", JSON.stringify({ capes: [], profiles: [{ accountUuid: "2a05b91e5af6403c9bbf5d0e16c29ed9", activeCapeId: "", hatId: "dragon-helm", effectId: "chaos-storm", wingsId: "overlord", unlocks: ["overlord", "celestial"], visibility: "everyone", updatedAt: now }], version: 1 }));
+}
+
 /** Ruft ein Backend-Kommando auf. */
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (isTauri) {

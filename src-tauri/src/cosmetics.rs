@@ -558,7 +558,7 @@ pub fn set_cosmetic(account_uuid: &str, kind: &str, id: &str) -> Result<Cosmetic
 
 /* ---------- Echter Account-Skin (Mojang-Sessionserver) ---------- */
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerSkin {
     pub uuid: String,
@@ -573,7 +573,18 @@ static SKIN_CACHE: std::sync::LazyLock<std::sync::Mutex<std::collections::HashMa
     std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
 const SKIN_CACHE_MS: i64 = 10 * 60 * 1000;
 
-/// Lädt Skin-Textur und Modell eines Spielers. Ergebnis 10 Minuten gecacht.
+fn skin_disk_path(id: &str) -> std::path::PathBuf {
+    let dir = cache_dir().join("skins");
+    let _ = fs::create_dir_all(&dir);
+    dir.join(format!("{id}.json"))
+}
+
+fn skin_from_disk(id: &str) -> Option<PlayerSkin> {
+    fs::read_to_string(skin_disk_path(id)).ok().and_then(|t| serde_json::from_str::<PlayerSkin>(&t).ok())
+}
+
+/// Lädt Skin-Textur und Modell eines Spielers. 10 Minuten im Speicher, 24 h auf der Festplatte gecacht;
+/// bei Netzfehlern (Mojang-Ratenlimit, Sessionserver down) wird der letzte bekannte Skin verwendet.
 pub async fn fetch_player_skin(uuid: &str) -> Result<PlayerSkin, String> {
     let id = uuid.replace('-', "").to_lowercase();
     if id.len() != 32 || !id.chars().all(|c| c.is_ascii_hexdigit()) {
@@ -586,6 +597,28 @@ pub async fn fetch_player_skin(uuid: &str) -> Result<PlayerSkin, String> {
             }
         }
     }
+    if let Some(disk) = skin_from_disk(&id) {
+        if now_millis() - disk.fetched_at < 24 * 60 * 60 * 1000 {
+            if let Ok(mut cache) = SKIN_CACHE.lock() {
+                cache.insert(id.clone(), disk.clone());
+            }
+            return Ok(disk);
+        }
+    }
+    match fetch_player_skin_online(&id).await {
+        Ok(s) => {
+            let _ = fs::write(skin_disk_path(&id), serde_json::to_string(&s).unwrap_or_default());
+            Ok(s)
+        }
+        Err(e) => {
+            crate::launch::log_step(format!("Skin {id}: {e} – verwende letzten bekannten Skin, falls vorhanden"));
+            skin_from_disk(&id).ok_or(e)
+        }
+    }
+}
+
+async fn fetch_player_skin_online(uuid: &str) -> Result<PlayerSkin, String> {
+    let id = uuid.to_string();
     let client = crate::mod_search::http_client()?;
     let url = format!("https://sessionserver.mojang.com/session/minecraft/profile/{id}");
     let resp = client.get(&url).send().await.map_err(|e| format!("Sessionserver: {e}"))?;

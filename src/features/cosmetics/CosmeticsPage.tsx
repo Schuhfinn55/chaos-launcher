@@ -37,7 +37,10 @@ export default function CosmeticsPage() {
   const skins = useSkinStore((s) => s.skins);
   const activeSkinId = useSkinStore((s) => s.activeSkinId);
 
-  const [kind, setKind] = useState<KindId>("cape");
+  const [kind, setKind] = useState<KindId>(() => {
+    const q = new URLSearchParams(window.location.hash.split("?")[1] || "").get("kind");
+    return q && ["skin", "cape", "hat", "wings", "effect"].includes(q) ? (q as KindId) : "cape";
+  });
   const [showCape, setShowCape] = useState(true);
   const [showCosmetics, setShowCosmetics] = useState(true);
   const [animation, setAnimation] = useState<ViewerAnimation>("idle");
@@ -68,7 +71,7 @@ export default function CosmeticsPage() {
   useEffect(() => {
     if (account?.uuid) loadProfileSkin(account.uuid);
   }, [account?.uuid, loadProfileSkin]);
-  const skinUrl = activeSkin ? activeSkin.dataUrl : profileSkin?.dataUrl ?? (account ? `https://crafatar.com/skins/${account.uuid}` : null);
+  const skinUrl = activeSkin ? activeSkin.dataUrl : profileSkin?.dataUrl ?? (account ? `https://mc-heads.net/skin/${account.uuid}` : null);
   const skinModel = activeSkin?.model ?? profileSkin?.model ?? model;
 
   // Hüte & Effekte
@@ -234,7 +237,7 @@ function SkinsSection({ model, setModel }: { model: "classic" | "slim"; setModel
     if (!account) return toast.warning("Anmeldung nötig");
     setBusy(true);
     try {
-      const res = await fetch(`https://crafatar.com/skins/${account.uuid}`);
+      const res = await fetch(`https://mc-heads.net/skin/${account.uuid}`);
       const blob = await res.blob();
       const dataUrl = await new Promise<string>((resolve) => {
         const r = new FileReader();

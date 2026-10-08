@@ -29,5 +29,5 @@ export function formatUuid(id: string): string {
 /** Liefert die Avatar-URL für eine UUID (über Crafatar). */
 export function avatarUrl(uuid: string | undefined, size = 64): string {
   if (!uuid) return "";
-  return `https://crafatar.com/avatars/${uuid}?size=${size}&overlay&default=MHF_Steve`;
+  return `https://mc-heads.net/avatar/${uuid}/${size}`;
 }

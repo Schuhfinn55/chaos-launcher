@@ -172,7 +172,7 @@ export default function AccountsPage() {
 
         {active && (
           <aside className="chaos-card chaos-acc-preview">
-            <SkinViewer3D skinUrl={activeSkin?.dataUrl ?? `https://crafatar.com/skins/${active.uuid}`} model={activeSkin?.model} width={240} height={320} zoom={0.9} />
+            <SkinViewer3D skinUrl={activeSkin?.dataUrl ?? `https://mc-heads.net/skin/${active.uuid}`} model={activeSkin?.model} width={240} height={320} zoom={0.9} />
             <strong>{active.username}</strong>
             <span className="chaos-faint" style={{ fontSize: 12 }}>
               Aktiver Minecraft-Account

@@ -47,9 +47,9 @@ export default function Avatar({ uuid, size = 32, className, title }: Props) {
       const fb = new Image();
       fb.crossOrigin = "anonymous";
       fb.onload = () => { ctx.clearRect(0, 0, size, size); ctx.drawImage(fb, 0, 0, size, size); };
-      fb.src = `https://crafatar.com/avatars/${uuid}?size=${Math.max(8, Math.min(512, size * 2))}&overlay`;
+      fb.src = `https://mc-heads.net/avatar/${uuid}/${Math.max(8, Math.min(512, size * 2))}`;
     };
-    img.src = skin?.dataUrl ?? (uuid ? `https://crafatar.com/skins/${uuid}` : "");
+    img.src = skin?.dataUrl ?? (uuid ? `https://mc-heads.net/skin/${uuid}` : "");
   }, [skin?.dataUrl, uuid, size]);
 
   return <canvas ref={canvasRef} width={size} height={size} className={className} title={title} style={{ width: size, height: size, imageRendering: "pixelated", borderRadius: Math.round(size * 0.2) }} />;

@@ -1,0 +1,1 @@
+- Skin wird wieder zuverlässig angezeigt: eigener Skin-Cache auf der Festplatte, Ersatzdienst gewechselt (Crafatar war ausgefallen)
