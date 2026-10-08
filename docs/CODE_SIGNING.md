@@ -47,6 +47,21 @@ Prüfen: `signtool verify /pa /v "Chaos Launcher_x.y.z_x64-setup.exe"` oder Rech
 - **VirusTotal**: Setup-EXE unter https://www.virustotal.com hochladen; die Website verlinkt den Hash-Bericht automatisch.
 - Jede Version einmal selbst herunterladen/ausführen bringt nichts für die Reputation – es zählen viele verschiedene Nutzer.
 
+
+## GitHub-Actions-Build (Voraussetzung für SignPath)
+
+`.github/workflows/build.yml` baut bei jedem Tag `v*` (und manuell) Setup-EXE und MSI auf GitHub, signiert sie,
+sobald Secrets hinterlegt sind, und hängt sie an das Release an. Damit erfüllt das Projekt die SignPath-Bedingung
+„Build über CI“.
+
+**SignPath beantragen (ca. 10 Minuten, kostenlos):**
+1. https://signpath.org/apply → Formular mit der Vorlage unten ausfüllen (GitHub-Repo, MIT-Lizenz, CI-Workflow verlinken).
+2. Nach Freigabe (meist 1–2 Wochen) in SignPath: Projekt + Signing Policy anlegen, API-Token erzeugen.
+3. Im GitHub-Repo unter *Settings → Secrets → Actions* eintragen: `SIGNPATH_API_TOKEN`, `SIGNPATH_ORG_ID`, `SIGNPATH_PROJECT`, `SIGNPATH_POLICY`.
+4. Nächstes Release taggen (`git tag v2.x.y && git push --tags`) – die Dateien am Release sind dann signiert; `website/publish.py` kann danach mit `--site-only` nur noch Feed und Website aktualisieren.
+
+**Eigenes Zertifikat (PFX) statt SignPath:** Secrets `CHAOS_SIGN_PFX_BASE64` (Datei base64-kodiert) und `CHAOS_SIGN_PFX_PASSWORD` setzen – der Workflow signiert dann direkt mit signtool.
+
 ## Vorlage SignPath-Antrag (Englisch, einfach einfügen)
 
 ```

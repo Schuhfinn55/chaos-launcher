@@ -1,0 +1,103 @@
+# Chaos Launcher – Windows-Build in GitHub Actions
+#
+# Läuft bei jedem Tag "v*" (Release) und manuell (workflow_dispatch).
+# Erzeugt Setup-EXE und MSI, signiert sie (sobald ein Zertifikat/SignPath
+# hinterlegt ist) und hängt sie an das GitHub-Release des Tags.
+#
+# Signierung (eine Variante in den Repo-Secrets hinterlegen):
+#   SIGNPATH_API_TOKEN + SIGNPATH_ORG_ID + SIGNPATH_PROJECT + SIGNPATH_POLICY
+#       → SignPath Foundation (kostenlos für Open Source, https://signpath.org/apply)
+#   CHAOS_SIGN_PFX_BASE64 + CHAOS_SIGN_PFX_PASSWORD
+#       → eigenes OV-Zertifikat als PFX (z. B. Certum Open Source)
+name: build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Abhängigkeiten
+        run: npm ci
+
+      - name: Signierskript auf den CI-Pfad setzen
+        shell: pwsh
+        run: |
+          $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          $script = ("${{ github.workspace }}/scripts/sign.ps1").Replace("\", "/")
+          $conf.bundle.windows.signCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File $script %1"
+          $conf | ConvertTo-Json -Depth 20 | Set-Content src-tauri/tauri.conf.json -Encoding UTF8
+          # PFX aus Secret (optional) – sign.ps1 signiert dann automatisch
+          if ("${{ secrets.CHAOS_SIGN_PFX_BASE64 }}" -ne "") {
+            [IO.File]::WriteAllBytes("$env:RUNNER_TEMP/chaos.pfx", [Convert]::FromBase64String("${{ secrets.CHAOS_SIGN_PFX_BASE64 }}"))
+            "CHAOS_SIGN_PFX=$env:RUNNER_TEMP/chaos.pfx" >> $env:GITHUB_ENV
+            "CHAOS_SIGN_PFX_PASSWORD=${{ secrets.CHAOS_SIGN_PFX_PASSWORD }}" >> $env:GITHUB_ENV
+          }
+
+      - name: Build (Tauri)
+        run: npm run tauri build
+        env:
+          TAURI_SKIP_DEVSERVER_CHECK: "true"
+
+      - name: Artefakte einsammeln
+        id: collect
+        shell: pwsh
+        run: |
+          $ver = (Get-Content package.json | ConvertFrom-Json).version
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item "src-tauri/target/release/bundle/nsis/*-setup.exe" "out/ChaosLauncher-$ver-setup.exe"
+          Copy-Item "src-tauri/target/release/bundle/msi/*.msi" "out/ChaosLauncher-$ver.msi"
+          "version=$ver" >> $env:GITHUB_OUTPUT
+          Get-ChildItem out
+
+      # --- SignPath (nur wenn Secrets gesetzt sind) -------------------------
+      - name: SignPath – Setup-EXE signieren
+        if: ${{ env.SIGNPATH_API_TOKEN != '' }}
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORG_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_POLICY }}
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out-signed
+
+      - name: Artefakte hochladen
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-launcher-${{ steps.collect.outputs.version }}
+          path: out/*
+
+      - name: An Release anhängen
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $dir = if (Test-Path out-signed) { "out-signed" } else { "out" }
+          Get-ChildItem $dir | ForEach-Object { Get-FileHash $_.FullName -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } } | Set-Content "$dir/SHA256SUMS"
+          gh release upload "${{ github.ref_name }}" (Get-ChildItem $dir | ForEach-Object { $_.FullName }) --clobber
