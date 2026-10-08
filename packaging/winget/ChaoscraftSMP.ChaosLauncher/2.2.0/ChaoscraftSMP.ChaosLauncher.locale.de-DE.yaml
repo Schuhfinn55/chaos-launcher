@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: ChaoscraftSMP.ChaosLauncher
+PackageVersion: 2.2.0
+PackageLocale: de-DE
+Publisher: ChaoscraftSMP
+PublisherUrl: https://chaos-launcher.chaoscraft.workers.dev
+PublisherSupportUrl: https://github.com/Schuhfinn55/chaos-launcher/issues
+PackageName: Chaos Launcher
+PackageUrl: https://chaos-launcher.chaoscraft.workers.dev
+License: MIT
+LicenseUrl: https://github.com/Schuhfinn55/chaos-launcher/blob/main/LICENSE
+ShortDescription: Minecraft-Launcher für ChaoscraftSMP mit Chaos Client, animierten Capes, Wings, Hüten, Effekten, Mod-Manager und Auto-Updates.
+Description: |-
+  Der Chaos Launcher ist ein kostenloser, quelloffener Minecraft-Launcher für die ChaoscraftSMP-Community.
+  Er bringt den Chaos Client (Fabric-Mod) mit: animierte Capes, Wings, Hüte, Partikel-Effekte, Musik-Player,
+  FPS-Boost, Profile, Mod-Manager (Modrinth/CurseForge), Import aus anderen Launchern und automatische Updates.
+Moniker: chaos-launcher
+Tags:
+  - minecraft
+  - launcher
+  - fabric
+  - cosmetics
+  - chaoscraft
+ReleaseNotesUrl: https://github.com/Schuhfinn55/chaos-launcher/releases/tag/v2.2.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+PackageIdentifier: ChaoscraftSMP.ChaosLauncher
+PackageVersion: 2.2.0
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+  - interactive
+  - silent
+  - silentWithProgress
+InstallerSwitches:
+  Silent: /S
+  SilentWithProgress: /S
+UpgradeBehavior: install
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0-setup.exe
+    InstallerSha256: CAD93D3ADAEBCAD58B1D7DD8F6A87F654B38E090E2E224A6E60501C70B9C47B9
+ManifestType: installer
+ManifestVersion: 1.6.0

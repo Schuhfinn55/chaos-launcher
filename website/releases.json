@@ -10,7 +10,10 @@
         "publishedAt": "2026-10-07",
         "notes": "- Cosmetics-Update: 7 neue Wings (Void, Inferno-Drache, Cyber, Frost, Blutengel, Gold, Seraphim) mit zweilagigem Flügelmodell, Sprung-/Fall-Animation und Leucht-Pulsieren\n- 13 neue Hüte (Drachenhelm, Chaos-Visor, Katzen-/Wolfsohren, Piratenhut, Geweih, Flammenkrone, Astronautenhelm, Pilz, Ritterhelm, Blumenkranz, Neon-Ring, Eiskrone) – Hüte können jetzt leuchten, rotieren und schweben\n- 10 neue Effekte (Chaos-Sturm, Gewitter, Void-Riss, Galaxie, Blutmond, Irrlichter, Engelsring, Feuerwerksspur, Regenbogen, Frost-Aura)\n- 6 neue animierte Capes (Blutmond, Chaos-Sturm, Drachenauge, Hologramm, Lavastrom, Void-Portal)\n- Chaos Client 2.5.0",
         "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0.msi",
-        "msiSha256": "e67e3e96a6d5f27ddad5cab99c19e67b583e60898ea1569dfcd579cdbe01f28c"
+        "msiSha256": "e67e3e96a6d5f27ddad5cab99c19e67b583e60898ea1569dfcd579cdbe01f28c",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0-portable.zip",
+        "portableSha256": "eb301156e9eb07ddbecd84da102e88424096b49632e3dbd821a5478d018c38e6",
+        "portableSize": 9273835
       },
       "client": {
         "version": "2.5.0",
@@ -95,6 +98,6 @@
       "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-07",
+  "updatedAt": "2026-10-08",
   "downloads": "github"
 }

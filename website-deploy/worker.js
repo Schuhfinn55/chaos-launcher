@@ -23,11 +23,11 @@ export default {
       return new Response(JSON.stringify({ count, real, offset, cosmeticsPlayers, apiPlayers }), { headers: { "Content-Type": "application/json", ...cors } });
     }
 
-    const m = /^\/dl\/(launcher|msi|client)$/.exec(p);
+    const m = /^\/dl\/(launcher|msi|portable|client)$/.exec(p);
     if (m) {
       const feed = await env.ASSETS.fetch(new Request(url.origin + "/releases.json")).then((r) => r.json()).catch(() => null);
       const s = feed?.channels?.stable || {};
-      const target = m[1] === "launcher" ? s.launcher?.url : m[1] === "msi" ? s.launcher?.msiUrl : s.client?.url;
+      const target = m[1] === "launcher" ? s.launcher?.url : m[1] === "msi" ? s.launcher?.msiUrl : m[1] === "portable" ? s.launcher?.portableUrl : s.client?.url;
       if (!target) return new Response("Download nicht verfügbar", { status: 404, headers: cors });
       if (m[1] !== "client") {
         // Zähler (KV ist nicht atomar – für eine Anzeige völlig ausreichend)

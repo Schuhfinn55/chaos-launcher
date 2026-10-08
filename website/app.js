@@ -34,6 +34,11 @@
       if (l.sha256) $("dl-vt").href = "https://www.virustotal.com/gui/search/" + l.sha256;
       $("stat-version").textContent = "v" + l.version;
       for (const id of ["btn-msi", "btn-msi-2"]) { const a = $(id); if (l.msiUrl) { a.href = msiUrl; if (counted) a.removeAttribute("download"); } else a.style.display = "none"; }
+      const zipUrl = counted ? "./dl/portable" : l.portableUrl;
+      for (const id of ["btn-zip", "btn-zip-2"]) { const a = $(id); if (!a) continue; if (l.portableUrl) { a.href = zipUrl; if (counted) a.removeAttribute("download"); else a.setAttribute("download", ""); } else a.style.display = "none"; }
+      if (counted) document.querySelectorAll("#btn-zip, #btn-zip-2").forEach((a) => a.addEventListener("click", () => {
+        const el = $("stat-downloads"); const n = parseInt(el.textContent, 10); if (!isNaN(n)) setTimeout(() => (el.textContent = String(n + 1)), 800);
+      }));
     }
     if (c) {
       $("stat-client").textContent = "v" + c.version;

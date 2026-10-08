@@ -113,6 +113,7 @@ def main():
     ap.add_argument("--no-github", action="store_true", help="kein GitHub-Release/Pages")
     ap.add_argument("--no-cloudflare", action="store_true", help="Website nicht auf Cloudflare deployen")
     ap.add_argument("--client-only", action="store_true", help="nur die Chaos-Client-JAR in das bestehende Launcher-Release laden und den Feed aktualisieren")
+    ap.add_argument("--portable-only", action="store_true", help="nur das Portable-ZIP bauen, ins bestehende Release laden und den Feed aktualisieren")
     args = ap.parse_args()
     if args.notes_file:
         args.notes = open(args.notes_file, encoding="utf-8").read().strip()
@@ -131,7 +132,40 @@ def main():
         return f"https://github.com/{GH_REPO}/releases/download/{tag}/{name}" if use_github else f"{PUBLIC}/download/{name}"
 
     assets = []  # (lokal, Dateiname)
-    if args.client_only:
+
+    def build_portable(version):
+        """Portable-ZIP: chaos-launcher.exe + resources/ – ohne Installer, einfach entpacken und starten."""
+        import zipfile
+        exe = os.path.join(ROOT, "src-tauri", "target", "release", "chaos-launcher.exe")
+        res = os.path.join(ROOT, "src-tauri", "target", "release", "resources")
+        if not os.path.exists(exe):
+            return None
+        name = f"ChaosLauncher-{version}-portable.zip"
+        out = os.path.join(staging_dir("portable"), name)
+        with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+            z.write(exe, "Chaos Launcher/chaos-launcher.exe")
+            for fn in sorted(os.listdir(res)):
+                if fn.startswith("onyx-"):
+                    continue
+                z.write(os.path.join(res, fn), f"Chaos Launcher/resources/{fn}")
+            z.writestr("Chaos Launcher/LIESMICH.txt", "Chaos Launcher (portable)\n\nEinfach den Ordner irgendwohin entpacken und chaos-launcher.exe starten.\nKeine Installation, keine Admin-Rechte. Daten liegen wie gewohnt unter %APPDATA%\\chaos-launcher.\n\nWebsite: " + PAGES_URL + "\n")
+        return out, name
+
+    if args.portable_only:
+        version = feed["channels"]["stable"]["launcher"]["version"]
+        built = build_portable(version)
+        if not built:
+            sys.exit("chaos-launcher.exe fehlt – erst `npm run tauri build`")
+        zpath, zname = built
+        feed["channels"]["stable"]["launcher"]["portableUrl"] = dl_url(zname)
+        feed["channels"]["stable"]["launcher"]["portableSha256"] = sha256(zpath)
+        feed["channels"]["stable"]["launcher"]["portableSize"] = os.path.getsize(zpath)
+        feed["updatedAt"] = today
+        json.dump(feed, open(feed_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+        if use_github:
+            gh("release", "upload", tag, "-R", GH_REPO, "--clobber", zpath)
+        print(f"Portable {zname} veröffentlicht (Release {tag}).")
+    elif args.client_only:
         jar = os.path.join(ROOT, "src-tauri", "resources", "chaos-client.jar")
         cv = jar_version(jar)
         jar_name = f"chaos-client-{cv}.jar"
@@ -166,6 +200,13 @@ def main():
             launcher["msiUrl"] = dl_url(msi_name)
             launcher["msiSha256"] = sha256(msi)
             assets.append((msi, msi_name))
+        built = build_portable(version)
+        if built:
+            zpath, zname = built
+            launcher["portableUrl"] = dl_url(zname)
+            launcher["portableSha256"] = sha256(zpath)
+            launcher["portableSize"] = os.path.getsize(zpath)
+            assets.append((zpath, zname))
         feed["channels"]["stable"]["launcher"] = launcher
         if os.path.exists(jar):
             cv = jar_version(jar)
