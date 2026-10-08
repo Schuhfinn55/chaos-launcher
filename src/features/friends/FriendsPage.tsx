@@ -1,50 +1,59 @@
 /* ============================================================
- * Chaos Launcher - Freunde-Liste (voll funktional)
+ * Chaos Launcher - Freunde
  *
- * Features:
- *   - Echte Minecraft-Avatare (via Crafatar/Mojang)
- *   - Gruppen: Online / Abwesend / Offline
- *   - Suchfeld zum Filtern
- *   - Server-Join-Button (IP-Feld pro Freund)
- *   - Details: Freund-seit, letzter Server, zuletzt gespielt
+ * Echte Freundesliste über die Chaos-Cosmetics-API: Anfragen senden,
+ * annehmen, Online-Status (Launcher offen / im Spiel auf Server X),
+ * „Mitspielen“ startet Minecraft direkt auf dem Server des Freundes.
+ * Die Namen/UUIDs werden zusätzlich an den Chaos Client übergeben
+ * (Freunde werden ingame in der Tab-Liste hervorgehoben).
  * ============================================================ */
 
-import { useEffect, useState } from "react";
-import { useFriendStore } from "@/stores/useStore";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader, EmptyState } from "@/components/PageHeader";
-import { uid, formatDate } from "@/lib/utils";
-import { fetchUuid, avatarUrl } from "@/lib/mojang";
-import { invoke } from "@/lib/bridge";
-import type { Friend } from "@/types";
+import { avatarUrl, fetchUuid } from "@/lib/mojang";
+import { friendsAction, friendsList } from "@/lib/api/friends";
 import { effectiveApiUrl, getRemoteCosmetics, type RemoteCosmetics } from "@/lib/api/cosmetics";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
 import { wingsById } from "@/lib/builtinWings";
-import { useSettingsStore } from "@/stores/useStore";
+import { useAccountStore, useInstanceStore, useSettingsStore } from "@/stores/useStore";
+import { setPendingJoin } from "@/stores/joinStore";
+import { toast } from "@/stores/toastStore";
+import type { FriendEntry, FriendsView } from "@/types";
 import "./FriendsPage.css";
 
-const STATUS_META: Record<Friend["status"], { label: string; color: string; order: number }> = {
-  online: { label: "Online", color: "var(--onyx-success)", order: 0 },
-  away: { label: "Abwesend", color: "var(--onyx-warning)", order: 1 },
-  offline: { label: "Offline", color: "var(--onyx-text-faint)", order: 2 },
+const STATE_META: Record<FriendEntry["state"], { label: string; color: string }> = {
+  ingame: { label: "Im Spiel", color: "var(--chaos-success, #22c55e)" },
+  online: { label: "Launcher offen", color: "#60a5fa" },
+  offline: { label: "Offline", color: "var(--chaos-text-dim)" },
 };
 
-function FriendCosmetics({ uuid }: { uuid?: string }) {
+function timeAgo(ms: number): string {
+  if (!ms) return "noch nie gesehen";
+  const d = Date.now() - ms;
+  if (d < 90_000) return "gerade eben";
+  if (d < 3_600_000) return `vor ${Math.round(d / 60_000)} min`;
+  if (d < 86_400_000) return `vor ${Math.round(d / 3_600_000)} h`;
+  return `vor ${Math.round(d / 86_400_000)} Tagen`;
+}
+
+function FriendCosmetics({ uuid }: { uuid: string }) {
   const apiUrl = useSettingsStore((s) => effectiveApiUrl(s.settings));
   const [data, setData] = useState<RemoteCosmetics | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
-    if (!uuid || !apiUrl) { setData(null); return; }
-    getRemoteCosmetics(uuid).then((r) => alive && setData(r)).catch(() => alive && setData(null));
-    return () => { alive = false; };
+    setData(undefined);
+    getRemoteCosmetics(uuid).then((d) => alive && setData(d)).catch(() => alive && setData(null));
+    return () => {
+      alive = false;
+    };
   }, [uuid, apiUrl]);
-  if (!apiUrl) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics anderer: Chaos-Cosmetics-API in den Einstellungen eintragen.</span>;
   if (data === undefined) return <span className="chaos-faint" style={{ fontSize: 11 }}>Cosmetics werden geladen …</span>;
-  if (!data) return <span className="chaos-faint" style={{ fontSize: 11 }}>Noch keine Chaos-Cosmetics bekannt (nutzt keinen Chaos Launcher, Cosmetics verborgen oder Server offline).</span>;
+  if (!data) return <span className="chaos-faint" style={{ fontSize: 11 }}>Keine Cosmetics sichtbar.</span>;
   const hat = hatById(data.hat), effect = effectById(data.effect), wings = wingsById(data.wings);
   return (
     <div className="chaos-row chaos-wrap" style={{ gap: 6 }}>
-      <span className="chaos-badge chaos-badge-accent">Chaos-Spieler</span>
       <span className="chaos-badge">{data.activeCape ? `🧥 ${data.activeCape.name || "Cape"}` : "🧥 kein Cape"}</span>
       <span className="chaos-badge">{hat ? `${hat.icon} ${hat.name}` : "🎩 kein Hut"}</span>
       <span className="chaos-badge">{wings ? `${wings.icon} ${wings.name}` : "🪽 keine Wings"}</span>
@@ -54,213 +63,189 @@ function FriendCosmetics({ uuid }: { uuid?: string }) {
 }
 
 export default function FriendsPage() {
-  const friends = useFriendStore((s) => s.friends);
-  const add = useFriendStore((s) => s.add);
-  const remove = useFriendStore((s) => s.remove);
-  const update = useFriendStore((s) => s.update);
-
+  const navigate = useNavigate();
+  const account = useAccountStore((s) => s.active);
+  const activeInstanceId = useInstanceStore((s) => s.activeId);
+  const [view, setView] = useState<FriendsView | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
-  const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);
 
-  /** Fügt einen Freund hinzu und lädt seinen Avatar + UUID. */
-  const addFriend = async () => {
-    if (!name.trim()) return;
-    setAdding(true);
+  const load = useCallback(async () => {
+    if (!account) return;
     try {
-      // UUID + Avatar automatisch laden
-      const uuid = await fetchUuid(name.trim());
-      const friend: Friend = {
-        id: uid(),
-        name: name.trim(),
-        note: note.trim() || undefined,
-        status: "offline",
-        addedAt: Date.now(),
-        uuid: uuid ?? undefined,
-        avatarUrl: uuid ? avatarUrl(uuid) : undefined,
-      };
-      await add(friend);
-      setName("");
-      setNote("");
+      setView(await friendsList(account.uuid));
+      setError(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [account]);
+
+  useEffect(() => {
+    void load();
+    const t = setInterval(load, 30_000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  const act = async (action: "request" | "accept" | "decline" | "remove", uuid: string, label: string, who = "") => {
+    if (!account) return;
+    setBusy(true);
+    try {
+      const r = await friendsAction(account.uuid, action, uuid, who);
+      if (action === "request") toast.success(r.accepted ? "Jetzt befreundet" : r.already ? "Schon befreundet" : "Anfrage gesendet", who || label);
+      else toast.info(label, who);
+      await load();
+    } catch (e) {
+      toast.error("Fehlgeschlagen", String(e));
     } finally {
-      setAdding(false);
+      setBusy(false);
     }
   };
 
-  /** Aktualisiert den Avatar eines Freundes (falls noch nicht geladen). */
-  const refreshAvatar = async (friend: Friend) => {
-    const uuid = friend.uuid ?? (await fetchUuid(friend.name));
-    if (uuid) {
-      update(friend.id, { uuid, avatarUrl: avatarUrl(uuid) });
-    }
-  };
-
-  /** Setzt die Server-IP für einen Freund. */
-  const setServer = (friend: Friend, ip: string) => {
-    update(friend.id, { lastServer: ip });
-  };
-
-  /** "Zusammen spielen": startet Minecraft (falls aktiv) und joinet den Server.
-   *  Da wir das aktive Profil brauchen, leiten wir auf Spielen weiter. */
-  const joinServer = async (friend: Friend) => {
-    if (!friend.lastServer) return;
+  const addByName = async () => {
+    const n = name.trim();
+    if (!n || !account) return;
+    setBusy(true);
     try {
-      // Markiere "zuletzt zusammen gespielt"
-      update(friend.id, { lastPlayed: Date.now() });
-      // Hinweis: Echtes direktes Joinen würde beim Launch als
-      // --server / --quickPlayMultiplayer Argument ergänzt. Für jetzt
-      // kopieren wir die IP in die Zwischenablage als Hilfestellung.
-      await navigator.clipboard?.writeText(friend.lastServer);
-      window.alert(
-        `Server-IP "${friend.lastServer}" kopiert!\n\nStarte Minecraft über den Spielen-Tab und füge die IP im Mehrspieler-Menü ein.`
-      );
-    } catch {
-      /* clipboard ggf. nicht verfügbar */
+      const uuid = (await fetchUuid(n)) ?? "";
+      const r = await friendsAction(account.uuid, "request", uuid, n);
+      toast.success(r.accepted ? "Jetzt befreundet" : r.already ? "Schon befreundet" : "Anfrage gesendet", n);
+      setName("");
+      await load();
+    } catch (e) {
+      toast.error("Anfrage fehlgeschlagen", String(e));
+    } finally {
+      setBusy(false);
     }
   };
 
-  // Filter + Sortierung (Gruppen)
-  // Defensive: falls friends null/undefined (alte Cache-Stände), [] nutzen
-  const safeFriends = friends ?? [];
-  const filtered = safeFriends.filter(
-    (f) =>
-      f.name.toLowerCase().includes(search.toLowerCase()) ||
-      (f.note ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (f.lastServer ?? "").toLowerCase().includes(search.toLowerCase())
-  );
-  const sorted = [...filtered].sort(
-    (a, b) => STATUS_META[a.status].order - STATUS_META[b.status].order
-  );
-  const grouped: Record<Friend["status"], Friend[]> = {
-    online: sorted.filter((f) => f.status === "online"),
-    away: sorted.filter((f) => f.status === "away"),
-    offline: sorted.filter((f) => f.status === "offline"),
+  const join = (f: FriendEntry) => {
+    if (!f.server) return;
+    if (!activeInstanceId) {
+      toast.warning("Kein Profil", "Wähle zuerst ein Profil auf der Spielen-Seite.");
+      navigate("/play");
+      return;
+    }
+    setPendingJoin(f.server);
+    toast.info("Mitspielen", `Nächster Start verbindet direkt mit ${f.server}.`);
+    navigate("/play");
   };
+
+  if (!account) {
+    return (
+      <div className="onyx-page">
+        <PageHeader title="Freunde" subtitle="Freundesliste mit Online-Status – für alle, die den Chaos Launcher nutzen." />
+        <EmptyState icon="👥" title="Nicht angemeldet" hint="Melde dich mit deinem Minecraft-Account an, um Freunde hinzuzufügen." />
+      </div>
+    );
+  }
+
+  const q = search.trim().toLowerCase();
+  const friends = (view?.friends ?? []).filter((f) => !q || f.name.toLowerCase().includes(q));
+  const online = friends.filter((f) => f.state !== "offline").length;
 
   return (
-    <div className="onyx-content">
+    <div className="onyx-page">
       <PageHeader
         title="Freunde"
-        subtitle="Behalte deine Mitspieler im Blick – mit echten Avataren, Server-IPs und Status-Gruppen."
+        subtitle={`${online} von ${view?.friends.length ?? 0} online · Status wird live über die Chaos-API geteilt.`}
+        actions={
+          <input className="chaos-input" placeholder="Suchen …" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 180 }} />
+        }
       />
 
-      {/* Hinzufügen */}
       <div className="onyx-card onyx-friend-add">
-        <h3>Freund hinzufügen</h3>
         <div className="onyx-friend-form">
-          <input
-            className="onyx-input"
-            placeholder="Minecraft-Name (für Avatar)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addFriend()}
-          />
-          <input
-            className="onyx-input"
-            placeholder="Notiz (optional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addFriend()}
-          />
-          <button className="onyx-btn onyx-btn-primary" onClick={addFriend} disabled={!name.trim() || adding}>
-            {adding ? "Lädt …" : "Hinzufügen"}
+          <input className="chaos-input" placeholder="Minecraft-Name des Freundes" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addByName()} maxLength={16} />
+          <button className="onyx-btn onyx-btn-primary" onClick={addByName} disabled={!name.trim() || busy}>
+            {busy ? "…" : "Anfrage senden"}
           </button>
         </div>
-        <p className="onyx-friend-hint">
-          Der Avatar wird automatisch über deinen Minecraft-Namen geladen.
-        </p>
+        <span className="onyx-friend-hint">Der Freund muss den Chaos Launcher nutzen und bekommt die Anfrage hier unter „Anfragen“. Nimmt er an, seht ihr euch gegenseitig online.</span>
       </div>
 
-      {/* Suche */}
-      {safeFriends.length > 0 && (
-        <div className="onyx-toolbar">
-          <input
-            className="onyx-input"
-            placeholder="Freunde durchsuchen (Name, Notiz, Server) …"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {error && <div className="onyx-toast onyx-toast-warn">Freundesliste nicht erreichbar: {error}</div>}
+
+      {(view?.incoming.length ?? 0) > 0 && (
+        <div className="onyx-friend-group">
+          <div className="onyx-friend-group-head">
+            <span className="onyx-friend-group-dot" style={{ background: "#f5c342" }} />
+            <span className="onyx-friend-group-label">Anfragen</span>
+            <span className="onyx-friend-group-count">{view!.incoming.length}</span>
+          </div>
+          {view!.incoming.map((f) => (
+            <div key={f.uuid} className="onyx-card onyx-friend">
+              <img className="onyx-friend-avatar" src={avatarUrl(f.uuid)} alt="" />
+              <div className="onyx-friend-info">
+                <span className="onyx-friend-name">{f.name}</span>
+                <span className="onyx-friend-meta">möchte mit dir befreundet sein</span>
+              </div>
+              <div className="chaos-row" style={{ gap: 6 }}>
+                <button className="onyx-btn onyx-btn-primary" disabled={busy} onClick={() => act("accept", f.uuid, "Angenommen", f.name)}>Annehmen</button>
+                <button className="onyx-btn" disabled={busy} onClick={() => act("decline", f.uuid, "Abgelehnt", f.name)}>Ablehnen</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {safeFriends.length === 0 ? (
-        <EmptyState
-          title="Noch keine Freunde"
-          hint="Füge Freunde mit ihrem Minecraft-Namen hinzu – ihre Avatare erscheinen automatisch."
-        />
-      ) : sorted.length === 0 ? (
-        <EmptyState title="Keine Treffer" hint="Kein Freund passt auf deine Suche." />
+      {(view?.outgoing.length ?? 0) > 0 && (
+        <div className="onyx-friend-group">
+          <div className="onyx-friend-group-head">
+            <span className="onyx-friend-group-dot" style={{ background: "#60a5fa" }} />
+            <span className="onyx-friend-group-label">Gesendete Anfragen</span>
+            <span className="onyx-friend-group-count">{view!.outgoing.length}</span>
+          </div>
+          {view!.outgoing.map((f) => (
+            <div key={f.uuid} className="onyx-card onyx-friend">
+              <img className="onyx-friend-avatar" src={avatarUrl(f.uuid)} alt="" />
+              <div className="onyx-friend-info">
+                <span className="onyx-friend-name">{f.name}</span>
+                <span className="onyx-friend-meta">wartet auf Antwort</span>
+              </div>
+              <button className="onyx-btn" disabled={busy} onClick={() => act("decline", f.uuid, "Anfrage zurückgezogen", f.name)}>Zurückziehen</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {view && friends.length === 0 ? (
+        <EmptyState icon="👥" title={q ? "Keine Treffer" : "Noch keine Freunde"} hint={q ? "Anderen Namen probieren." : "Schick oben eine Anfrage an einen Chaos-Spieler."} />
       ) : (
         <div className="onyx-friend-groups">
-          {(["online", "away", "offline"] as const).map((status) => {
-            const group = grouped[status];
-            if (group.length === 0) return null;
-            const meta = STATUS_META[status];
+          {(["ingame", "online", "offline"] as FriendEntry["state"][]).map((state) => {
+            const list = friends.filter((f) => f.state === state);
+            if (!list.length) return null;
+            const meta = STATE_META[state];
             return (
-              <div key={status} className="onyx-friend-group">
+              <div key={state} className="onyx-friend-group">
                 <div className="onyx-friend-group-head">
                   <span className="onyx-friend-group-dot" style={{ background: meta.color }} />
                   <span className="onyx-friend-group-label">{meta.label}</span>
-                  <span className="onyx-friend-group-count">{group.length}</span>
+                  <span className="onyx-friend-group-count">{list.length}</span>
                 </div>
-                <div className="onyx-list">
-                  {group.map((f) => (
-                    <div key={f.id} className="onyx-card onyx-friend">
-                      <div className="onyx-friend-avatar">
-                        {f.avatarUrl ? (
-                          <img src={f.avatarUrl} alt="" onError={() => refreshAvatar(f)} />
-                        ) : (
-                          <span>{f.name.charAt(0).toUpperCase()}</span>
-                        )}
-                      </div>
-                      <div className="onyx-friend-info">
-                        <div className="onyx-friend-name">
-                          <strong>{f.name}</strong>
-                          <span className="onyx-friend-status" style={{ color: meta.color }}>
-                            ● {meta.label}
-                          </span>
-                        </div>
-                        {f.note && <span className="onyx-friend-note">{f.note}</span>}
-                        <FriendCosmetics uuid={f.uuid} />
-                        <div className="onyx-friend-meta">
-                          <span>freund seit {formatDate(f.addedAt)}</span>
-                          {f.lastPlayed && (
-                            <span>· zuletzt gespielt {formatDate(f.lastPlayed)}</span>
-                          )}
-                        </div>
-                        {/* Server-IP */}
-                        <div className="onyx-friend-server">
-                          <input
-                            className="onyx-input"
-                            placeholder="Server-IP (z.B. play.hypixel.net)"
-                            value={f.lastServer ?? ""}
-                            onChange={(e) => setServer(f, e.target.value)}
-                          />
-                          <button
-                            className="onyx-btn onyx-btn-primary"
-                            onClick={() => joinServer(f)}
-                            disabled={!f.lastServer}
-                          >
-                            Zusammen spielen
-                          </button>
-                        </div>
-                      </div>
-                      <select
-                        className="onyx-select"
-                        value={f.status}
-                        onChange={(e) => update(f.id, { status: e.target.value as Friend["status"] })}
-                      >
-                        <option value="online">Online</option>
-                        <option value="away">Abwesend</option>
-                        <option value="offline">Offline</option>
-                      </select>
-                      <button className="onyx-btn onyx-btn-danger" onClick={() => remove(f.id)}>
-                        ✕
-                      </button>
+                {list.map((f) => (
+                  <div key={f.uuid} className={"onyx-card onyx-friend" + (open === f.uuid ? " open" : "")} onClick={() => setOpen(open === f.uuid ? null : f.uuid)}>
+                    <img className="onyx-friend-avatar" src={avatarUrl(f.uuid)} alt="" />
+                    <div className="onyx-friend-info">
+                      <span className="onyx-friend-name">{f.name}</span>
+                      <span className="onyx-friend-status" style={{ color: meta.color }}>
+                        {state === "ingame" ? (f.server ? `spielt auf ${f.server}` : "spielt gerade") : state === "online" ? "hat den Launcher offen" : `zuletzt ${timeAgo(f.at)}`}
+                      </span>
+                      {open === f.uuid && <FriendCosmetics uuid={f.uuid} />}
                     </div>
-                  ))}
-                </div>
+                    <div className="chaos-row" style={{ gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                      {state === "ingame" && f.server && (
+                        <button className="onyx-btn onyx-btn-primary" onClick={() => join(f)} title={`Minecraft starten und mit ${f.server} verbinden`}>
+                          ▶ Mitspielen
+                        </button>
+                      )}
+                      <button className="onyx-btn" disabled={busy} onClick={() => act("remove", f.uuid, "Entfernt", f.name)}>Entfernen</button>
+                    </div>
+                  </div>
+                ))}
               </div>
             );
           })}

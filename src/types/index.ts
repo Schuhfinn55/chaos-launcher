@@ -287,6 +287,20 @@ export interface HeavyMod {
   reason: string;
   enabled: boolean;
 }
+export interface FriendEntry {
+  uuid: string;
+  name: string;
+  /** online (Launcher offen) | ingame | offline */
+  state: "online" | "ingame" | "offline";
+  server: string;
+  at: number;
+  chaos: boolean;
+}
+export interface FriendsView {
+  friends: FriendEntry[];
+  incoming: FriendEntry[];
+  outgoing: FriendEntry[];
+}
 export interface RedeemResult {
   ok: boolean;
   already?: boolean;

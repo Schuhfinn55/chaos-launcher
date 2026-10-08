@@ -28,6 +28,7 @@ import AccountsPage from "@/features/accounts/AccountsPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import { useAccountStore, useCosmeticsStore, useFriendStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
 import { syncCosmetics } from "@/lib/api/cosmetics";
+import { presenceHeartbeat } from "@/lib/api/friends";
 import { BUILTIN_THEMES } from "@/lib/themes";
 import "@/components/common.css";
 import "@/app.css";
@@ -105,6 +106,15 @@ export default function App() {
     const t = setTimeout(() => { syncCosmetics(activeAccountUuid).catch(() => {}); }, 2500);
     return () => clearTimeout(t);
   }, [activeAccountUuid, settings?.cosmeticsEnabled]);
+
+  // Präsenz für die Freundesliste: alle 60 s „online“ bzw. „im Spiel auf Server X“ melden
+  useEffect(() => {
+    if (!activeAccountUuid) return;
+    const beat = () => { presenceHeartbeat(activeAccountUuid).catch(() => {}); };
+    const t0 = setTimeout(beat, 4000);
+    const iv = setInterval(beat, 60_000);
+    return () => { clearTimeout(t0); clearInterval(iv); };
+  }, [activeAccountUuid]);
 
   // Sprache, Animationen, Hell/Dunkel, Akzent, Transparenz, Skalierung
   useEffect(() => {

@@ -401,6 +401,81 @@ pub struct CosmeticCode {
     pub redeemed_by: Vec<serde_json::Value>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendEntry {
+    pub uuid: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub state: String,
+    #[serde(default)]
+    pub server: String,
+    #[serde(default)]
+    pub at: i64,
+    #[serde(default)]
+    pub chaos: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendsView {
+    #[serde(default)]
+    pub friends: Vec<FriendEntry>,
+    #[serde(default)]
+    pub incoming: Vec<FriendEntry>,
+    #[serde(default)]
+    pub outgoing: Vec<FriendEntry>,
+}
+
+/// Präsenz melden (Launcher offen / im Spiel).
+pub async fn presence_update(api_url: &str, token: &str, state: &str, server: &str) -> Result<(), String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client
+        .put(format!("{b}/v1/presence"))
+        .bearer_auth(token)
+        .json(&serde_json::json!({ "state": state, "server": server }))
+        .timeout(std::time::Duration::from_secs(8))
+        .send()
+        .await
+        .map_err(|e| format!("Präsenz: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Präsenz HTTP {}", resp.status()));
+    }
+    Ok(())
+}
+
+/// Freundesliste mit Online-Status.
+pub async fn friends_list(api_url: &str, token: &str) -> Result<FriendsView, String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client.get(format!("{b}/v1/friends")).bearer_auth(token).send().await.map_err(|e| format!("Freunde laden: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Freunde laden HTTP {}", resp.status()));
+    }
+    resp.json::<FriendsView>().await.map_err(|e| format!("Freunde JSON: {e}"))
+}
+
+/// Freundschaftsaktion: request | accept | decline | remove.
+pub async fn friends_action(api_url: &str, token: &str, action: &str, uuid: &str, name: &str) -> Result<serde_json::Value, String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client
+        .post(format!("{b}/v1/friends/{action}"))
+        .bearer_auth(token)
+        .json(&serde_json::json!({ "uuid": uuid, "name": name }))
+        .send()
+        .await
+        .map_err(|e| format!("Freunde: {e}"))?;
+    let status = resp.status();
+    let v: serde_json::Value = resp.json().await.unwrap_or_default();
+    if !status.is_success() {
+        return Err(v.get("error").and_then(|e| e.as_str()).unwrap_or("Aktion fehlgeschlagen").to_string());
+    }
+    Ok(v)
+}
+
 /// Eigener Datensatz (inkl. Freischaltungen).
 pub async fn fetch_me(api_url: &str, token: &str) -> Result<RemoteCosmetics, String> {
     let b = base(api_url)?;

@@ -43,6 +43,72 @@ pub fn set_cosmetic(accountUuid: String, kind: String, id: String) -> Result<Cos
     cosmetics::set_cosmetic(&accountUuid, &kind, &id)
 }
 
+fn api_and_token_for(account_uuid: &str) -> impl std::future::Future<Output = Result<(String, String), String>> {
+    let uuid = account_uuid.to_string();
+    async move {
+        let settings = storage::load_settings().unwrap_or_default();
+        let api = cosmetics_api::effective_url(&settings);
+        let account = storage::load_accounts()?.into_iter().find(|a| a.uuid == uuid).ok_or("Account nicht gefunden")?;
+        let token = cosmetics_api::authenticate(&api, &account).await?;
+        Ok((api, token))
+    }
+}
+
+/// Freundesliste (mit Online-Status) laden; Namen/UUIDs werden zusätzlich für den Chaos Client (shared.json) gespeichert.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn friends_list(accountUuid: String) -> Result<cosmetics_api::FriendsView, String> {
+    let (api, token) = api_and_token_for(&accountUuid).await?;
+    let view = cosmetics_api::friends_list(&api, &token).await?;
+    let legacy: Vec<serde_json::Value> = view
+        .friends
+        .iter()
+        .map(|f| serde_json::json!({ "id": f.uuid, "name": f.name, "uuid": f.uuid, "status": if f.state == "offline" { "offline" } else { "online" }, "addedAt": 0, "lastServer": f.server }))
+        .collect();
+    let _ = storage::save("friends", &serde_json::Value::Array(legacy));
+    Ok(view)
+}
+
+/// Freundschaftsanfrage / annehmen / ablehnen / entfernen.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn friends_action(accountUuid: String, action: String, uuid: String, name: String) -> Result<serde_json::Value, String> {
+    if !["request", "accept", "decline", "remove"].contains(&action.as_str()) {
+        return Err("Unbekannte Aktion".to_string());
+    }
+    let (api, token) = api_and_token_for(&accountUuid).await?;
+    cosmetics_api::friends_action(&api, &token, &action, &uuid, &name).await
+}
+
+/// Präsenz-Heartbeat: „online“ (Launcher offen) oder „ingame“ + Server (aus chaos-client/presence.json der laufenden Instanz).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn presence_heartbeat(accountUuid: String) -> Result<String, String> {
+    let (api, token) = api_and_token_for(&accountUuid).await?;
+    let mut state = "online".to_string();
+    let mut server = String::new();
+    let running = crate::launch::running_instances();
+    if !running.is_empty() {
+        state = "ingame".to_string();
+        if let Ok(instances) = storage::load_instances() {
+            for inst in instances.iter().filter(|i| running.contains(&i.id)) {
+                if let Ok(home) = storage::instance_home(inst) {
+                    if let Ok(txt) = std::fs::read_to_string(home.join("chaos-client").join("presence.json")) {
+                        if let Ok(v) = serde_json::from_str::<serde_json::Value>(&txt) {
+                            let at = v.get("at").and_then(|a| a.as_i64()).unwrap_or(0);
+                            if crate::system::now_millis() - at < 10 * 60 * 1000 {
+                                server = v.get("server").and_then(|s| s.as_str()).unwrap_or("").to_string();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    cosmetics_api::presence_update(&api, &token, &state, &server).await?;
+    Ok(state)
+}
+
 /// Code für exklusive Wings einlösen (Freischaltung wird von der API bestätigt und lokal gespeichert).
 #[tauri::command]
 #[allow(non_snake_case)]

@@ -16,7 +16,7 @@
  * Deploy: npx wrangler deploy (siehe wrangler.toml)
  * ============================================================ */
 
-const API_VERSION = "1.5.0";
+const API_VERSION = "1.6.0";
 const COSMETICS_VERSION = 2;
 const TOKEN_TTL_S = 24 * 60 * 60;
 const MAX_PNG = 4 * 1024 * 1024;
@@ -138,6 +138,24 @@ const fmtCode = (c) => c.length === 13 && c.startsWith("CHAOS") ? `CHAOS-${c.sli
 function isAdmin(env, request) { const k = request.headers.get("x-admin-key") || ""; return !!env.ADMIN_KEY && k.length > 0 && k === env.ADMIN_KEY; }
 function codeView(c) { return { code: fmtCode(c.code), wings: c.wings, maxUses: c.maxUses, uses: c.uses || 0, note: c.note || "", createdAt: c.createdAt, redeemedBy: c.redeemedBy || [] }; }
 
+/* ---------- Freunde & Präsenz ---------- */
+const PRESENCE_TTL_MS = 180000;
+async function friendsRec(env, uuid) { const r = await getJson(env, "friends:" + uuid); return r && typeof r === "object" ? { friends: r.friends || [], incoming: r.incoming || [], outgoing: r.outgoing || [] } : { friends: [], incoming: [], outgoing: [] }; }
+const putFriends = (env, uuid, r) => putJson(env, "friends:" + uuid, r);
+const without = (list, uuid) => list.filter((e) => e.uuid !== uuid);
+const has = (list, uuid) => list.some((e) => e.uuid === uuid);
+async function presenceOf(env, uuid) {
+  const pr = await getJson(env, "presence:" + uuid);
+  if (!pr || now() - (pr.at || 0) > PRESENCE_TTL_MS) return { state: "offline", server: "", at: pr?.at || 0 };
+  return { state: pr.state || "online", server: pr.server || "", at: pr.at };
+}
+async function friendsView(env, uuid) {
+  const r = await friendsRec(env, uuid);
+  const friends = await Promise.all(r.friends.map(async (f) => { const [pl, pr] = await Promise.all([getPlayer(env, f.uuid), presenceOf(env, f.uuid)]); return { uuid: f.uuid, name: pl?.name || f.name || "", chaos: !!pl, ...pr }; }));
+  friends.sort((a, b) => (a.state === "offline") - (b.state === "offline") || a.name.localeCompare(b.name));
+  return { friends, incoming: r.incoming, outgoing: r.outgoing };
+}
+
 async function playerView(env, origin, uuid) {
   const p = await getPlayer(env, uuid);
   if (!p) return null;
@@ -243,6 +261,7 @@ export default {
         const pl = (await getPlayer(env, uuid)) || { name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };
         pl.name = name;
         await putPlayer(env, uuid, pl);
+        await putJson(env, "name:" + name.toLowerCase(), uuid);
         return json(200, { token, expiresAt });
       }
 
@@ -282,6 +301,72 @@ export default {
         pl.updatedAt = now();
         await putPlayer(env, uuid, pl);
         return json(200, await playerView(env, origin, uuid));
+      }
+
+      /* Präsenz (Launcher offen / im Spiel auf Server X) – läuft nach 3 Minuten ohne Heartbeat ab */
+      if (request.method === "PUT" && p === "/v1/presence") {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const b = await readJson(request, 4 * 1024);
+        const state = ["online", "ingame"].includes(b.state) ? b.state : "online";
+        const server = String(b.server || "").slice(0, 120);
+        await putJson(env, "presence:" + s.uuid, { name: s.name, state, server, at: now() }, { expirationTtl: 600 });
+        return json(200, { ok: true });
+      }
+
+      /* Freunde */
+      if (p === "/v1/friends" || p.startsWith("/v1/friends/")) {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const me = s.uuid;
+        if (request.method === "GET" && p === "/v1/friends") return json(200, await friendsView(env, me), { "Cache-Control": "no-store" });
+        if (request.method !== "POST") return json(405, { error: "Methode" });
+        const b = await readJson(request, 4 * 1024);
+        let target = normUuid(b.uuid || "");
+        let targetName = String(b.name || "").slice(0, 16);
+        if (!isUuid(target) && targetName) { target = (await getJson(env, "name:" + targetName.toLowerCase())) || ""; }
+        if (!isUuid(target)) return json(404, { error: "Spieler nicht gefunden – er muss den Chaos Launcher mindestens einmal gestartet haben." });
+        if (target === me) return json(400, { error: "Das bist du selbst." });
+        const tp = await getPlayer(env, target);
+        if (tp?.name) targetName = tp.name;
+        const mine = await friendsRec(env, me), theirs = await friendsRec(env, target);
+        const meEntry = { uuid: me, name: s.name }, themEntry = { uuid: target, name: targetName };
+        const action = p.slice("/v1/friends/".length);
+        if (action === "request") {
+          if (has(mine.friends, target)) return json(200, { ok: true, already: true });
+          if (has(mine.incoming, target)) {
+            // Gegenseitig → direkt Freunde
+            mine.incoming = without(mine.incoming, target); theirs.outgoing = without(theirs.outgoing, me);
+            if (!has(mine.friends, target)) mine.friends.push(themEntry);
+            if (!has(theirs.friends, me)) theirs.friends.push(meEntry);
+            await putFriends(env, me, mine); await putFriends(env, target, theirs);
+            return json(200, { ok: true, accepted: true });
+          }
+          if (!has(mine.outgoing, target)) mine.outgoing.push(themEntry);
+          if (!has(theirs.incoming, me)) theirs.incoming.push(meEntry);
+          await putFriends(env, me, mine); await putFriends(env, target, theirs);
+          return json(200, { ok: true, pending: true });
+        }
+        if (action === "accept") {
+          if (!has(mine.incoming, target)) return json(404, { error: "Keine Anfrage von diesem Spieler." });
+          mine.incoming = without(mine.incoming, target); theirs.outgoing = without(theirs.outgoing, me);
+          if (!has(mine.friends, target)) mine.friends.push(themEntry);
+          if (!has(theirs.friends, me)) theirs.friends.push(meEntry);
+          await putFriends(env, me, mine); await putFriends(env, target, theirs);
+          return json(200, { ok: true });
+        }
+        if (action === "decline") {
+          mine.incoming = without(mine.incoming, target); mine.outgoing = without(mine.outgoing, target);
+          theirs.outgoing = without(theirs.outgoing, me); theirs.incoming = without(theirs.incoming, me);
+          await putFriends(env, me, mine); await putFriends(env, target, theirs);
+          return json(200, { ok: true });
+        }
+        if (action === "remove") {
+          mine.friends = without(mine.friends, target); theirs.friends = without(theirs.friends, me);
+          await putFriends(env, me, mine); await putFriends(env, target, theirs);
+          return json(200, { ok: true });
+        }
+        return json(404, { error: "unbekannt" });
       }
 
       /* Eigener Datensatz (inkl. Freischaltungen) */

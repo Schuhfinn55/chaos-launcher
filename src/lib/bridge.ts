@@ -217,6 +217,15 @@ const mocks: Record<string, MockHandler> = {
   async cosmetics_api_info() {
     return { reachable: false, apiVersion: "", cosmeticsVersion: 0, message: "Browser-Dev" };
   },
+  async friends_list() {
+    return { friends: [{ uuid: "069a79f444e94726a5befca90e38aaf5", name: "Notch", state: "ingame", server: "chaoscraftsmp.duckdns.org", at: Date.now(), chaos: true }, { uuid: "853c80ef3c3749fdaa49938b674adae6", name: "jeb_", state: "offline", server: "", at: 0, chaos: true }], incoming: [{ uuid: "61699b2ed3274a019f1e0ea8c3f06bc6", name: "Dinnerbone" }], outgoing: [] };
+  },
+  async friends_action() {
+    return { ok: true };
+  },
+  async presence_heartbeat() {
+    return "online";
+  },
   async redeem_cosmetic_code(args) {
     return { ok: true, unlocked: "overlord", unlocks: ["overlord"], code: args.code };
   },

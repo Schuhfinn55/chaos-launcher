@@ -7,6 +7,7 @@
  * Fehler landen als LaunchError im Dialog.
  * ============================================================ */
 
+import { consumePendingJoin } from "@/stores/joinStore";
 import { syncCosmetics } from "@/lib/api/cosmetics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listen, toLaunchError } from "@/lib/bridge";
@@ -144,7 +145,19 @@ export function useLauncher(instanceId: string | null | undefined) {
       if (acc) {
         await Promise.race([syncCosmetics(acc.uuid), new Promise((r) => setTimeout(r, 5000))]).catch(() => {});
       }
-      await launchInstance(id);
+      const join = consumePendingJoin();
+      if (join) {
+        const inst = useInstanceStore.getState().instances.find((i) => i.id === id);
+        const prev = inst?.quickServer ?? "";
+        await useInstanceStore.getState().update(id, { quickServer: join });
+        try {
+          await launchInstance(id);
+        } finally {
+          await useInstanceStore.getState().update(id, { quickServer: prev });
+        }
+      } else {
+        await launchInstance(id);
+      }
       setState((s) => ({
         ...s,
         launching: false,

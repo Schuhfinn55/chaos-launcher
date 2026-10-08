@@ -36,5 +36,6 @@ export const CHAOSCRAFT = {
     { slug: "immediatelyfast", title: "ImmediatelyFast", projectType: "mod" },
     { slug: "modmenu", title: "Mod Menu", projectType: "mod" },
     { slug: "appleskin", title: "AppleSkin", projectType: "mod" },
+    { slug: "simple-voice-chat", title: "Simple Voice Chat", projectType: "mod" },
   ] as PresetModRef[],
 };
