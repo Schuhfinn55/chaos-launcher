@@ -20,6 +20,9 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+import sys
+sys.path.insert(0, HERE)
+import trailer3d as t3
 TR = "D:/tmp/trailer"
 SHOTS = "D:/tmp/video/shots"
 OUT = os.path.join(TR, "chaos-launcher-trailer.mp4")
@@ -103,7 +106,8 @@ def font(size, weight="bold"):
 
 
 LOGO = Image.open(os.path.join(ROOT, "website", "assets", "icon.png")).convert("RGBA")
-SKIN = Image.open(os.path.join(TR, "assets", "skin.png")).convert("RGBA")
+SKIN = Image.open(os.path.join(TR, "assets", "skin_launcher.png")).convert("RGBA")  # Skin wie im Launcher angezeigt
+SKIN_SLIM = SKIN.getpixel((55, 20))[3] == 0
 BLOCK_NAMES = ["obsidian", "deepslate", "blackstone", "netherrack", "redstone_block", "crying_obsidian", "basalt_side", "polished_blackstone", "red_nether_bricks", "magma", "stone", "ancient_debris_side"]
 BLOCKS = {n: Image.open(os.path.join(TR, "assets", "blocks", n + ".png")).convert("RGBA").resize((64, 64), Image.NEAREST) for n in BLOCK_NAMES}
 
@@ -557,14 +561,16 @@ def scene2(t, dur, arr):
 UI_SHOTS = [
     ("home", ("push", 0.45, 0.35, 1.0, 1.25), "HAUPTMENÜ"),
     ("play", ("slide", -500), "PROFIL · VERSION 1.21.11"),
-    ("play", ("push", 0.30, 0.68, 1.2, 1.7), "FPS-BOOST"),
-    ("mods", ("push", 0.5, 0.45, 1.0, 1.2), "MODS"),
+    ("mods", ("push", 0.5, 0.45, 1.0, 1.2), "MODS · MODRINTH & CURSEFORGE"),
     ("settings", ("slide", 500), "EINSTELLUNGEN"),
     ("cape", ("push", 0.62, 0.62, 1.05, 1.5), "COSMETICS · CAPES"),
     ("hat", ("push", 0.6, 0.55, 1.1, 1.6), "COSMETICS · HÜTE"),
     ("wings", ("push", 0.55, 0.45, 1.0, 1.45), "COSMETICS · WINGS"),
+    ("effect", ("push", 0.5, 0.5, 1.1, 1.5), "COSMETICS · EFFEKTE"),
     ("servers", ("slide", -500), "MULTIPLAYER · SERVER"),
-    ("friends", ("push", 0.5, 0.4, 1.0, 1.3), "FREUNDE"),
+    ("friends", ("push", 0.5, 0.4, 1.0, 1.3), "FREUNDE · LIVE-STATUS"),
+    ("play", ("push", 0.30, 0.70, 1.6, 2.1), "FPS-BOOST"),
+    ("wings", ("push", 0.37, 0.47, 1.9, 2.4), "CODE EINLÖSEN"),
 ]
 
 
@@ -578,7 +584,7 @@ def scene3(t, dur, arr, t_abs):
     else:
         c0 = cuts[idx]
         c1 = cuts[idx + 1] if idx + 1 < len(cuts) else T3[1]
-        name, mode, label = UI_SHOTS[idx % len(UI_SHOTS)]
+        name, mode, label = UI_SHOTS[min(idx, len(UI_SHOTS) - 1)]
     ui_shot(arr, name, c0, t_abs, max(0.2, c1 - c0), mode, label)
     # kurzer Glitch am Schnitt
     age = t_abs - c0
@@ -636,6 +642,69 @@ def wings_shot(arr, t, p, wid, name, glow_col):
     composite(arr, t2, W / 2 - t2.width / 2, H - BAR - 70 - t2.height / 2, alpha=a)
 
 
+FLOOR_BLOCKS = {n: BLOCKS[n] for n in ("deepslate", "blackstone", "polished_blackstone", "basalt_side", "redstone_block", "obsidian", "crying_obsidian")}
+WING_CACHE = {}
+
+
+def wing_tex(wid, k):
+    key = (wid, k)
+    if key not in WING_CACHE:
+        WING_CACHE[key] = Image.open(os.path.join(ROOT, "src", "assets", "wings", f"{wid}_f{k}.png" if k is not None else f"{wid}.png")).convert("RGBA")
+    return WING_CACHE[key]
+
+
+WING_META = {"overlord": (1.15, 40, 6, 8, 10), "celestial": (1.12, 40, 12, 8, 8), "phoenix": (1.0, 44, 14, None, 0), "galaxy": (1.0, 40, 12, None, 0), "inferno": (1.18, 42, 6, None, 0), "cyber": (1.0, 40, 8, None, 0)}
+
+
+def shot3d(arr, t, p, wid="overlord", hat="dragon-helm", cam="orbit", label=None, sub=None, yaw0=0.0, slowmo=False):
+    """Echte 3D-Ansicht wie im Spiel: Spieler (Launcher-Skin) mit Wings + Hut auf Blockboden, Kamera orbit/push/hero/low."""
+    scale, open_deg, tilt, frames, fps = WING_META.get(wid, (1.0, 40, 10, None, 0))
+    tt = t * (0.35 if slowmo and p < 0.3 else 1.0)
+    k = (int(tt * fps) % frames) if frames else None
+    wing = wing_tex(wid, k)
+    target = (0, 18, 0)
+    if cam == "orbit":
+        ang = yaw0 + p * 2.6
+        dist = 78 - 10 * p
+        pos = (math.sin(ang) * dist, 30 + 10 * math.sin(p * 3.1), math.cos(ang) * dist)
+    elif cam == "push":
+        ang = yaw0
+        dist = 110 - 55 * (p ** 0.7)
+        pos = (math.sin(ang) * dist, 26 + 8 * (1 - p), math.cos(ang) * dist)
+    elif cam == "low":
+        ang = yaw0 + p * 0.8
+        dist = 60
+        pos = (math.sin(ang) * dist, 8 + 6 * p, math.cos(ang) * dist)
+        target = (0, 22, 0)
+    elif cam == "hero":  # von hinten, Blick über die Schulter nach vorn
+        dist = 55 + 40 * p
+        pos = (4 - 6 * p, 32 + 12 * p, dist)
+        target = (-18, 20, -40)
+    else:
+        pos = (0, 30, 80)
+    camera = t3.Camera(pos=pos, target=target, fov_deg=44)
+    swing = math.sin(t * 2.2) * 0.12
+    quads = t3.floor_quads(FLOOR_BLOCKS, size=5)
+    quads += t3.player_quads(SKIN, slim=SKIN_SLIM, yaw=0.0, swing=swing)
+    quads += t3.wing_quads(wing, tt, scale=scale, open_deg=open_deg, tilt_deg=tilt)
+    if hat:
+        quads += t3.hat_quads(hat, t=t)
+    bg = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    im = t3.render_quads(quads, camera, (W, H), fog=(70.0, 190.0), bg=bg)
+    # Licht hinter dem Spieler
+    pr = camera.project(np.array([[0, 20, 2]], dtype=float))[0]
+    add_light(arr, GLOW_RED, pr[0] - 450, pr[1] - 450, strength=0.35)
+    composite(arr, im, 0, 0)
+    PARTS_B.draw(arr, t, alpha=0.6)
+    if label:
+        a = min(1, max(0, (p - 0.1) * 4))
+        tt1 = txt("l3d_" + label, label, font(60, "bold"), glow=RED, blur=18, spacing=8)
+        composite(arr, tt1, W / 2 - tt1.width / 2, H - BAR - 150 - tt1.height / 2, alpha=a)
+        if sub:
+            tt2 = txt("s3d_" + sub, sub, font(24, "semi"), fill=(235, 195, 90), spacing=5)
+            composite(arr, tt2, W / 2 - tt2.width / 2, H - BAR - 72 - tt2.height / 2, alpha=a)
+
+
 def flythrough(arr, t, p, speed=1.8):
     grid_floor(arr, t, speed=speed, alpha=0.4)
     CUBES.draw(arr, t, speed=speed * 0.7, alpha=1.0)
@@ -667,26 +736,33 @@ def feature_card(arr, t, p, title, sub):
     composite(arr, t2, W / 2 - t2.width / 2, H / 2 + 70 - t2.height / 2, alpha=a)
 
 
+# Montage: jede Launcher-Seite nur einmal (Szene 3), hier echte 3D-Shots wie im Spiel + Detail-Zooms
 MONTAGE = [
-    ("fly", None), ("ui", ("wings", ("push", 0.25, 0.55, 1.3, 1.9), "WINGS · 3D-VORSCHAU")), ("card", ("19 WINGS", "ANIMIERT · LEUCHTEND · MIT PARTIKELN")),
-    ("block", "redstone_block"), ("ui", ("hat", ("push", 0.7, 0.6, 1.5, 2.0), "25 HÜTE")), ("wings", ("overlord", "CHAOS OVERLORD", RED)),
-    ("ui", ("cape", ("push", 0.68, 0.7, 1.4, 1.9), "ANIMIERTE CAPES")), ("block", "magma"), ("card", ("24 EFFEKTE", "CHAOS-STURM · GEWITTER · GALAXIE · BLUTMOND")),
-    ("wings", ("celestial", "CELESTIAL SERAPH", (139, 92, 246))), ("ui", ("effect", ("push", 0.5, 0.5, 1.1, 1.5), "EFFEKTE")), ("fly", None),
-    ("creator", None), ("ui", ("friends", ("push", 0.4, 0.45, 1.1, 1.4), "FREUNDE · LIVE-STATUS")), ("card", ("FREUNDE", "ANFRAGEN · ONLINE-STATUS · MITSPIELEN")),
-    ("block", "crying_obsidian"), ("ui", ("play", ("push", 0.3, 0.7, 1.4, 1.9), "FPS-BOOST")), ("card", ("FPS-BOOST", "HOHE PRIORITÄT · RICHTIGE GPU · EIN KLICK")),
-    ("fly", None), ("card", ("CHAOS-BADGE", "DAS ROTE C VOR DEINEM NAMEN")), ("ui", ("home", ("push", 0.5, 0.3, 1.2, 1.6), "AUTO-UPDATES")),
+    ("3d", dict(wid="overlord", hat="dragon-helm", cam="orbit", label="CHAOS OVERLORD", sub="LEGENDÄR · NUR MIT CODE", slowmo=True), 6),
+    ("block", "redstone_block", 1), ("card", ("19 WINGS", "ANIMIERT · LEUCHTEND · MIT PARTIKELN"), 2),
+    ("3d", dict(wid="celestial", hat="neon-halo", cam="low", label="CELESTIAL SERAPH", sub="LEGENDÄR · NUR MIT CODE", yaw0=2.4), 4),
+    ("3d", dict(wid="phoenix", hat="flame-crown", cam="push", yaw0=0.6), 2),
+    ("fly", None, 2), ("card", ("25 HÜTE", "LEUCHTEN · ROTIEREN · SCHWEBEN"), 2),
+    ("3d", dict(wid="galaxy", hat="chaos-visor", cam="orbit", yaw0=4.0), 2),
+    ("block", "magma", 1), ("card", ("24 EFFEKTE", "CHAOS-STURM · GEWITTER · GALAXIE · BLUTMOND"), 2),
+    ("3d", dict(wid="inferno", hat="knight-helm", cam="low", yaw0=1.0), 2),
+    ("creator", None, 6),
+    ("block", "crying_obsidian", 1), ("card", ("FREUNDE", "LIVE-STATUS · MITSPIELEN MIT EINEM KLICK"), 2),
+    ("3d", dict(wid="cyber", hat="ice-crown", cam="push", yaw0=3.3), 2),
+    ("card", ("FPS-BOOST", "HOHE PRIORITÄT · RICHTIGE GPU · EIN KLICK"), 2),
+    ("fly", None, 2), ("card", ("CHAOS-BADGE", "DAS ROTE C VOR DEINEM NAMEN"), 2),
+    ("3d", dict(wid="overlord", hat="dragon-helm", cam="hero", yaw0=0.0), 4),
 ]
 
 
 def scene4(t, dur, arr, t_abs):
     # Schnitte: pro Beat (Creator- und Wings-Shots dauern 4 Beats)
     cuts = beats_between(T4[0], T4[1])
-    # Längen pro Element bestimmen
+    # Längen pro Element (in Beats) aus der Montage-Liste
     plan = []
     i, k = 0, 0
     while i < len(cuts):
-        kind, arg = MONTAGE[k % len(MONTAGE)]
-        n = 4 if kind in ("creator", "wings") else (2 if kind in ("card", "fly") else 1)
+        kind, arg, n = MONTAGE[k % len(MONTAGE)]
         plan.append((cuts[i], cuts[min(i + n, len(cuts) - 1)] if i + n < len(cuts) else T4[1], kind, arg))
         i += n
         k += 1
@@ -707,10 +783,10 @@ def scene4(t, dur, arr, t_abs):
         feature_card(arr, t, p, *arg)
     elif kind == "block":
         block_detail(arr, t, p, arg)
-    elif kind == "wings":
-        wings_shot(arr, t, p, *arg)
+    elif kind == "3d":
+        shot3d(arr, t, p, **arg)
     elif kind == "creator":
-        creator_shot(arr, t, p)
+        shot3d(arr, t, p, wid="overlord", hat="dragon-helm", cam="orbit", yaw0=1.2, label="YTCHAOSFABI44", sub="ENTWICKLER & GRÜNDER VON CHAOSCRAFT")
     age = t_abs - c0
     if age < 0.06:
         flash = 0.12
@@ -793,20 +869,22 @@ def scene5(t, dur, arr):
 
 def scene6(t, dur, arr):
     p = t / dur
-    # Kamera fährt zurück: Welt im Hintergrund, Logo wird kleiner
-    CUBES_BG.draw(arr, t * 0.3, speed=0.05, alpha=0.6, fog_z=4.0)
-    grid_floor(arr, t, speed=0.15, alpha=0.3, horizon=0.62)
-    PARTS.draw(arr, t, alpha=0.7)
-    s = 1.0 - 0.3 * p
+    # Kamera fährt zurück: Spieler mit Wings von hinten vor rotem Horizont, Logo darüber
+    grid_floor(arr, t, speed=0.15, alpha=0.35, horizon=0.5)
+    add_light(arr, GLOW_RED, W / 2 - 450, H * 0.5 - 450, strength=0.5)
+    shot3d(arr, t, min(1.0, p * 1.2), wid="overlord", hat="dragon-helm", cam="hero", yaw0=0.0)
+    arr *= 0.85
+    s = 0.62 - 0.12 * p
     size = int(420 * s)
     lg = LOGO.resize((size, size), Image.LANCZOS)
-    add_light(arr, LG_GLOW.resize((int(760 * s), int(760 * s))), W / 2 - 380 * s, H / 2 - 380 * s - 40 * s, strength=0.5)
-    composite(arr, lg, W / 2 - size / 2, H / 2 - size / 2 - 40 * s)
+    lx = W * 0.3
+    add_light(arr, LG_GLOW.resize((int(760 * s), int(760 * s))), lx - 380 * s, H * 0.42 - 380 * s, strength=0.5)
+    composite(arr, lg, lx - size / 2, H * 0.42 - size / 2)
     t1 = txt("logo1", "CHAOS LAUNCHER", font(104, "bold"), glow=RED, blur=26, spacing=10)
     t1s = t1.resize((int(t1.width * s), int(t1.height * s)), Image.LANCZOS)
-    composite(arr, t1s, W / 2 - t1s.width / 2, H / 2 + 250 * s - t1s.height / 2)
+    composite(arr, t1s, lx - t1s.width / 2, H * 0.42 + 190 * s - t1s.height / 2)
     t3 = txt("url", "chaos-launcher.chaoscraft.workers.dev", font(30, "regular"), fill=(245, 195, 66))
-    composite(arr, t3, W / 2 - t3.width / 2, H - BAR - 90, alpha=min(1, max(0, (p - 0.2) * 3)))
+    composite(arr, t3, lx - t3.width / 2, H * 0.42 + 300 * s - t3.height / 2, alpha=min(1, max(0, (p - 0.2) * 3)))
     # Ausblenden
     fade = 1.0
     if p > 0.72:
@@ -824,8 +902,8 @@ def scene6(t, dur, arr):
 # Song: ruhig 0–22 s, Aufbau ab 23, energisch 65–88, Einbruch 89–96, Wiedereinsatz ab 98
 T1 = (0.0, 12.0)
 T2 = (12.0, 23.0)
-T3 = (23.0, 47.0)
-T4 = (47.0, 89.0)
+T3 = (23.0, 38.0)
+T4 = (38.0, 89.0)
 T5 = (89.0, 99.0)
 T6 = (99.0, 112.0)
 TOTAL = T6[1]
