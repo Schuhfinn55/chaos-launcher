@@ -2,31 +2,36 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.2.0",
-        "fileName": "ChaosLauncher-2.2.0-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0-setup.exe",
-        "sha256": "cad93d3adaebcad58b1d7dd8f6a87f654b38e090e2e224a6e60501c70b9c47b9",
-        "size": 7018599,
-        "publishedAt": "2026-10-07",
-        "notes": "- Cosmetics-Update: 7 neue Wings (Void, Inferno-Drache, Cyber, Frost, Blutengel, Gold, Seraphim) mit zweilagigem Flügelmodell, Sprung-/Fall-Animation und Leucht-Pulsieren\n- 13 neue Hüte (Drachenhelm, Chaos-Visor, Katzen-/Wolfsohren, Piratenhut, Geweih, Flammenkrone, Astronautenhelm, Pilz, Ritterhelm, Blumenkranz, Neon-Ring, Eiskrone) – Hüte können jetzt leuchten, rotieren und schweben\n- 10 neue Effekte (Chaos-Sturm, Gewitter, Void-Riss, Galaxie, Blutmond, Irrlichter, Engelsring, Feuerwerksspur, Regenbogen, Frost-Aura)\n- 6 neue animierte Capes (Blutmond, Chaos-Sturm, Drachenauge, Hologramm, Lavastrom, Void-Portal)\n- Chaos Client 2.5.0",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0.msi",
-        "msiSha256": "e67e3e96a6d5f27ddad5cab99c19e67b583e60898ea1569dfcd579cdbe01f28c",
-        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/ChaosLauncher-2.2.0-portable.zip",
-        "portableSha256": "eb301156e9eb07ddbecd84da102e88424096b49632e3dbd821a5478d018c38e6",
-        "portableSize": 9273835
+        "version": "2.3.0",
+        "fileName": "ChaosLauncher-2.3.0-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/ChaosLauncher-2.3.0-setup.exe",
+        "sha256": "c5bed6788b5eebb8206faf957cd9c23f2bf620a12970fe97a1a6fdef021118d5",
+        "size": 7254354,
+        "publishedAt": "2026-10-08",
+        "notes": "- Legendäre Wings „Chaos Overlord“ und „Celestial Seraph“: animierte Texturen, Spezialeffekte – nur mit Code freischaltbar (Cosmetics › Wings)\n- Freunde-Funktion: Anfragen senden/annehmen, Live-Status (im Spiel auf Server X / Launcher offen / offline), „Mitspielen“ verbindet direkt mit dem Server des Freundes\n- Wings überarbeitet: sitzen jetzt auf den Schulterblättern, kein Durchstoßen des Körpers, keine Doppelkonturen, leuchtende Wings verdecken korrekt\n- Simple Voice Chat ist im Chaoscraft-Profil enthalten\n- Chaos Client 2.6.7",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/ChaosLauncher-2.3.0.msi",
+        "msiSha256": "da4df3e1a8204bf5b4ad7c56993c2122bb40ed4901dc443b8825668ce2eb2d9a",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/ChaosLauncher-2.3.0-portable.zip",
+        "portableSha256": "f52714970168b178a6ebd52f5798f20c951bcca3fba9d82d441705ba892874fd",
+        "portableSize": 9575350
       },
       "client": {
-        "version": "2.5.0",
-        "fileName": "chaos-client-2.5.0.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.2.0/chaos-client-2.5.0.jar",
-        "sha256": "294478ba52828846795177fad598c775544c02b80eb224e4f4075b1f2be54566",
-        "size": 649671,
-        "publishedAt": "2026-10-07",
-        "notes": "Cosmetics-Update: Wings, Hüte, Effekte"
+        "version": "2.6.7",
+        "fileName": "chaos-client-2.6.7.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/chaos-client-2.6.7.jar",
+        "sha256": "d5d05a910793901552bc3a2eb2e7a29158a5a8b690dac6d1b4d8a54879775535",
+        "size": 738447,
+        "publishedAt": "2026-10-08",
+        "notes": "Legendäre Wings, Wings-Fixes, Freunde-Status"
       }
     }
   },
   "history": [
+    {
+      "version": "2.3.0",
+      "date": "2026-10-08",
+      "notes": "- Legendäre Wings „Chaos Overlord“ und „Celestial Seraph“: animierte Texturen, Spezialeffekte – nur mit Code freischaltbar (Cosmetics › Wings)\n- Freunde-Funktion: Anfragen senden/annehmen, Live-Status (im Spiel auf Server X / Launcher offen / offline), „Mitspielen“ verbindet direkt mit dem Server des Freundes\n- Wings überarbeitet: sitzen jetzt auf den Schulterblättern, kein Durchstoßen des Körpers, keine Doppelkonturen, leuchtende Wings verdecken korrekt\n- Simple Voice Chat ist im Chaoscraft-Profil enthalten\n- Chaos Client 2.6.7"
+    },
     {
       "version": "2.2.0",
       "date": "2026-10-07",
