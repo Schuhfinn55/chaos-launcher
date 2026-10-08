@@ -36,6 +36,34 @@ def font(size, bold=True, light=False):
         return ImageFont.load_default()
 
 
+def emoji_font(size):
+    try:
+        return ImageFont.truetype("C:/Windows/Fonts/seguiemj.ttf", size)
+    except Exception:
+        return font(size)
+
+
+def draw_emoji(d, xy, s, size, fill):
+    try:
+        d.text(xy, s, font=emoji_font(size), fill=fill, embedded_color=True)
+    except Exception:
+        d.text(xy, s, font=emoji_font(size), fill=fill)
+
+
+def wrap(s, f, maxw):
+    words, lines, cur = s.split(" "), [], ""
+    for w_ in words:
+        test = (cur + " " + w_).strip()
+        if f.getlength(test) <= maxw or not cur:
+            cur = test
+        else:
+            lines.append(cur)
+            cur = w_
+    if cur:
+        lines.append(cur)
+    return lines
+
+
 def ease(t):  # smoothstep
     t = max(0.0, min(1.0, t))
     return t * t * (3 - 2 * t)
@@ -60,9 +88,9 @@ def background(t, pulse=0.0):
     a = t * 0.25
     cx, cy = int(W / 8 + math.cos(a) * 90), int(H / 8 + math.sin(a * 0.7) * 60)
     r = int(170 + 30 * pulse)
-    gd.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(90 + int(40 * pulse), 8, 18))
+    gd.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(42 + int(22 * pulse), 4, 9))
     cx2, cy2 = int(W / 8 * 3 - math.cos(a * 0.6) * 80), int(H / 8 * 3 + math.sin(a) * 50)
-    gd.ellipse([cx2 - 150, cy2 - 150, cx2 + 150, cy2 + 150], fill=(60, 6, 14))
+    gd.ellipse([cx2 - 150, cy2 - 150, cx2 + 150, cy2 + 150], fill=(28, 3, 7))
     glow = glow.filter(ImageFilter.GaussianBlur(45)).resize((W, H), Image.BILINEAR)
     img = Image.fromarray(np.clip(np.asarray(img, dtype=np.int16) + np.asarray(glow, dtype=np.int16), 0, 255).astype(np.uint8))
     d = ImageDraw.Draw(img)
@@ -171,31 +199,35 @@ def scene_shot(t, dur, path, headline, bullets, kicker=""):
     img = embers(img, t, alpha=0.5)
     shot = rounded_shot(path)
     # Kamerafahrt: leichtes Zoomen + Verschieben
-    zoom = 0.62 + 0.05 * ease(p)
+    zoom = 0.54 + 0.04 * ease(p)
     slide = ease_out(min(1, p * 2.5))
-    cx = W * 0.36 + (1 - slide) * -400
-    cy = H * 0.52 + math.sin(t * 0.5) * 6
+    cx = W * 0.30 + (1 - slide) * -400
+    cy = H * 0.53 + math.sin(t * 0.5) * 6
     img = paste_center(img, shot, cx, cy, scale=zoom, alpha=slide)
-    # Text rechts
-    x = int(W * 0.66)
-    y = int(H * 0.26)
+    # Text rechts (mit Umbruch, bleibt im Bild)
+    x = int(W * 0.60)
+    y = int(H * 0.24)
+    maxw = W - x - 90
     d = ImageDraw.Draw(img)
     if kicker:
         a = ease(min(1, p * 3))
-        d.text((x, y - 50), kicker, font=font(26), fill=tuple(int(c * a) for c in RED2))
+        d.text((x, y - 48), kicker, font=font(26), fill=tuple(int(c * a) for c in RED2))
     hp = ease(min(1, (p - 0.05) * 2.5))
-    img = text_glow(img, (x, y), headline, font(72), anchor="la", blur=20, strength=0.7 * hp, fill=tuple(int(c * hp) for c in WHITE))
+    img = text_glow(img, (x, y), headline, font(68), anchor="la", blur=20, strength=0.7 * hp, fill=tuple(int(c * hp) for c in WHITE))
     d = ImageDraw.Draw(img)
-    yy = y + 110
+    yy = y + 105
+    bf = font(31, bold=False)
     for i, b in enumerate(bullets):
         bp = ease((p - 0.18 - i * 0.1) * 4)
         if bp <= 0:
             continue
         off = int((1 - bp) * 40)
         col = tuple(int(c * bp) for c in (225, 225, 232))
-        d.rounded_rectangle([x + off, yy + 14, x + off + 10, yy + 24], radius=5, fill=tuple(int(c * bp) for c in RED))
-        d.text((x + off + 26, yy), b, font=font(34, bold=False), fill=col)
-        yy += 56
+        d.rounded_rectangle([x + off, yy + 13, x + off + 10, yy + 23], radius=5, fill=tuple(int(c * bp) for c in RED))
+        lines = wrap(b, bf, maxw - 30)
+        for li, line in enumerate(lines):
+            d.text((x + off + 26, yy + li * 38), line, font=bf, fill=col)
+        yy += 38 * len(lines) + 14
     return img
 
 
@@ -254,13 +286,13 @@ def scene_legendary(t, dur):
         if ap <= 0:
             continue
         frame = int(t * fps) % 8
-        pair = wing_pair(wid, frame=frame, scale=5)
-        cx = W * (0.28 + i * 0.44)
-        cy = H * 0.55 + (1 - ap) * 80
+        pair = wing_pair(wid, frame=frame, scale=7)
+        cx = W * (0.27 + i * 0.46)
+        cy = H * 0.53 + (1 - ap) * 80
         pair.putalpha(pair.split()[3].point(lambda v: int(v * ap)))
         img = flap(img, pair, cx, cy, t + i, speed=1.1, amp=0.12)
-        img = text_glow(img, (cx, H * 0.86), name, font(48), fill=tuple(int(c * ap) for c in WHITE), glow=RED if i == 0 else (139, 92, 246), anchor="mm", blur=18, strength=0.8 * ap)
-        ImageDraw.Draw(img).text((cx, H * 0.92), "🔒 nur mit Code", font=font(26, bold=False), fill=tuple(int(c * ap) for c in GOLD), anchor="mm")
+        img = text_glow(img, (cx, H * 0.85), name, font(52), fill=tuple(int(c * ap) for c in WHITE), glow=RED if i == 0 else (139, 92, 246), anchor="mm", blur=18, strength=0.8 * ap)
+        ImageDraw.Draw(img).text((cx, H * 0.92), "NUR MIT CODE", font=font(26), fill=tuple(int(c * ap) for c in GOLD), anchor="mm")
     return img
 
 
@@ -281,7 +313,7 @@ def scene_list(t, dur, headline, items, accent=RED):
         x = int(W * (0.12 if cols == 1 else (0.1 + col * 0.45)))
         y = int(260 + row * (95 if cols == 2 else 110)) + int((1 - ip) * 40)
         d.rounded_rectangle([x, y, x + (W * (0.76 if cols == 1 else 0.38)), y + 78], radius=16, fill=(22, 22, 28), outline=tuple(int(c * ip) for c in accent), width=2)
-        d.text((x + 24, y + 14), ic, font=font(40, bold=False), fill=tuple(int(c * ip) for c in WHITE))
+        draw_emoji(d, (x + 22, y + 16), ic, 40, tuple(int(c * ip) for c in WHITE))
         d.text((x + 90, y + 10), title, font=font(32), fill=tuple(int(c * ip) for c in WHITE))
         d.text((x + 90, y + 46), sub, font=font(22, bold=False), fill=tuple(int(c * ip) for c in DIM))
     return img
