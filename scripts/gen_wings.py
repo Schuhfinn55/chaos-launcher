@@ -228,7 +228,7 @@ def draw_feathered(L, base_c, tip_c, shoulder_c, outline_f=0.55, stars=None, tip
         L.dots(L.mask(), stars[2], every=stars[1] * 3, seed=11 + seed)
 
 
-def draw_membrane(L, mem_top, mem_bot, bone_c, vein_c, outline_c, glow_c=None, mem_alpha=255, scale=1.0):
+def draw_membrane(L, mem_top, mem_bot, bone_c, vein_c, outline_c, glow_c=None, mem_alpha=255, scale=1.0, glow_edge=True):
     def S(p):
         return (p[0] * scale, (p[1] - 26) * scale + 26)
 
@@ -269,7 +269,8 @@ def draw_membrane(L, mem_top, mem_bot, bone_c, vein_c, outline_c, glow_c=None, m
     if glow_c:
         for p in (c12, c23, c3b):
             L.paint(line(E, pull(p, E, -0.3), 1), lambda x, y: glow_c)
-        L.edge(mem, lambda x, y: glow_c)
+        if glow_edge:
+            L.edge(mem, lambda x, y: glow_c)
 
 
 def draw_butterfly(L, c_in, c_out, c_vein, c_spot, c_spot2, c_edge, mem_alpha=255):
@@ -344,7 +345,9 @@ def draw_overlord(L, k, n):
     t = k / n
     pulse = 0.5 + 0.5 * math.sin(t * math.tau)
     glow = mix(rgba("#FF1F3D"), rgba("#FFE4E8"), pulse * 0.7)
-    draw_membrane(L, rgba("#4A0810"), rgba("#14050A"), rgba("#0B0608"), rgba("#8A1020"), rgba("#060305"), glow_c=glow)
+    draw_membrane(L, rgba("#4A0810"), rgba("#14050A"), rgba("#0B0608"), rgba("#8A1020"), rgba("#060305"), glow_c=glow, glow_edge=False)
+    # dezente rote Kante statt Vollkontur
+    L.edge(L.mask(), lambda x, y: rgba("#7A0F17"))
     R, E, T1, T2, T3, B = _mem_points()
     rnd = random.Random(100 + k)
     # Energie-Impulse wandern entlang der Adern (Ellbogen → Spitzen)
@@ -371,14 +374,14 @@ def draw_overlord(L, k, n):
 def draw_celestial(L, k, n):
     """Celestial Seraph: schillernde Federn (Cyan → Violett → Gold → Rosé), funkelnde Sterne, weißes Spitzenleuchten."""
     t = k / n
-    pal = [(rgba("#E0F7FF"), rgba("#38BDF8")), (rgba("#EDE9FE"), rgba("#8B5CF6")), (rgba("#FFF7CC"), rgba("#F5C342")), (rgba("#FCE7F3"), rgba("#F472B6"))]
+    pal = [(rgba("#BAE6FD"), rgba("#0284C7")), (rgba("#DDD6FE"), rgba("#6D28D9")), (rgba("#FDE68A"), rgba("#B45309")), (rgba("#FBCFE8"), rgba("#BE185D"))]
     seg = t * len(pal)
     i = int(seg) % len(pal)
     j = (i + 1) % len(pal)
     f = seg - int(seg)
     base = mix(pal[i][0], pal[j][0], f)
     tip = mix(pal[i][1], pal[j][1], f)
-    draw_feathered(L, base, tip, rgba("#FFFFFF"), outline_f=0.68, stars=((255, 255, 255, 255), 14, tip), tip_glow=rgba("#FFFFFF"), seed=k * 3)
+    draw_feathered(L, base, tip, rgba("#F8FAFC"), outline_f=0.5, stars=((255, 255, 255, 255), 18, tip), tip_glow=mix(tip, rgba("#FFFFFF"), 0.5), seed=k * 3)
     # Lichtbogen über der Schulter
     rnd = random.Random(500 + k)
     for _ in range(6):
@@ -444,9 +447,9 @@ DESIGNS = [
        ["#FDE68A", "#B45309", "#FFF7CC"], flapSpeed=0.07, flapAmp=16, openAngle=40, tilt=12, glow=True, particle="dust_gold"),
     # ---- Legendär (nur per Code)
     W_("overlord", "Chaos Overlord", "LEGENDÄR · Schwarze Drachenschwingen mit pulsierenden Energieadern, Blitzen und Glut – nur mit Code.", "👑",
-       draw_overlord, ["#4A0810", "#FF1F3D", "#FFE4E8"], flapSpeed=0.06, flapAmp=28, openAngle=44, tilt=6, scale=1.32, glow=True, particle="overlord", frames=8, fps=10, exclusive=True),
+       draw_overlord, ["#4A0810", "#FF1F3D", "#FFE4E8"], flapSpeed=0.06, flapAmp=22, openAngle=40, tilt=6, scale=1.15, glow=True, particle="overlord", frames=8, fps=10, exclusive=True),
     W_("celestial", "Celestial Seraph", "LEGENDÄR · Schillernde Federn, die ihre Farbe wechseln, mit Sternenstaub und Lichtspuren – nur mit Code.", "🌟",
-       draw_celestial, ["#E0F7FF", "#8B5CF6", "#F5C342"], flapSpeed=0.065, flapAmp=18, openAngle=46, tilt=14, scale=1.3, glow=True, particle="celestial", frames=8, fps=8, exclusive=True),
+       draw_celestial, ["#BAE6FD", "#6D28D9", "#B45309"], flapSpeed=0.065, flapAmp=16, openAngle=40, tilt=12, scale=1.12, glow=False, particle="celestial", frames=8, fps=8, exclusive=True),
     W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
        lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
        ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),
