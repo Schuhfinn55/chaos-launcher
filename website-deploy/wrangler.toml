@@ -11,7 +11,8 @@ binding = "ASSETS"
 html_handling = "auto-trailing-slash"
 not_found_handling = "none"
 # API- und Download-Routen immer im Worker (nicht als Asset) behandeln
-run_worker_first = ["/api/*", "/dl/*"]
+# Alle Anfragen durch den Worker (Sicherheits-Header auf allen Seiten); Assets liefert env.ASSETS
+run_worker_first = true
 
 [[kv_namespaces]]
 binding = "KV"

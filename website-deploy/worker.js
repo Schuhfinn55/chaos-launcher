@@ -40,6 +40,18 @@ export default {
       return Response.redirect(target, 302);
     }
 
-    return env.ASSETS.fetch(request);
+    // Statische Seite mit Sicherheits-Headern (HSTS, CSP, …) – gute Reputation bei Browser-/Sicherheitsscannern
+    const res = await env.ASSETS.fetch(request);
+    const h = new Headers(res.headers);
+    h.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    h.set("X-Content-Type-Options", "nosniff");
+    h.set("X-Frame-Options", "DENY");
+    h.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    h.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    h.set("Cross-Origin-Opener-Policy", "same-origin");
+    if ((h.get("content-type") || "").includes("text/html")) {
+      h.set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://chaos-cosmetics-api.chaoscraft.workers.dev https://api.mcsrvstat.us https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+    }
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
   },
 };
