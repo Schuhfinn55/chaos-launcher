@@ -351,10 +351,10 @@ def draw_overlord(L, k, n):
     for i, T in enumerate((T1, T2, T3, mid(T2, T3), mid(T3, B))):
         f = (t + i * 0.2) % 1.0
         px, py = E[0] + (T[0] - E[0]) * f, E[1] + (T[1] - E[1]) * f
-        L.paint(ellipse(px, py, 2.2, 2.2), lambda x, y: rgba("#FFF1F3"))
-        f2 = (f - 0.12) % 1.0
+        L.paint(intersect(ellipse(px, py, 1.3, 1.3), L.mask()), lambda x, y: rgba("#FFB3BC"))
+        f2 = (f - 0.1) % 1.0
         qx, qy = E[0] + (T[0] - E[0]) * f2, E[1] + (T[1] - E[1]) * f2
-        L.paint(ellipse(qx, qy, 1.4, 1.4), lambda x, y: rgba("#FF5A6E"))
+        L.paint(intersect(ellipse(qx, qy, 0.9, 0.9), L.mask()), lambda x, y: rgba("#FF5A6E"))
     # Blitze: kurze gezackte Linien über der Membran
     for _ in range(3 if pulse > 0.5 else 1):
         x0, y0 = rnd.uniform(18, 46), rnd.uniform(8, 44)
@@ -365,7 +365,7 @@ def draw_overlord(L, k, n):
             L.paint(intersect(line(a, b, 1), L.mask()), lambda x, y: rgba("#FFD6DC"))
     # Glut an den Spitzen
     for T in (T1, T2, T3):
-        L.paint(intersect(ellipse(T[0], T[1], 4, 4), L.mask()), lambda x, y: mix(rgba("#FF2D44"), rgba("#FFFFFF"), pulse * 0.6))
+        L.paint(intersect(ellipse(T[0], T[1], 2.5, 2.5), L.mask()), lambda x, y: mix(rgba("#FF2D44"), rgba("#FFD6DC"), pulse * 0.5))
 
 
 def draw_celestial(L, k, n):
