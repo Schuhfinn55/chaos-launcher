@@ -12,8 +12,10 @@
 name: build
 
 on:
-  push:
-    tags: ["v*"]
+  # Automatisch bei Tags erst aktivieren, wenn die Signierung eingerichtet ist (sonst überschreibt der CI-Build
+  # die lokal veröffentlichten Dateien und die SHA-256-Werte im Update-Feed passen nicht mehr):
+  #   push:
+  #     tags: ["v*"]
   workflow_dispatch:
 
 permissions:

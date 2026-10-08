@@ -1,0 +1,5 @@
+- Legendäre Wings „Chaos Overlord“ und „Celestial Seraph“: animierte Texturen, Spezialeffekte – nur mit Code freischaltbar (Cosmetics › Wings)
+- Freunde-Funktion: Anfragen senden/annehmen, Live-Status (im Spiel auf Server X / Launcher offen / offline), „Mitspielen“ verbindet direkt mit dem Server des Freundes
+- Wings überarbeitet: sitzen jetzt auf den Schulterblättern, kein Durchstoßen des Körpers, keine Doppelkonturen, leuchtende Wings verdecken korrekt
+- Simple Voice Chat ist im Chaoscraft-Profil enthalten
+- Chaos Client 2.6.7
