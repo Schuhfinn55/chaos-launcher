@@ -2,23 +2,23 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.3.0",
-        "fileName": "ChaosLauncher-2.3.0-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/ChaosLauncher-2.3.0-setup.exe",
-        "sha256": "c5bed6788b5eebb8206faf957cd9c23f2bf620a12970fe97a1a6fdef021118d5",
-        "size": 7254354,
+        "version": "2.3.1",
+        "fileName": "ChaosLauncher-2.3.1-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/ChaosLauncher-2.3.1-setup.exe",
+        "sha256": "38b29c1574614b29d20e2e5e2aaac2062286e17528471d68818c4bc45ebb72cb",
+        "size": 7262195,
         "publishedAt": "2026-10-08",
-        "notes": "- Legendäre Wings „Chaos Overlord“ und „Celestial Seraph“: animierte Texturen, Spezialeffekte – nur mit Code freischaltbar (Cosmetics › Wings)\n- Freunde-Funktion: Anfragen senden/annehmen, Live-Status (im Spiel auf Server X / Launcher offen / offline), „Mitspielen“ verbindet direkt mit dem Server des Freundes\n- Wings überarbeitet: sitzen jetzt auf den Schulterblättern, kein Durchstoßen des Körpers, keine Doppelkonturen, leuchtende Wings verdecken korrekt\n- Simple Voice Chat ist im Chaoscraft-Profil enthalten\n- Chaos Client 2.6.7",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/ChaosLauncher-2.3.0.msi",
-        "msiSha256": "da4df3e1a8204bf5b4ad7c56993c2122bb40ed4901dc443b8825668ce2eb2d9a",
-        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/ChaosLauncher-2.3.0-portable.zip",
-        "portableSha256": "f52714970168b178a6ebd52f5798f20c951bcca3fba9d82d441705ba892874fd",
-        "portableSize": 9575350
+        "notes": "- Skin wird wieder zuverlässig angezeigt: eigener Skin-Cache auf der Festplatte, Ersatzdienst gewechselt (Crafatar war ausgefallen)",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/ChaosLauncher-2.3.1.msi",
+        "msiSha256": "fffb0a8489939bd9eb48c60f934e3ceeec3d580f1ab03031753ed22a8a3d6255",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/ChaosLauncher-2.3.1-portable.zip",
+        "portableSha256": "5908d3448ef3efb2f4fcc9b5d7be6c49b28695afba057fe6a59d11e4f0caa9c4",
+        "portableSize": 9584115
       },
       "client": {
         "version": "2.6.7",
         "fileName": "chaos-client-2.6.7.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.0/chaos-client-2.6.7.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/chaos-client-2.6.7.jar",
         "sha256": "d5d05a910793901552bc3a2eb2e7a29158a5a8b690dac6d1b4d8a54879775535",
         "size": 738447,
         "publishedAt": "2026-10-08",
@@ -27,6 +27,11 @@
     }
   },
   "history": [
+    {
+      "version": "2.3.1",
+      "date": "2026-10-08",
+      "notes": "- Skin wird wieder zuverlässig angezeigt: eigener Skin-Cache auf der Festplatte, Ersatzdienst gewechselt (Crafatar war ausgefallen)"
+    },
     {
       "version": "2.3.0",
       "date": "2026-10-08",
