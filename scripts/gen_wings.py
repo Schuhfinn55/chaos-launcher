@@ -341,34 +341,27 @@ def _mem_points():
 
 
 def draw_overlord(L, k, n):
-    """Chaos Overlord: schwarze Drachenschwinge, blutrote Membran, Energieadern, die nach außen pulsieren, Blitze."""
+    """Chaos Overlord: schwarze Drachenschwinge, blutrote Membran, Energie fließt gleichmäßig durch die Adern (nahtloser Loop, kein Flackern)."""
     t = k / n
     pulse = 0.5 + 0.5 * math.sin(t * math.tau)
-    glow = mix(rgba("#FF1F3D"), rgba("#FFE4E8"), pulse * 0.7)
-    draw_membrane(L, rgba("#4A0810"), rgba("#14050A"), rgba("#0B0608"), rgba("#8A1020"), rgba("#060305"), glow_c=glow, glow_edge=False)
-    # dezente rote Kante statt Vollkontur
+    draw_membrane(L, rgba("#4A0810"), rgba("#14050A"), rgba("#0B0608"), rgba("#8A1020"), rgba("#060305"), glow_c=None, glow_edge=False)
     L.edge(L.mask(), lambda x, y: rgba("#7A0F17"))
     R, E, T1, T2, T3, B = _mem_points()
-    rnd = random.Random(100 + k)
-    # Energie-Impulse wandern entlang der Adern (Ellbogen → Spitzen)
-    for i, T in enumerate((T1, T2, T3, mid(T2, T3), mid(T3, B))):
-        f = (t + i * 0.2) % 1.0
-        px, py = E[0] + (T[0] - E[0]) * f, E[1] + (T[1] - E[1]) * f
-        L.paint(intersect(ellipse(px, py, 1.3, 1.3), L.mask()), lambda x, y: rgba("#FFB3BC"))
-        f2 = (f - 0.1) % 1.0
-        qx, qy = E[0] + (T[0] - E[0]) * f2, E[1] + (T[1] - E[1]) * f2
-        L.paint(intersect(ellipse(qx, qy, 0.9, 0.9), L.mask()), lambda x, y: rgba("#FF5A6E"))
-    # Blitze: kurze gezackte Linien über der Membran
-    for _ in range(3 if pulse > 0.5 else 1):
-        x0, y0 = rnd.uniform(18, 46), rnd.uniform(8, 44)
-        pts = [(x0, y0)]
-        for _s in range(4):
-            pts.append((pts[-1][0] + rnd.uniform(-5, 5), pts[-1][1] + rnd.uniform(-5, 5)))
-        for a, b in zip(pts, pts[1:]):
-            L.paint(intersect(line(a, b, 1), L.mask()), lambda x, y: rgba("#FFD6DC"))
-    # Glut an den Spitzen
+    veins = (T1, T2, T3, mid(T2, T3), mid(T3, B))
+    dark, bright = rgba("#9A1422"), rgba("#FFD2D8")
+    # Fließende Welle: Helligkeit entlang jeder Ader hängt von (Position − Zeit) ab → bewegt sich stetig nach außen
+    for i, T in enumerate(veins):
+        steps = 40
+        for sidx in range(steps + 1):
+            f = sidx / steps
+            px, py = E[0] + (T[0] - E[0]) * f, E[1] + (T[1] - E[1]) * f
+            wave = 0.5 + 0.5 * math.sin((f * 2.0 - t - i * 0.15) * math.tau)
+            c = mix(dark, bright, wave ** 3)
+            L.paint(intersect(ellipse(px, py, 0.9, 0.9), L.mask()), lambda x, y, c=c: c)
+    # Gelenk und Spitzen glühen im Takt
+    L.paint(intersect(ellipse(E[0], E[1], 2.2, 2.2), L.mask()), lambda x, y: mix(rgba("#FF2D44"), rgba("#FFE4E8"), pulse * 0.6))
     for T in (T1, T2, T3):
-        L.paint(intersect(ellipse(T[0], T[1], 2.5, 2.5), L.mask()), lambda x, y: mix(rgba("#FF2D44"), rgba("#FFD6DC"), pulse * 0.5))
+        L.paint(intersect(ellipse(T[0], T[1], 2.0, 2.0), L.mask()), lambda x, y: mix(rgba("#B9121F"), rgba("#FF8A98"), pulse * 0.7))
 
 
 def draw_celestial(L, k, n):
