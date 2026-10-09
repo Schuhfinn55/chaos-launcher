@@ -306,3 +306,13 @@ pub fn find_with_token(source: &str, uuid: &str) -> Option<ForeignAccount> {
     let uuid = norm_uuid(uuid);
     scan().into_iter().find(|a| a.has_token && a.uuid == uuid && (source.is_empty() || a.source == source))
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn print_scan() {
+        for a in super::scan() {
+            println!("FOUND {} | {} | {} | token={} | exp={:?}", a.source_name, a.name, a.uuid, a.has_token, a.expires_at);
+        }
+    }
+}
