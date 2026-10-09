@@ -16,13 +16,13 @@
         "portableSize": 9584115
       },
       "client": {
-        "version": "2.6.7",
-        "fileName": "chaos-client-2.6.7.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/chaos-client-2.6.7.jar",
-        "sha256": "d5d05a910793901552bc3a2eb2e7a29158a5a8b690dac6d1b4d8a54879775535",
-        "size": 738447,
-        "publishedAt": "2026-10-08",
-        "notes": "Legendäre Wings, Wings-Fixes, Freunde-Status"
+        "version": "2.6.8",
+        "fileName": "chaos-client-2.6.8.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/chaos-client-2.6.8.jar",
+        "sha256": "eb67c5fe3907277bcf275a1e4f75e12d38f5ed0f4cfbe092a7fba31be57e7fd5",
+        "size": 1216079,
+        "publishedAt": "2026-10-09",
+        "notes": "Ingame-Menü mit echten Cosmetic-Vorschauen"
       }
     }
   },
@@ -108,6 +108,6 @@
       "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-08",
+  "updatedAt": "2026-10-09",
   "downloads": "github"
 }
