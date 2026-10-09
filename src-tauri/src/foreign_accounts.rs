@@ -10,7 +10,8 @@
 //!   - Minecraft Launcher (launcher_accounts.json, launcher_accounts_microsoft_store.json,
 //!     launcher_profiles.json/authenticationDatabase) – auch CurseForge/LabyMod
 //!   - Prism Launcher, PolyMC, MultiMC (accounts.json)
-//!   - Modrinth App, NoRisk Client (SQLite app.db, tolerant nach Spalten gesucht)
+//!   - NoRisk Client V3 (accounts.json – Minecraft-Token + Ablauf)
+//!   - Modrinth App (SQLite app.db, tolerant nach Spalten gesucht)
 //!   - ATLauncher (accounts.json), Lunar Client (accounts.json), TLauncher (TlauncherProfiles.json)
 use serde::Serialize;
 use std::collections::HashMap;
@@ -216,6 +217,35 @@ fn scan_sqlite(out: &mut Vec<ForeignAccount>, id: &str, label: &str, db: &Path) 
     let _ = fs::remove_file(&tmp);
 }
 
+/* ---------------- NoRisk Client V3 (accounts.json) ---------------- */
+
+fn scan_norisk(out: &mut Vec<ForeignAccount>) {
+    let mut roots = Vec::new();
+    if let Some(a) = appdata() {
+        roots.push(a.join("norisk").join("NoRiskClientV3"));
+    }
+    if let Some(l) = localappdata() {
+        roots.push(l.join("norisk").join("NoRiskClientV3"));
+    }
+    for root in roots {
+        let Some(v) = read_json(&root.join("accounts.json")) else { continue };
+        let Some(list) = v.get("accounts").and_then(|x| x.as_array()) else { continue };
+        for e in list {
+            let id = e.get("id").and_then(|x| x.as_str()).unwrap_or("");
+            let name = e.get("username").and_then(|x| x.as_str()).unwrap_or("");
+            let token = e.get("access_token").and_then(|x| x.as_str());
+            let exp = e
+                .get("mc_access_token_expires")
+                .or_else(|| e.get("expires"))
+                .and_then(|x| x.as_str())
+                .and_then(parse_iso);
+            if let Some(fa) = account("norisk", "NoRisk Client", id, name, token, exp) {
+                out.push(fa);
+            }
+        }
+    }
+}
+
 fn scan_databases(out: &mut Vec<ForeignAccount>) {
     let mut cands: Vec<(&str, &str, PathBuf)> = Vec::new();
     if let Some(a) = appdata() {
@@ -275,6 +305,7 @@ pub fn scan() -> Vec<ForeignAccount> {
     let mut raw = Vec::new();
     scan_official(&mut raw);
     scan_mmc(&mut raw);
+    scan_norisk(&mut raw);
     scan_databases(&mut raw);
     scan_misc(&mut raw);
     let now = crate::system::now_secs();
