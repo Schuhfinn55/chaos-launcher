@@ -7,8 +7,9 @@
 
 import { useEffect, useRef } from "react";
 import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
-import { BoxGeometry, DoubleSide, Group, Mesh, MeshStandardMaterial, NearestFilter, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
+import { DoubleSide, Group, Mesh, MeshStandardMaterial, NearestFilter, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
 import type { BuiltinHat } from "@/lib/builtinHats";
+import { animateHat, buildHatGroup, disposeGroup } from "@/lib/hatMesh";
 import { WINGS_PLANE, WINGS_ROOT, wingsTextureUrl, type BuiltinWings } from "@/lib/builtinWings";
 
 export type ViewerAnimation = "idle" | "walk" | "run" | "fly" | "none";
@@ -171,43 +172,27 @@ export default function SkinViewer3D({
     };
   }, [capeUrl, backEquipment, capeFps]);
 
-  // Hut: Quader in Kopf-Koordinaten (MC-Modellraum, y nach unten) an den Kopf hängen
+  // Hut: Quader in Kopf-Koordinaten (MC-Modellraum) an den Kopf hängen – Geometrie aus hatMesh.ts,
+  // identisch mit den Karten-Vorschaubildern und dem Chaos Client.
   useEffect(() => {
     const v = viewerRef.current;
     if (!v) return;
     const head = v.playerObject.skin.head;
     if (hatRef.current) {
       head.remove(hatRef.current);
-      hatRef.current.traverse((o) => {
-        if (o instanceof Mesh) {
-          o.geometry.dispose();
-          (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose());
-        }
-      });
+      disposeGroup(hatRef.current);
       hatRef.current = null;
     }
     if (!hat) return;
-    const g = new Group();
-    for (const b of hat.boxes) {
-      const mat = hat.glow
-        ? new MeshStandardMaterial({ color: b.color, emissive: b.color, emissiveIntensity: 0.9, roughness: 0.4, metalness: 0.05 })
-        : new MeshStandardMaterial({ color: b.color, roughness: 0.75, metalness: 0.05 });
-      const mesh = new Mesh(new BoxGeometry(b.w, b.h, b.d), mat);
-      // MC: y nach unten (Kopf -8..0), z nach hinten → three: x gleich, y/z gekippt, Kopf-Box zentriert (y -4..4)
-      mesh.position.set(b.x + b.w / 2, -(b.y + b.h / 2) - 4, -(b.z + b.d / 2));
-      g.add(mesh);
-    }
+    const g = buildHatGroup(hat);
     head.add(g);
     hatRef.current = g;
     // Animation: spin (Grad/Tick um die Hochachse), bob (Schweben) – wie im Chaos Client
-    const spin = hat.spin ?? 0, bob = hat.bob ?? 0;
-    if (!spin && !bob) return;
+    if (!hat.spin && !hat.bob) return;
     let raf = 0;
     const t0 = performance.now();
     const tick = () => {
-      const t = (performance.now() - t0) / 50;
-      g.rotation.y = (t * spin * Math.PI) / 180;
-      g.position.y = Math.sin(t * 0.09) * bob;
+      animateHat(g, hat, (performance.now() - t0) / 50);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);

@@ -9,6 +9,7 @@
 
 import { Empty } from "@/components/ui";
 import { CHAOS_HATS, type BuiltinHat } from "@/lib/builtinHats";
+import { useHatThumb } from "@/lib/hatThumbs";
 import { CHAOS_EFFECTS, type BuiltinEffect } from "@/lib/builtinEffects";
 import type { Account, CosmeticsProfile } from "@/types";
 
@@ -20,6 +21,9 @@ interface Common {
   onPreview: (id: string | null) => void;
   previewId: string | null;
   onLogin: () => void;
+  /** Skin für die Hut-Vorschaubilder (Data-URL oder http) */
+  skinUrl?: string | null;
+  skinModel?: "classic" | "slim";
 }
 
 export function HatsSection(p: Common) {
@@ -43,18 +47,18 @@ export function HatsSection(p: Common) {
       </p>
       <div className="chaos-cos-grid">
         {CHAOS_HATS.map((h) => (
-          <HatCard key={h.id} hat={h} active={h.id === activeId} preview={p.previewId === h.id} busy={p.busy || !p.account} onPreview={() => p.onPreview(p.previewId === h.id ? null : h.id)} onWear={() => p.onSelect(h.id)} />
+          <HatCard key={h.id} hat={h} skinUrl={p.skinUrl ?? null} skinModel={p.skinModel ?? "classic"} active={h.id === activeId} preview={p.previewId === h.id} busy={p.busy || !p.account} onPreview={() => p.onPreview(p.previewId === h.id ? null : h.id)} onWear={() => p.onSelect(h.id)} />
         ))}
       </div>
     </div>
   );
 }
 
-function HatCard({ hat, active, preview, busy, onPreview, onWear }: { hat: BuiltinHat; active: boolean; preview: boolean; busy: boolean; onPreview: () => void; onWear: () => void }) {
+function HatCard({ hat, skinUrl, skinModel, active, preview, busy, onPreview, onWear }: { hat: BuiltinHat; skinUrl: string | null; skinModel: "classic" | "slim"; active: boolean; preview: boolean; busy: boolean; onPreview: () => void; onWear: () => void }) {
   return (
     <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "")} onClick={onPreview}>
-      <div className="chaos-cos-item-img hat">
-        <HatThumb hat={hat} />
+      <div className={"chaos-cos-item-img hat" + (hat.glow ? " glow" : "")}>
+        <HatThumb hat={hat} skinUrl={skinUrl} skinModel={skinModel} />
       </div>
       <strong>{hat.icon} {hat.name}</strong>
       <span className="chaos-faint" style={{ fontSize: 11 }}>{hat.description}</span>
@@ -67,8 +71,15 @@ function HatCard({ hat, active, preview, busy, onPreview, onWear }: { hat: Built
   );
 }
 
+/** Vorschaubild: Hut auf dem eigenen Skin, gerendert mit skinview3d (Fallback: isometrische Skizze ohne WebGL). */
+function HatThumb({ hat, skinUrl, skinModel }: { hat: BuiltinHat; skinUrl: string | null; skinModel: "classic" | "slim" }) {
+  const url = useHatThumb(hat, skinUrl, skinModel);
+  if (url) return <img src={url} alt={hat.name} className="chaos-hat-thumb" draggable={false} />;
+  return <HatSketch hat={hat} />;
+}
+
 /** Isometrische Mini-Vorschau der Quader (ohne WebGL). */
-function HatThumb({ hat }: { hat: BuiltinHat }) {
+function HatSketch({ hat }: { hat: BuiltinHat }) {
   const sc = 4.2, cx = 48, cy = 58;
   const iso = (x: number, y: number, z: number) => ({ px: cx + (x - z) * sc * 0.87, py: cy + (x + z) * sc * 0.5 + y * sc });
   const shade = (c: string, f: number) => {

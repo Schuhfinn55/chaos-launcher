@@ -164,7 +164,7 @@ export default function CosmeticsPage() {
               onLogin={() => navigate("/accounts")}
             />
           )}
-          {kind === "hat" && <HatsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("hat", id)} onPreview={setPreviewHatId} previewId={previewHatId} onLogin={() => navigate("/accounts")} />}
+          {kind === "hat" && <HatsSection account={account} profile={profile} busy={cosBusy} skinUrl={skinUrl} skinModel={skinModel} onSelect={(id) => selectCosmetic("hat", id)} onPreview={setPreviewHatId} previewId={previewHatId} onLogin={() => navigate("/accounts")} />}
           {kind === "wings" && <WingsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("wings", id)} onPreview={setPreviewWingsId} previewId={previewWingsId} onLogin={() => navigate("/accounts")} onUnlocked={reloadCosmetics} />}
           {kind === "effect" && <EffectsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("effect", id)} onPreview={setPreviewEffectId} previewId={previewEffectId} onLogin={() => navigate("/accounts")} />}
         </section>

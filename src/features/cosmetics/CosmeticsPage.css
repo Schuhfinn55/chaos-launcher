@@ -33,6 +33,9 @@
 .chaos-cos-item-img img { image-rendering: pixelated; }
 .chaos-cos-item-img.skin img { height: 100%; }
 .chaos-cos-item-img.cape img { height: 96px; width: 60px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); border-radius: 3px; }
+.chaos-cos-item-img.hat { background: radial-gradient(circle at 50% 40%, var(--chaos-bg-3), var(--chaos-bg-1) 75%); }
+.chaos-cos-item-img.hat.glow { background: radial-gradient(circle at 50% 40%, rgba(var(--chaos-accent-rgb), 0.22), var(--chaos-bg-1) 75%); }
+.chaos-cos-item-img img.chaos-hat-thumb { image-rendering: auto; height: 104px; width: 104px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55)); }
 .chaos-cos-item-img.none { font-size: 32px; color: var(--chaos-text-faint); }
 .chaos-cos-item-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
 
