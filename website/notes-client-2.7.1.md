@@ -1,0 +1,1 @@
+Neues Emote-System: 16 Ganzkörper-Animationen (Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken), Emote-Rad mit Taste B, automatische Third-Person, Sync zu anderen Chaos-Spielern in der Nähe. Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Bewegung.

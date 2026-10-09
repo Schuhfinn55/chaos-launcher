@@ -2,31 +2,36 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.3.1",
-        "fileName": "ChaosLauncher-2.3.1-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/ChaosLauncher-2.3.1-setup.exe",
-        "sha256": "38b29c1574614b29d20e2e5e2aaac2062286e17528471d68818c4bc45ebb72cb",
-        "size": 7262195,
-        "publishedAt": "2026-10-08",
-        "notes": "- Skin wird wieder zuverlässig angezeigt: eigener Skin-Cache auf der Festplatte, Ersatzdienst gewechselt (Crafatar war ausgefallen)",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/ChaosLauncher-2.3.1.msi",
-        "msiSha256": "fffb0a8489939bd9eb48c60f934e3ceeec3d580f1ab03031753ed22a8a3d6255",
-        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/ChaosLauncher-2.3.1-portable.zip",
-        "portableSha256": "5908d3448ef3efb2f4fcc9b5d7be6c49b28695afba057fe6a59d11e4f0caa9c4",
-        "portableSize": 9584115
+        "version": "2.3.2",
+        "fileName": "ChaosLauncher-2.3.2-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/ChaosLauncher-2.3.2-setup.exe",
+        "sha256": "bd045b82459fccba0ccaab01c4c694b28873e3778ef51cfd1014eec05f94eda4",
+        "size": 7787071,
+        "publishedAt": "2026-10-09",
+        "notes": "- Neues Emote-System im Chaos Client (2.7.1): 16 Ganzkörper-Animationen – Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken\n- Emote-Rad mit Taste B (oder Ziffern 1-9/0), automatisch in die dritte Person, Bewegung bricht das Emote ab\n- Emotes sind für andere Chaos-Spieler in der Nähe sichtbar (Sync über die Cosmetics-API)\n- Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Emote-Bewegung mit",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/ChaosLauncher-2.3.2.msi",
+        "msiSha256": "0a53d563d044bb9301ebcfa0396dca7448f14fad1f944b91ee5a65026b8b1e1a",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/ChaosLauncher-2.3.2-portable.zip",
+        "portableSha256": "1fbff980efc74d1b5e9029b7cc10ddd98825122149d6a4a12e0fdc32ec6c261e",
+        "portableSize": 10098689
       },
       "client": {
-        "version": "2.6.8",
-        "fileName": "chaos-client-2.6.8.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.1/chaos-client-2.6.8.jar",
-        "sha256": "eb67c5fe3907277bcf275a1e4f75e12d38f5ed0f4cfbe092a7fba31be57e7fd5",
-        "size": 1216079,
+        "version": "2.7.1",
+        "fileName": "chaos-client-2.7.1.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/chaos-client-2.7.1.jar",
+        "sha256": "869e294dd057625f7efeaded94819e795f965872144b414f86103f45ee65b2b7",
+        "size": 1234621,
         "publishedAt": "2026-10-09",
-        "notes": "Ingame-Menü mit echten Cosmetic-Vorschauen"
+        "notes": "Neues Emote-System: 16 Ganzkörper-Animationen (Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken), Emote-Rad mit Taste B, automatische Third-Person, Sync zu anderen Chaos-Spielern in der Nähe. Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Bewegung."
       }
     }
   },
   "history": [
+    {
+      "version": "2.3.2",
+      "date": "2026-10-09",
+      "notes": "- Neues Emote-System im Chaos Client (2.7.1): 16 Ganzkörper-Animationen – Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken\n- Emote-Rad mit Taste B (oder Ziffern 1-9/0), automatisch in die dritte Person, Bewegung bricht das Emote ab\n- Emotes sind für andere Chaos-Spieler in der Nähe sichtbar (Sync über die Cosmetics-API)\n- Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Emote-Bewegung mit"
+    },
     {
       "version": "2.3.1",
       "date": "2026-10-08",

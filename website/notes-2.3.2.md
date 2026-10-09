@@ -1,0 +1,4 @@
+- Neues Emote-System im Chaos Client (2.7.1): 16 Ganzkörper-Animationen – Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken
+- Emote-Rad mit Taste B (oder Ziffern 1-9/0), automatisch in die dritte Person, Bewegung bricht das Emote ab
+- Emotes sind für andere Chaos-Spieler in der Nähe sichtbar (Sync über die Cosmetics-API)
+- Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Emote-Bewegung mit
