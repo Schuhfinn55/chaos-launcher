@@ -26,24 +26,35 @@ pub async fn login_start() -> Result<auth::DeviceCode, String> {
 pub async fn login_finish(deviceCode: String, interval: u64, expiresIn: u64) -> Result<PublicAccount, String> {
     let token = auth::poll_for_token(&deviceCode, interval, expiresIn).await?;
     let new_acc = auth::complete_login(token.access_token, token.refresh_token).await?;
+    let stored = store_login(new_acc)?;
+    log::info!("[Chaos] Login abgeschlossen für {}", stored.username);
+    Ok(PublicAccount::from(&stored))
+}
 
+/// Speichert einen frisch angemeldeten Account als aktiv (vorhandener Eintrag
+/// mit gleicher UUID wird aktualisiert; ein fehlendes Refresh-Token überschreibt
+/// kein vorhandenes).
+pub fn store_login(new_acc: Account) -> Result<Account, String> {
     let mut accounts = storage::load_accounts()?;
     for a in accounts.iter_mut() {
         a.active = false;
     }
-    if let Some(existing) = accounts.iter_mut().find(|a| a.uuid == new_acc.uuid) {
+    let out = if let Some(existing) = accounts.iter_mut().find(|a| a.uuid.eq_ignore_ascii_case(&new_acc.uuid)) {
         existing.username = new_acc.username.clone();
-        existing.avatar_url = new_acc.avatar_url.clone();
+        existing.avatar_url = new_acc.avatar_url.clone().or(existing.avatar_url.clone());
         existing.access_token = new_acc.access_token.clone();
-        existing.refresh_token = new_acc.refresh_token.clone();
+        if new_acc.refresh_token.as_deref().map(|t| !t.is_empty()).unwrap_or(false) {
+            existing.refresh_token = new_acc.refresh_token.clone();
+        }
         existing.mc_token_expires_at = new_acc.mc_token_expires_at;
         existing.active = true;
+        existing.clone()
     } else {
         accounts.push(new_acc.clone());
-    }
+        new_acc
+    };
     storage::save_accounts(&accounts)?;
-    log::info!("[Chaos] Login abgeschlossen für {}", new_acc.username);
-    Ok(PublicAccount::from(&new_acc))
+    Ok(out)
 }
 
 /// Erneuert einen Account per Refresh-Token (stille Anmeldung).

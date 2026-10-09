@@ -9,7 +9,7 @@ import StartupOverlay from "@/components/StartupOverlay";
 import UpdateDialog from "@/components/UpdateDialog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastHost } from "@/components/ui";
-import { invoke } from "@/lib/bridge";
+import { invoke, listen } from "@/lib/bridge";
 import { setLanguage } from "@/lib/i18n";
 import HomePage from "@/features/home/HomePage";
 import PlayPage from "@/features/play/PlayPage";
@@ -97,6 +97,14 @@ export default function App() {
     void loadSkins();
     void loadCosmetics();
   }, [loadFriends, loadSkins, loadCosmetics]);
+
+  // Account im Spiel gewechselt / per Ingame-Login hinzugefügt (Launcher-Bridge) → Liste neu laden
+  const loadAccounts = useAccountStore((s) => s.load);
+  useEffect(() => {
+    let un: (() => void) | undefined;
+    listen("accounts-changed", () => { void loadAccounts(); }).then((u) => (un = u));
+    return () => { un?.(); };
+  }, [loadAccounts]);
 
   // Cosmetics beim Launcher-Start (und nach Account-Wechsel/Login) automatisch zur Community-API hochladen,
   // damit andere Chaos-Spieler Cape, Hut, Wings und Effekt sehen. Ergebnis/Fehler stehen im launch.log.

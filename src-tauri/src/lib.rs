@@ -24,6 +24,7 @@ pub mod cosmetics;
 pub mod cosmetics_api;
 pub mod cosmetics_server;
 pub mod discord;
+pub mod foreign_accounts;
 pub mod forge;
 pub mod fps;
 pub mod import;
@@ -44,6 +45,9 @@ pub mod versions;
 
 use tauri::Manager;
 
+/// Globaler AppHandle (für Events aus Hintergrund-Threads, z.B. der Bridge).
+pub static APP: std::sync::OnceLock<tauri::AppHandle> = std::sync::OnceLock::new();
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
@@ -62,6 +66,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            let _ = APP.set(app.handle().clone());
             // Alte Onyx-Daten übernehmen, Datenordner anlegen
             match storage::migrate_legacy_data() {
                 Ok(migrated) => commands::system::set_migrated(migrated),

@@ -362,13 +362,13 @@ async fn auth_minecraft(xsts: &str, uhs: &str) -> Result<(String, i64), String> 
 }
 
 #[derive(Debug, Deserialize)]
-struct McProfile {
-    id: String,
-    name: String,
+pub struct McProfile {
+    pub id: String,
+    pub name: String,
 }
 
 /// Ruft das Minecraft-Profil (UUID + Name) ab.
-async fn fetch_profile(mc_token: &str) -> Result<McProfile, String> {
+pub async fn fetch_profile(mc_token: &str) -> Result<McProfile, String> {
     let client = http_client()?;
     let resp = client
         .get(MC_PROFILE_URL)
