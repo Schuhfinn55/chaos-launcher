@@ -314,6 +314,24 @@ export default {
         return json(200, { ok: true });
       }
 
+      /* Emotes: kurzlebig (30 s), Spieler in der Nähe fragen per bulk ab */
+      if (request.method === "PUT" && p === "/v1/emote") {
+        const s = await bearer(env, request);
+        if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
+        const b = await readJson(request, 2 * 1024);
+        const id = sanitizeId(b.id);
+        if (!id) return json(400, { error: "id fehlt" });
+        await putJson(env, "emote:" + s.uuid, { id, at: now() }, { expirationTtl: 60 });
+        return json(200, { ok: true });
+      }
+      if (request.method === "POST" && p === "/v1/emotes/bulk") {
+        const b = await readJson(request, 16 * 1024);
+        const list = Array.isArray(b.uuids) ? b.uuids.slice(0, 64).map(normUuid).filter(isUuid) : [];
+        const out = {};
+        await Promise.all(list.map(async (u) => { const e = await getJson(env, "emote:" + u); if (e && now() - e.at < 30000) out[u] = e; }));
+        return json(200, out, { "Cache-Control": "no-store" });
+      }
+
       /* Freunde */
       if (p === "/v1/friends" || p.startsWith("/v1/friends/")) {
         const s = await bearer(env, request);

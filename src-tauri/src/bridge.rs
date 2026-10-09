@@ -98,6 +98,21 @@ fn handle(req: Request, secret: &str) {
         json(200, serde_json::json!({ "ok": true, "launcher": env!("CARGO_PKG_VERSION") }))
     } else if query(&url, "secret") != secret {
         json(403, serde_json::json!({ "error": "Ungültiges Geheimnis" }))
+    } else if path == "/emote" {
+        // Eigenes Emote an die Cosmetics-API melden (Chaos-Spieler in der Nähe sehen es)
+        let id = query(&url, "id");
+        let r = tauri::async_runtime::block_on(async {
+            let settings = storage::load_settings().unwrap_or_default();
+            let api = crate::cosmetics_api::effective_url(&settings);
+            let accounts = storage::load_accounts()?;
+            let acc = accounts.iter().find(|a| a.active).cloned().ok_or("Kein aktiver Account")?;
+            let token = crate::cosmetics_api::authenticate(&api, &acc).await?;
+            crate::cosmetics_api::emote_update(&api, &token, &id).await
+        });
+        match r {
+            Ok(()) => json(200, serde_json::json!({ "ok": true })),
+            Err(e) => json(500, serde_json::json!({ "error": e })),
+        }
     } else if path == "/session" {
         match session_for(&query(&url, "uuid"), query(&url, "force") == "1") {
             Ok(v) => json(200, v),

@@ -446,6 +446,24 @@ pub async fn presence_update(api_url: &str, token: &str, state: &str, server: &s
     Ok(())
 }
 
+/// Emote melden (kurzlebig, für Spieler in der Nähe).
+pub async fn emote_update(api_url: &str, token: &str, id: &str) -> Result<(), String> {
+    let b = base(api_url)?;
+    let client = http_client()?;
+    let resp = client
+        .put(format!("{b}/v1/emote"))
+        .bearer_auth(token)
+        .json(&serde_json::json!({ "id": id }))
+        .timeout(std::time::Duration::from_secs(6))
+        .send()
+        .await
+        .map_err(|e| format!("Emote: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("Emote HTTP {}", resp.status()));
+    }
+    Ok(())
+}
+
 /// Freundesliste mit Online-Status.
 pub async fn friends_list(api_url: &str, token: &str) -> Result<FriendsView, String> {
     let b = base(api_url)?;
