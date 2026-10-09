@@ -1,0 +1,118 @@
+{
+  "channels": {
+    "stable": {
+      "launcher": {
+        "version": "2.3.2",
+        "fileName": "ChaosLauncher-2.3.2-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/ChaosLauncher-2.3.2-setup.exe",
+        "sha256": "bd045b82459fccba0ccaab01c4c694b28873e3778ef51cfd1014eec05f94eda4",
+        "size": 7787071,
+        "publishedAt": "2026-10-09",
+        "notes": "- Neues Emote-System im Chaos Client (2.7.1): 16 Ganzkörper-Animationen – Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken\n- Emote-Rad mit Taste B (oder Ziffern 1-9/0), automatisch in die dritte Person, Bewegung bricht das Emote ab\n- Emotes sind für andere Chaos-Spieler in der Nähe sichtbar (Sync über die Cosmetics-API)\n- Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Emote-Bewegung mit",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/ChaosLauncher-2.3.2.msi",
+        "msiSha256": "0a53d563d044bb9301ebcfa0396dca7448f14fad1f944b91ee5a65026b8b1e1a",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/ChaosLauncher-2.3.2-portable.zip",
+        "portableSha256": "1fbff980efc74d1b5e9029b7cc10ddd98825122149d6a4a12e0fdc32ec6c261e",
+        "portableSize": 10098689
+      },
+      "client": {
+        "version": "2.7.1",
+        "fileName": "chaos-client-2.7.1.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.3.2/chaos-client-2.7.1.jar",
+        "sha256": "869e294dd057625f7efeaded94819e795f965872144b414f86103f45ee65b2b7",
+        "size": 1234621,
+        "publishedAt": "2026-10-09",
+        "notes": "Neues Emote-System: 16 Ganzkörper-Animationen (Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken), Emote-Rad mit Taste B, automatische Third-Person, Sync zu anderen Chaos-Spielern in der Nähe. Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Bewegung."
+      }
+    }
+  },
+  "history": [
+    {
+      "version": "2.3.2",
+      "date": "2026-10-09",
+      "notes": "- Neues Emote-System im Chaos Client (2.7.1): 16 Ganzkörper-Animationen – Winken, Dab, Chaos Dance, Floss, Flex, T-Pose, Backflip, Drehung, Sitzen, Verbeugung, Applaus, Jubel, Salut, Facepalm, Headbang, Nachdenken\n- Emote-Rad mit Taste B (oder Ziffern 1-9/0), automatisch in die dritte Person, Bewegung bricht das Emote ab\n- Emotes sind für andere Chaos-Spieler in der Nähe sichtbar (Sync über die Cosmetics-API)\n- Hüte, Flügel, Capes, Rüstung und 3D Skin Layers folgen der Emote-Bewegung mit"
+    },
+    {
+      "version": "2.3.1",
+      "date": "2026-10-08",
+      "notes": "- Skin wird wieder zuverlässig angezeigt: eigener Skin-Cache auf der Festplatte, Ersatzdienst gewechselt (Crafatar war ausgefallen)"
+    },
+    {
+      "version": "2.3.0",
+      "date": "2026-10-08",
+      "notes": "- Legendäre Wings „Chaos Overlord“ und „Celestial Seraph“: animierte Texturen, Spezialeffekte – nur mit Code freischaltbar (Cosmetics › Wings)\n- Freunde-Funktion: Anfragen senden/annehmen, Live-Status (im Spiel auf Server X / Launcher offen / offline), „Mitspielen“ verbindet direkt mit dem Server des Freundes\n- Wings überarbeitet: sitzen jetzt auf den Schulterblättern, kein Durchstoßen des Körpers, keine Doppelkonturen, leuchtende Wings verdecken korrekt\n- Simple Voice Chat ist im Chaoscraft-Profil enthalten\n- Chaos Client 2.6.7"
+    },
+    {
+      "version": "2.2.0",
+      "date": "2026-10-07",
+      "notes": "- Cosmetics-Update: 7 neue Wings (Void, Inferno-Drache, Cyber, Frost, Blutengel, Gold, Seraphim) mit zweilagigem Flügelmodell, Sprung-/Fall-Animation und Leucht-Pulsieren\n- 13 neue Hüte (Drachenhelm, Chaos-Visor, Katzen-/Wolfsohren, Piratenhut, Geweih, Flammenkrone, Astronautenhelm, Pilz, Ritterhelm, Blumenkranz, Neon-Ring, Eiskrone) – Hüte können jetzt leuchten, rotieren und schweben\n- 10 neue Effekte (Chaos-Sturm, Gewitter, Void-Riss, Galaxie, Blutmond, Irrlichter, Engelsring, Feuerwerksspur, Regenbogen, Frost-Aura)\n- 6 neue animierte Capes (Blutmond, Chaos-Sturm, Drachenauge, Hologramm, Lavastrom, Void-Portal)\n- Chaos Client 2.5.0"
+    },
+    {
+      "version": "2.1.13",
+      "date": "2026-10-07",
+      "notes": "- „Ungültige Sitzung“ behoben: Minecraft-Token wird vor jedem Start erneuert; im Spiel holt der Chaos Client 2.4.2 bei abgelaufener Sitzung automatisch ein neues Token vom Launcher und verbindet neu – kein Neustart mehr nötig"
+    },
+    {
+      "version": "2.1.12",
+      "date": "2026-10-06",
+      "notes": "- FPS-Boost auf der Spielen-Seite: zeigt RAM-Auslastung, genutzte Grafikkarte, Monitor-Hz, FPS-Limit/VSync und schwere Mods (Voxy, Flashback, …) mit Ein-Klick-Deaktivierung; „Boost anwenden“ setzt FPS-Limit unbegrenzt, VSync/Entity-Schatten aus, weist Java die Hochleistungs-GPU zu\n- Minecraft startet mit hoher Prozesspriorität (abschaltbar unter Einstellungen → Startverhalten)\n- Java: String-Deduplication für weniger RAM-Verbrauch"
+    },
+    {
+      "version": "2.1.11",
+      "date": "2026-10-06",
+      "notes": "- Cosmetics-Sync funktioniert wieder: Anmeldung an der Cosmetics-API läuft jetzt über Mojangs Spieler-Zertifikat (Mojang blockiert Anfragen aus der Cloud). Dein Minecraft-Token geht weiterhin nur an Mojang.\n- Cosmetics werden beim Launcher-Start und nach dem Login automatisch hochgeladen – andere sehen Cape, Hut, Wings, Effekt und Badge ohne Zutun\n- Fehlermeldungen der API werden im Klartext angezeigt"
+    },
+    {
+      "version": "2.1.10",
+      "date": "2026-10-06",
+      "notes": "- Cosmetics anderer Spieler wieder sichtbar: Sync zur neuen Cosmetics-API repariert (alte Cape-IDs vom früheren Server werden neu hochgeladen, Fehler landen im launch.log), API-Login zustandslos (keine Aussetzer mehr)\n- Chaos Client 2.4.1: prüft alle 2 Minuten erneut, ob Mitspieler inzwischen Cosmetics haben"
+    },
+    {
+      "version": "2.1.9",
+      "date": "2026-10-05",
+      "notes": "- Animierte Capes: PNG-Frame-Streifen oder animierte GIFs importieren, Tempo (fps) einstellen, animierte 3D-Vorschau – sechs neue animierte Chaos-Vorlagen (Chaos Flame, Chaos Pulse, Gewitter, Galaxy Drift, Red Matrix, Chaos Wave)\n- Chaos-Badge ingame: Pixel-Icon vor dem Namen über dem Kopf und in der Tab-Liste bei allen Chaos-Client-Spielern (Chaos Client 2.3.0)\n- Cosmetics-API unterstützt animierte Capes (fps wird mitgespeichert)"
+    },
+    {
+      "version": "2.1.8",
+      "date": "2026-10-05",
+      "notes": "- Cosmetics-API läuft jetzt gehostet in der Cloud (Cloudflare) – Capes, Hüte, Wings und Effekte anderer Chaos-Spieler sind immer sichtbar, unabhängig vom ChaoscraftSMP-Server. Alte Adresse wird automatisch umgestellt.\n- Website, Downloads und Updates kommen primär von GitHub (Pages + Releases)\n- Wings: kein Flackern mehr, sanfterer Flügelschlag (Chaos Client 2.2.0)"
+    },
+    {
+      "version": "2.1.7",
+      "date": "2026-10-05",
+      "notes": "- Wings: 12 animierte Pixel-Art-Flügel (Engel, Chaos, Phönix, Galaxie, Schatten, Dämon, Drache, Fledermaus, Neon, Schmetterling, Fee, Kristall) mit 3D-Vorschau; ingame vom Chaos Client 2.2.0 gerendert und für andere Chaos-Spieler sichtbar\n- Updates und Downloads zusätzlich über GitHub (Releases + GitHub Pages) – funktioniert auch, wenn die Website offline ist\n- 3D-Vorschau: Hüte sitzen jetzt exakt wie ingame"
+    },
+    {
+      "version": "2.1.6",
+      "date": "2026-10-03",
+      "notes": "- Import aus NoRisk: mitgelieferte Pack-Mods (Sodium, Fabric API, Lithium …) werden übernommen, fehlende Fabric-Abhängigkeiten automatisch ergänzt\n- Import aus NoRisk: gemeinsamer NRC-Ordner korrekt erkannt – Tastenbelegung, alle Welten, Serverliste, Resourcepacks kommen mit\n- Welten werden beim Import standardmäßig übernommen\n- Es läuft nur noch eine Launcher-Instanz gleichzeitig"
+    },
+    {
+      "version": "2.1.5",
+      "date": "2026-10-03",
+      "notes": "- Profile aus anderen Launchern übernehmen: NoRisk Client, Minecraft Launcher, Prism, CurseForge App, Modrinth App, GDLauncher, ATLauncher\n- Mods mit Quelle (Modrinth/CurseForge) für Updates, lokale JARs werden bei Modrinth erkannt\n- Konfigs, Spieleinstellungen, Server, Welten, Resourcepacks, Shader wahlweise mitnehmen"
+    },
+    {
+      "version": "2.1.4",
+      "date": "2026-10-03",
+      "notes": "- Großer Update-Dialog direkt nach dem Start mit Release-Notes und Ein-Klick-Installation\n- Discord-Button führt zur Website"
+    },
+    {
+      "version": "2.1.3",
+      "date": "2026-10-03",
+      "notes": "- Discord-Button „Chaos Launcher holen“ führt jetzt zu chaoslauncher.duckdns.org"
+    },
+    {
+      "version": "2.1.2",
+      "date": "2026-10-03",
+      "notes": "- Discord Rich Presence funktioniert jetzt ohne Einrichtung: Chaos-Launcher-App ist Standard\n- Discord-Verbindungsstatus in den Einstellungen, Diagnose im Launcher-Log\n- Website chaoslauncher.duckdns.org mit Animationen und Community-Bereich"
+    },
+    {
+      "version": "2.1.1",
+      "date": "2026-10-03",
+      "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
+    }
+  ],
+  "updatedAt": "2026-10-09",
+  "downloads": "github"
+}
