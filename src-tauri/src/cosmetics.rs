@@ -110,7 +110,31 @@ pub fn load() -> Result<CosmeticsState, String> {
     // Capes entfernen, deren Datei fehlt
     let dir = capes_dir();
     s.capes.retain(|c| dir.join(&c.file_name).exists());
+    // Freischaltungen reparieren: ältere Versionen haben den Doppelpunkt entfernt ("capeanim-overlord")
+    for p in s.profiles.iter_mut() {
+        for u in p.unlocks.iter_mut() {
+            if !u.contains(':') {
+                for prefix in ["effect", "emote", "cape", "hat"] {
+                    if u.len() > prefix.len() && u.starts_with(prefix) && !EXCLUSIVE_WINGS.contains(&u.as_str()) {
+                        *u = format!("{}:{}", prefix, &u[prefix.len()..]);
+                        break;
+                    }
+                }
+            }
+        }
+    }
     Ok(s)
+}
+
+/// Legendäre Wings (Freischaltung ohne Präfix) – zur Unterscheidung bei der Reparatur.
+const EXCLUSIVE_WINGS: [&str; 2] = ["overlord", "celestial"];
+
+/// Freischaltungs-Schlüssel bereinigen: "<art>:<id>" bleibt erhalten (Wings ohne Präfix).
+pub fn sanitize_unlock(key: &str) -> String {
+    match key.split_once(':') {
+        Some((k, id)) => format!("{}:{}", sanitize_id(k), sanitize_id(id)),
+        None => sanitize_id(key),
+    }
 }
 
 pub fn save(s: &CosmeticsState) -> Result<(), String> {
@@ -586,7 +610,7 @@ pub fn adopt_ingame_wheel(account_uuid: &str) -> Result<bool, String> {
 pub fn set_unlocks(account_uuid: &str, unlocks: &[String]) -> Result<CosmeticsProfile, String> {
     let mut state = load()?;
     let profile = profile_mut(&mut state, account_uuid);
-    profile.unlocks = unlocks.iter().map(|u| sanitize_id(u)).filter(|u| !u.is_empty()).collect();
+    profile.unlocks = unlocks.iter().map(|u| sanitize_unlock(u)).filter(|u| !u.is_empty() && !u.ends_with(':')).collect();
     let out = profile.clone();
     save(&state)?;
     Ok(out)
