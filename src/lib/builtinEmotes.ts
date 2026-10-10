@@ -70,10 +70,10 @@ export const CHAOS_EMOTES: BuiltinEmote[] = [
   E("bow", "Verbeugung", "Tiefe Verbeugung mit Hand auf der Brust.", "🙇", 2.4, false, (t) => { const p = env(t, 0.6, 1.7, 0.7); return P().body(32 * p, 0, 0).head(30 * p, 0, 0).rArm(-60 * p, -40 * p, -20 * p).lArm(10 * p, 0, -15 * p).offset(2 * p, -4 * p); }),
   E("clap", "Applaus", "Schnelles, lautes Klatschen.", "👏", 2.6, false, (t) => { const c = abs(sin(t * TAU * 3.2)); return P().rArm(-72, -30 + 26 * c, 20 - 32 * c).lArm(-72, 30 - 26 * c, -20 + 32 * c).head(-6, 0, 0).body(0, 0, 0).offset(-0.6 * c, 0); }),
   E("cheer", "Jubel", "Arme hoch, hüpfen, feiern.", "🎉", 3, true, (t) => { const j = abs(sin(t * TAU * 1.5)), a = sin(t * TAU * 3); return P().rArm(-165 + 10 * a, -10, 22 + 10 * a).lArm(-165 - 10 * a, 10, -22 + 10 * a).head(-18, 0, 6 * a).body(-3, 0, 0).legs(-6 * j, 0, 0).offset(-6 * j, 0); }),
-  E("salute", "Salut", "Zackiger Gruß an die Stirn.", "🫡", 1.8, false, (t) => { const p = env(t, 0.25, 1.4, 0.4); return P().rArm(-140 * p, -55 * p, 10 * p).lArm(0, 0, 2).head(-4 * p, 0, 0).body(-2 * p, 0, 0); }),
-  E("facepalm", "Facepalm", "Hand ins Gesicht, Kopf runter.", "🤦", 2.2, false, (t) => { const p = env(t, 0.3, 1.7, 0.5), shake = sin(t * TAU * 1.5) * 6 * p; return P().rArm(-150 * p, 22 * p, -14 * p).head(28 * p, shake, 0).body(6 * p, 0, 0).lArm(0, 0, 3); }),
+  E("salute", "Salut", "Zackiger Gruß an die Stirn.", "🫡", 1.8, false, (t) => { const p = env(t, 0.25, 1.4, 0.4); return P().rArm(-150 * p, 0, -42 * p).lArm(0, 0, 2).head(-6 * p, 0, 0).body(-2 * p, 0, 0); }),
+  E("facepalm", "Facepalm", "Hand ins Gesicht, Kopf runter.", "🤦", 2.2, false, (t) => { const p = env(t, 0.3, 1.7, 0.5), shake = sin(t * TAU * 1.5) * 6 * p; return P().rArm(-152 * p, 0, -34 * p).head(26 * p, shake, 0).body(6 * p, 0, 0).lArm(0, 0, 3); }),
   E("headbang", "Headbang", "Kopf schütteln, Arme oben – Metal.", "🤘", 4, true, (t) => { const h = sin(t * TAU * 2.6), a = sin(t * TAU * 1.3); return P().head(28 + 30 * h, 0, 0).rArm(-150, -20, 30 + 8 * a).lArm(-150, 20, -30 - 8 * a).body(6 + 4 * h, 0, 0).offset(-1.5 * abs(h), 0).legs(0, 0, 0); }),
-  E("think", "Nachdenken", "Hand ans Kinn, Blick in die Ferne.", "🤔", 2.4, false, (t) => { const p = env(t, 0.3, 2.0, 0.4); return P().rArm(-120 * p, 12 * p, -28 * p).head(-6 * p, 24 * p * sin(t * TAU * 0.4), 10 * p).body(0, 8 * p, 0); }),
+  E("think", "Nachdenken", "Hand ans Kinn, Blick in die Ferne.", "🤔", 2.4, false, (t) => { const p = env(t, 0.3, 2.0, 0.4); return P().rArm(-122 * p, 0, -32 * p).head(-6 * p, 24 * p * sin(t * TAU * 0.4), 10 * p).body(0, 8 * p, 0); }),
   /* ---- Neu (frei) ---- */
   E("griddy", "Griddy", "Beine kicken abwechselnd, Arme kreuzen vorm Körper – der Griddy.", "🏈", 4, true, (t) => { const s = sin(t * TAU * 2.2), c = cos(t * TAU * 2.2); return P().rLeg(-38 * Math.max(0, s), 0, 6).lLeg(-38 * Math.max(0, -s), 0, -6).rArm(-75 + 12 * c, -35, 18).lArm(-75 - 12 * c, 35, -18).body(4, 9 * s, 0).head(-4, -7 * s, 3 * c).offset(-2 * abs(s), 0); }),
   E("orange", "Orange Justice", "Arme kreisen wild, Körper wippt – purer Spaß.", "🍊", 3.2, true, (t) => { const a = sin(t * TAU * 1.25), b = cos(t * TAU * 1.25), s = sin(t * TAU * 2.5); return P().rArm(-90 + 85 * a, 0, 55 + 25 * b).lArm(-90 - 85 * a, 0, -55 - 25 * b).body(6 + 4 * s, 0, 11 * b).head(-6, 0, -9 * b).rLeg(-10 * Math.max(0, s), 0, 5).lLeg(-10 * Math.max(0, -s), 0, -5).offset(-3 * abs(s), 0); }),
@@ -84,7 +84,7 @@ export const CHAOS_EMOTES: BuiltinEmote[] = [
   E("laugh", "Lachen", "Nach vorn gebeugt, Hände am Bauch, schüttelt sich.", "😂", 3, false, (t) => { const p = env(t, 0.3, 2.4, 0.6), s = sin(t * TAU * 6); return P().body(18 * p + 4 * s * p, 0, 0).head((8 + 6 * s) * p, 0, 5 * s * p).rArm(-55 * p, -45 * p, -12 * p).lArm(-55 * p, 45 * p, 12 * p).offset(1.5 * p, 0); }),
   E("shrug", "Schulterzucken", "Hände hoch, Kopf schief – keine Ahnung.", "🤷", 2.2, false, (t) => { const p = env(t, 0.3, 1.6, 0.5); return P().rArm(-28 * p, 0, 62 * p).lArm(-28 * p, 0, -62 * p).head(-4 * p, 10 * p, 16 * p).body(0, 0, 4 * p).offset(-0.8 * p, 0); }),
   E("point", "Zeigen", "Da! Arm ausgestreckt nach vorn.", "👉", 2, false, (t) => { const p = env(t, 0.2, 1.5, 0.4); return P().rArm(-92 * p, -8 * p, 4 * p).lArm(0, 0, 2).head(-3 * p, -6 * p, 0).body(-2 * p, -8 * p, 0); }),
-  E("cry", "Weinen", "Hände vors Gesicht, Schultern zucken.", "😭", 3.2, false, (t) => { const p = env(t, 0.4, 2.5, 0.6), s = sin(t * TAU * 4); return P().rArm(-148 * p, 24 * p, -16 * p).lArm(-148 * p, -24 * p, 16 * p).head(26 * p, 0, 0).body((9 + 2 * s) * p, 0, 0).offset(0.8 * p, 0); }),
+  E("cry", "Weinen", "Hände vors Gesicht, Schultern zucken.", "😭", 3.2, false, (t) => { const p = env(t, 0.4, 2.5, 0.6), s = sin(t * TAU * 4); return P().rArm(-150 * p, 0, -36 * p).lArm(-150 * p, 0, 36 * p).head(24 * p, 0, 0).body((9 + 2 * s) * p, 0, 0).offset(0.8 * p, 0); }),
   /* ---- Legendär (nur mit Code) ---- */
   E("breakdance", "Breakdance", "Auf dem Rücken, Beine kreisen, der ganze Körper rotiert – Windmill.", "🌪", 4, true, (t) => { const w = t * TAU * 1.5; return P().group(-84, 360 * (t / 4)).offset(8.5 + 1.2 * sin(w), 0).rLeg(-30 + 25 * sin(w), 0, 70 * cos(w)).lLeg(-30 - 25 * sin(w), 0, 70 * cos(w)).rArm(-150, -20, 30).lArm(-150, 20, -30).head(-30, 0, 0).body(0, 0, 0); }, true),
   E("chaos-rave", "Chaos Rave", "Volle Energie: Arme fliegen, Körper dreht, nichts steht still.", "🔥", 4, true, (t) => { const a = sin(t * TAU * 3), b = cos(t * TAU * 3), s = sin(t * TAU * 1.5); return P().group(0, 360 * (t / 4)).rArm(-150 + 35 * a, -15, 30 + 30 * b).lArm(-150 - 35 * a, 15, -30 + 30 * b).body(5, 22 * s, 6 * a).head(-10 + 6 * a, -12 * s, 8 * b).rLeg(-28 * Math.max(0, a), 0, 6).lLeg(-28 * Math.max(0, -a), 0, -6).offset(-4 * abs(a), 0); }, true),
@@ -116,6 +116,8 @@ export function normalizeWheel(ids: string[] | undefined | null): string[] {
 }
 
 const rad = (d: number) => (d * Math.PI) / 180;
+/** Winkel auf −180..180 normieren – beim Ausblenden dreht ein Salto sonst rückwärts. */
+const wrap = (d: number) => { d %= 360; if (d >= 180) d -= 360; if (d < -180) d += 360; return d; };
 
 /**
  * skinview3d-Animation, die die Emote-Pose auf das Spielermodell legt.
@@ -147,7 +149,8 @@ export class EmoteAnimation extends PlayerAnimation {
       else part.rotation.set(0, 0, 0);
     }
     // Ganzkörper: Verschiebung + Drehung um die Körpermitte
-    const eul = new Euler(rad(p.groupPitch) * w, -rad(p.groupYaw) * w, 0, "YXZ");
+    const gp = w < 1 ? wrap(p.groupPitch) : p.groupPitch, gy = w < 1 ? wrap(p.groupYaw) : p.groupYaw;
+    const eul = new Euler(rad(gp) * w, -rad(gy) * w, 0, "YXZ");
     player.rotation.copy(eul);
     const rotated = this.pivot.clone().applyEuler(eul);
     player.position.set(0 - rotated.x + this.pivot.x, -p.offsetY * w - rotated.y + this.pivot.y, -p.offsetZ * w - rotated.z + this.pivot.z);

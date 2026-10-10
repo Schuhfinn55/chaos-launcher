@@ -26,6 +26,7 @@ import MusicPage from "@/features/music/MusicPage";
 import FriendsPage from "@/features/friends/FriendsPage";
 import AccountsPage from "@/features/accounts/AccountsPage";
 import SettingsPage from "@/features/settings/SettingsPage";
+import EmoteSheet from "@/features/dev/EmoteSheet";
 import { useAccountStore, useCosmeticsStore, useFriendStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
 import { syncCosmetics } from "@/lib/api/cosmetics";
 import { presenceHeartbeat } from "@/lib/api/friends";
@@ -76,6 +77,7 @@ function RoutedPages() {
         <Route path="/friends" element={<FriendsPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        {import.meta.env.DEV && <Route path="/dev/emotes" element={<EmoteSheet />} />}
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </div>
