@@ -309,6 +309,8 @@ export interface RedeemResult {
 }
 export interface CosmeticCode {
   code: string;
+  /** Freischaltungs-Schlüssel (Wings ohne Präfix, sonst hat:/effect:/emote:/cape:) */
+  item?: string;
   wings: string;
   maxUses: number;
   uses: number;
@@ -350,8 +352,11 @@ export interface CosmeticsProfile {
   hatId: string;
   effectId: string;
   wingsId: string;
-  /** Per Code freigeschaltete exklusive Wings */
+  /** Per Code freigeschaltete legendäre Items (Wings ohne Präfix, sonst hat:/effect:/emote:/cape:) */
   unlocks?: string[];
+  /** Belegung des Ingame-Emote-Rads (8 Slots) */
+  emoteWheel?: string[];
+  emoteWheelUpdatedAt?: number;
   visibility: "everyone" | "chaos" | "none" | string;
   updatedAt: number;
 }

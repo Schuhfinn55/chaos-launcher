@@ -147,9 +147,40 @@ pub async fn admin_codes_list(adminKey: String) -> Result<Vec<cosmetics_api::Cos
 /// Admin: Code anlegen.
 #[tauri::command]
 #[allow(non_snake_case)]
-pub async fn admin_codes_create(adminKey: String, code: String, wings: String, maxUses: u32, note: String) -> Result<cosmetics_api::CosmeticCode, String> {
+pub async fn admin_codes_create(adminKey: String, code: String, item: String, maxUses: u32, note: String) -> Result<cosmetics_api::CosmeticCode, String> {
     let settings = storage::load_settings().unwrap_or_default();
-    cosmetics_api::admin_codes_create(&cosmetics_api::effective_url(&settings), &adminKey, &code, &wings, maxUses, &note).await
+    cosmetics_api::admin_codes_create(&cosmetics_api::effective_url(&settings), &adminKey, &code, &item, maxUses, &note).await
+}
+
+/// Belegung des Ingame-Emote-Rads speichern (und laufenden Instanzen sofort exportieren).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn set_emote_wheel(accountUuid: String, ids: Vec<String>) -> Result<CosmeticsProfile, String> {
+    let p = cosmetics::set_emote_wheel(&accountUuid, &ids)?;
+    reexport_for_running(&accountUuid);
+    Ok(p)
+}
+
+/// Im Spiel geänderte Rad-Belegung übernehmen (true = geändert).
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn sync_emote_wheel_from_game(accountUuid: String) -> Result<bool, String> {
+    cosmetics::adopt_ingame_wheel(&accountUuid)
+}
+
+fn reexport_for_running(account_uuid: &str) {
+    let Ok(settings) = storage::load_settings() else { return };
+    let Ok(instances) = storage::load_instances() else { return };
+    let Ok(accounts) = storage::load_accounts() else { return };
+    let Some(acc) = accounts.iter().find(|a| a.uuid == account_uuid) else { return };
+    let uuid = acc.uuid.replace('-', "").to_lowercase();
+    for id in crate::launch::running_instances() {
+        if let Some(inst) = instances.iter().find(|i| i.id == id) {
+            if let Ok(home) = storage::instance_home(inst) {
+                let _ = cosmetics::export_for_instance(&home, &uuid, &acc.username, &settings);
+            }
+        }
+    }
 }
 
 /// Admin: Code löschen.

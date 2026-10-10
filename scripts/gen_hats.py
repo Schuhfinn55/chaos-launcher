@@ -20,8 +20,8 @@ def mirror(boxes):
     return [B(-(x + w), y, z, w, h, d, c) for (x, y, z, w, h, d, c) in boxes]
 
 
-def H(id, name, desc, icon, boxes, glow=False, spin=0.0, bob=0.0):
-    return dict(id=id, name=name, description=desc, icon=icon, glow=glow, spin=spin, bob=bob, boxes=boxes)
+def H(id, name, desc, icon, boxes, glow=False, spin=0.0, bob=0.0, exclusive=False):
+    return dict(id=id, name=name, description=desc, icon=icon, glow=glow, spin=spin, bob=bob, boxes=boxes, exclusive=exclusive)
 
 
 # ------------------------------------------------------------------ Hüte
@@ -31,6 +31,22 @@ left_antler = [B(-3.8, -13, -0.6, 1.2, 5, 1.2, "#6b4423"), B(-6, -12, -0.5, 2.4,
                B(-3.2, -15.5, -0.5, 1, 3, 1, "#8b5a2b"), B(-1.6, -13.5, -0.5, 1.6, 1, 1, "#7c4f2a")]
 left_dragon_horn = [B(-6.2, -9.5, -1, 2, 2, 2, "#0f172a"), B(-6.8, -11.5, -0.8, 1.6, 2.2, 1.6, "#1e293b"), B(-7.6, -13.3, -0.6, 1.2, 2, 1.2, "#334155")]
 left_wolf_ear = [B(-4.4, -10.8, -1.2, 2.6, 3.2, 2, "#4b5563"), B(-3.8, -12.6, -0.9, 1.4, 2, 1.4, "#374151"), B(-3.6, -10.5, -1.5, 1.2, 2.2, 0.4, "#d1d5db")]
+
+# ---- Legendär (nur mit Code) ----
+_ov_spike = [B(-4.6, -16, -0.6, 1.2, 4, 1.2, "#ff1f3d")]
+_ov_crown = ([B(-5, -11.5, -5, 10, 3.5, 10, "#0b0609"), B(-5.4, -9, -5.4, 10.8, 1, 10.8, "#4a0810")]
+             + [B(x, -14.5, z, 1.6, 3, 1.6, "#e11d2e") for (x, z) in ((-5, -5), (3.4, -5), (-5, 3.4), (3.4, 3.4))]
+             + [B(-1, -17, -5.2, 2, 5.5, 1.4, "#ff1f3d"), B(-0.5, -19.5, -5.0, 1, 2.5, 1, "#ffe4e8"),
+                B(-7.5, -13, -0.8, 1.6, 1.6, 1.6, "#ff4d5e"), B(5.9, -13, -0.8, 1.6, 1.6, 1.6, "#ff4d5e"), B(-0.8, -13, 5.9, 1.6, 1.6, 1.6, "#ff4d5e")])
+_void_helm = [B(-4.6, -9.2, -4.6, 9.2, 4.4, 9.2, "#0f0a1f"), B(-4.8, -5.8, -4.8, 9.6, 1.2, 9.6, "#2e1065"),
+              B(-4.9, -8.2, -5, 9.8, 1.2, 1, "#7c3aed"), B(-0.6, -11.5, -4.2, 1.2, 2.5, 8.4, "#4c1d95"),
+              B(-0.4, -13, -1, 0.8, 1.8, 2, "#a78bfa"), B(-6.2, -10.5, -0.8, 1.8, 1.4, 1.6, "#a78bfa"), B(4.4, -10.5, -0.8, 1.8, 1.4, 1.6, "#a78bfa")]
+_phoenix = [B(-4.6, -9.4, -4.6, 9.2, 2.2, 9.2, "#7c2d12"), B(-1.2, -14, -3.5, 2.4, 5, 7, "#f97316"), B(-0.8, -17, -2, 1.6, 3.5, 4.5, "#fbbf24"),
+            B(-0.5, -19.5, -1, 1, 3, 2.5, "#fde68a"), B(-5.8, -12, -1, 1.6, 3, 2, "#f97316"), B(4.2, -12, -1, 1.6, 3, 2, "#f97316"),
+            B(-6.4, -14.5, -0.6, 1, 2.5, 1.2, "#fbbf24"), B(5.4, -14.5, -0.6, 1, 2.5, 1.2, "#fbbf24")]
+_galaxy = ([B(-5.5, -12, -5.5, 11, 0.6, 1, "#c4b5fd"), B(-5.5, -12, 4.5, 11, 0.6, 1, "#c4b5fd"), B(-5.5, -12, -4.5, 1, 0.6, 9, "#c4b5fd"), B(4.5, -12, -4.5, 1, 0.6, 9, "#c4b5fd")]
+           + [B(-3.5, -14, -3.5, 7, 0.5, 0.8, "#818cf8"), B(-3.5, -14, 2.7, 7, 0.5, 0.8, "#818cf8"), B(-3.5, -14, -2.7, 0.8, 0.5, 5.4, "#818cf8"), B(2.7, -14, -2.7, 0.8, 0.5, 5.4, "#818cf8")]
+           + [B(-0.9, -16.5, -0.9, 1.8, 1.8, 1.8, "#f8fafc"), B(-6.3, -12.6, -0.5, 1, 1, 1, "#f472b6"), B(5.3, -12.6, -0.5, 1, 1, 1, "#60a5fa")])
 
 HATS = [
     H("top-hat", "Zylinder", "Klassischer schwarzer Zylinder mit rotem Band.", "🎩",
@@ -65,6 +81,10 @@ HATS = [
       [B(-4.6, -9.5, -4.6, 9.2, 2, 9.2, "#f4f1f2"), B(-4, -13, -4, 8, 3.5, 8, "#e11d2e"), B(-2.5, -15.5, -2.5, 5, 2.5, 5, "#e11d2e"),
        B(-0.5, -17, 1, 3, 2, 3, "#e11d2e"), B(1, -18.5, 2.5, 2.5, 2.5, 2.5, "#f4f1f2")]),
     # ---- neu ----
+    H("overlord-crown", "Overlord-Krone", "Schwarze Dornenkrone mit glühenden Blutrubinen und schwebenden Splittern.", "👑", _ov_crown, glow=True, spin=0.6, exclusive=True),
+    H("void-helm", "Void-Helm", "Helm aus dem Nichts: violette Risse, die pulsierend leuchten.", "🟣", _void_helm, glow=True, bob=0.2, exclusive=True),
+    H("phoenix-crest", "Phönix-Krone", "Lodernde Federkrone in Orange und Gold – brennt nie aus.", "🔥", _phoenix, glow=True, bob=0.3, exclusive=True),
+    H("galaxy-halo", "Galaxie-Halo", "Doppelter Sternenring mit leuchtendem Kern, dreht sich ewig.", "🌌", _galaxy, glow=True, spin=1.8, bob=0.4, exclusive=True),
     H("dragon-helm", "Drachenhelm", "Dunkler Schuppenhelm mit Stachelkamm, geschwungenen Hörnern und glühenden Augen.", "🐲",
       [B(-4.6, -9.2, -4.6, 9.2, 4, 9.2, "#1f2937"), B(-4.8, -6.2, -5, 9.6, 1, 1, "#111827"),
        B(-0.6, -11, -3, 1.2, 2, 1.2, "#334155"), B(-0.6, -11.5, -0.5, 1.2, 2.5, 1.2, "#334155"), B(-0.6, -11, 2, 1.2, 2, 1.2, "#334155"),
@@ -132,8 +152,8 @@ def main():
     lines = []
     for h in HATS:
         boxes = ", ".join(java_box(b) for b in h["boxes"])
-        lines.append('        add(new Hat("%s", "%s", "%s", "%s", %s, %sf, %sf, List.of(%s)));' % (
-            h["id"], h["name"], h["description"].replace('"', '\\"'), h["icon"], "true" if h["glow"] else "false", fmt(h["spin"]), fmt(h["bob"]), boxes))
+        lines.append('        add(new Hat("%s", "%s", "%s", "%s", %s, %sf, %sf, %s, List.of(%s)));' % (
+            h["id"], h["name"], h["description"].replace('"', '\\"'), h["icon"], "true" if h["glow"] else "false", fmt(h["spin"]), fmt(h["bob"]), "true" if h.get("exclusive") else "false", boxes))
     java = '''package com.chaoscraft.client.cosmetics;
 
 import java.util.LinkedHashMap;
@@ -150,7 +170,7 @@ public final class HatCatalog {
     private HatCatalog() {}
 
     public record Box(float x, float y, float z, float w, float h, float d, int color) {}
-    public record Hat(String id, String name, String description, String icon, boolean glow, float spin, float bob, List<Box> boxes) {}
+    public record Hat(String id, String name, String description, String icon, boolean glow, float spin, float bob, boolean exclusive, List<Box> boxes) {}
 
     private static Box b(double x, double y, double z, double w, double h, double d, int color) {
         return new Box((float) x, (float) y, (float) z, (float) w, (float) h, (float) d, 0xFF000000 | color);
@@ -181,6 +201,8 @@ public final class HatCatalog {
             extra += " spin: %s," % fmt(h["spin"])
         if h["bob"]:
             extra += " bob: %s," % fmt(h["bob"])
+        if h.get("exclusive"):
+            extra += " exclusive: true,"
         items.append('  {\n    id: "%s", name: "%s", description: "%s", icon: "%s",%s\n    boxes: [%s],\n  },' % (
             h["id"], h["name"], h["description"].replace('"', '\\"'), h["icon"], extra, ", ".join(ts_box(b) for b in h["boxes"])))
     ts = '''/* ============================================================
@@ -213,6 +235,8 @@ export interface BuiltinHat {
   glow?: boolean;
   spin?: number;
   bob?: number;
+  /** Legendär – nur per Code (Freischaltung "hat:<id>") */
+  exclusive?: boolean;
   boxes: HatBox[];
 }
 
@@ -221,6 +245,10 @@ const B = (x: number, y: number, z: number, w: number, h: number, d: number, col
 export const CHAOS_HATS: BuiltinHat[] = [
 %s
 ];
+
+export function isHatUnlocked(h: BuiltinHat, unlocks: string[] | undefined | null): boolean {
+  return !h.exclusive || (unlocks ?? []).includes("hat:" + h.id);
+}
 
 export function hatById(id: string | undefined | null): BuiltinHat | null {
   if (!id) return null;

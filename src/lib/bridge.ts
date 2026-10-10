@@ -22,7 +22,7 @@ if (!isTauri && typeof window !== "undefined" && import.meta.env.DEV && new URLS
     { id: "i2", name: "PvP 1.21.11", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "", ramMb: 4096, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#3b82f6", createdAt: now - 86400000 * 5, lastPlayed: now - 86400000, playtimeSeconds: 32000, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [mod("sodium", "Sodium")] },
     { id: "i3", name: "Vanilla 1.21.11", mcVersion: "1.21.11", loader: "vanilla", loaderVersion: "", ramMb: 4096, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#22c55e", createdAt: now - 86400000 * 2, lastPlayed: 0, playtimeSeconds: 0, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [] },
   ]));
-  localStorage.setItem("chaos.cosmetics", JSON.stringify({ capes: [], profiles: [{ accountUuid: "2a05b91e5af6403c9bbf5d0e16c29ed9", activeCapeId: "", hatId: "dragon-helm", effectId: "chaos-storm", wingsId: "overlord", unlocks: ["overlord", "celestial"], visibility: "everyone", updatedAt: now }], version: 1 }));
+  localStorage.setItem("chaos.cosmetics", JSON.stringify({ capes: [], profiles: [{ accountUuid: "2a05b91e5af6403c9bbf5d0e16c29ed9", activeCapeId: "", hatId: "dragon-helm", effectId: "chaos-storm", wingsId: "overlord", unlocks: ["overlord", "celestial", "emote:breakdance", "hat:overlord-crown"], emoteWheel: ["wave", "dab", "dance", "breakdance", "flex", "backflip", "sit", "cheer"], emoteWheelUpdatedAt: now, visibility: "everyone", updatedAt: now }], version: 1 }));
 }
 
 /** Ruft ein Backend-Kommando auf. */
@@ -250,7 +250,7 @@ const mocks: Record<string, MockHandler> = {
     return [{ code: "CHAOS-TEST-1234", wings: "overlord", maxUses: 5, uses: 1, note: "Mock", createdAt: Date.now(), redeemedBy: [] }];
   },
   async admin_codes_create(args) {
-    return { code: args.code || "CHAOS-NEU0-0000", wings: args.wings, maxUses: args.maxUses, uses: 0, note: args.note, createdAt: Date.now(), redeemedBy: [] };
+    return { code: args.code || "CHAOS-NEU0-0000", item: args.item, wings: args.item, maxUses: args.maxUses, uses: 0, note: args.note, createdAt: Date.now(), redeemedBy: [] };
   },
   async admin_codes_delete() {
     return true;
@@ -326,6 +326,15 @@ const mocks: Record<string, MockHandler> = {
   },
   async get_player_skin() {
     throw new Error("Mock: kein Sessionserver");
+  },
+  async set_emote_wheel(args) {
+    const state = ls<{ capes: unknown[]; profiles: Array<Record<string, unknown>>; version: number }>("chaos.cosmetics", { capes: [], profiles: [], version: 1 });
+    const profiles = state.profiles.map((p) => (p.accountUuid === args.accountUuid ? { ...p, emoteWheel: args.ids, emoteWheelUpdatedAt: Date.now() } : p));
+    lsSet("chaos.cosmetics", { ...state, profiles });
+    return profiles.find((p) => p.accountUuid === args.accountUuid);
+  },
+  async sync_emote_wheel_from_game() {
+    return false;
   },
   async set_cosmetic(args) {
     return { accountUuid: args.accountUuid, activeCapeId: "", hatId: args.kind === "hat" ? args.id : "", effectId: args.kind === "effect" ? args.id : "", wingsId: args.kind === "wings" ? args.id : "", visibility: "everyone", updatedAt: Date.now() };

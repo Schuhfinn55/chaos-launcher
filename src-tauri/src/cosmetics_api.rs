@@ -388,6 +388,8 @@ pub struct RedeemResult {
 pub struct CosmeticCode {
     pub code: String,
     #[serde(default)]
+    pub item: String,
+    #[serde(default)]
     pub wings: String,
     #[serde(default)]
     pub max_uses: u32,
@@ -540,13 +542,14 @@ pub async fn admin_codes_list(api_url: &str, key: &str) -> Result<Vec<CosmeticCo
 }
 
 /// Admin: Code anlegen (leerer Code = automatisch erzeugen).
-pub async fn admin_codes_create(api_url: &str, key: &str, code: &str, wings: &str, max_uses: u32, note: &str) -> Result<CosmeticCode, String> {
+pub async fn admin_codes_create(api_url: &str, key: &str, code: &str, item: &str, max_uses: u32, note: &str) -> Result<CosmeticCode, String> {
+    let wings = if item.contains(':') { "" } else { item };
     let b = base(api_url)?;
     let client = http_client()?;
     let resp = client
         .post(format!("{b}/v1/admin/codes"))
         .header("X-Admin-Key", key)
-        .json(&serde_json::json!({ "code": code, "wings": wings, "maxUses": max_uses, "note": note }))
+        .json(&serde_json::json!({ "code": code, "item": item, "wings": wings, "maxUses": max_uses, "note": note }))
         .send()
         .await
         .map_err(|e| format!("Code anlegen: {e}"))?;

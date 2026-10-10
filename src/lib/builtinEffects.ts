@@ -16,9 +16,15 @@ export interface BuiltinEffect {
   /** Farben der Vorschau-Partikel. */
   colors: string[];
   pattern: EffectPattern;
+  /** Legendär – nur per Code (Freischaltung "effect:<id>") */
+  exclusive?: boolean;
 }
 
 export const CHAOS_EFFECTS: BuiltinEffect[] = [
+  // ---- Legendär (nur mit Code)
+  { id: "chaos-nova", name: "Chaos-Nova", description: "Pulsierende Explosionsringe aus Glut, Funken und schwarzem Rauch – alle zwei Sekunden eine Druckwelle.", icon: "💥", colors: ["#ff1f3d", "#111113", "#fbbf24"], pattern: "burst", exclusive: true },
+  { id: "phoenix-fire", name: "Phönixfeuer", description: "Flammenschwingen aus Feuer und Gold, die hinter dir aufsteigen und Glut regnen lassen.", icon: "🔥", colors: ["#f97316", "#fbbf24", "#fde68a"], pattern: "rise", exclusive: true },
+  { id: "void-storm", name: "Void-Sturm", description: "Drei violette Wirbel aus dem Nichts, die um dich rasen, mit Endstaub und Rissen.", icon: "🌀", colors: ["#7c3aed", "#4c1d95", "#c4b5fd"], pattern: "ring", exclusive: true },
   // ---- Premium
   { id: "chaos-storm", name: "Chaos-Sturm", description: "Doppelte Helix aus rotem und schwarzem Staub, die um dich aufsteigt.", icon: "🌪", colors: ["#e11d2e", "#111113", "#ff4d5e"], pattern: "ring" },
   { id: "lightning", name: "Gewitter", description: "Elektrische Entladungen und helle Blitzsäulen um dich herum.", icon: "⚡", colors: ["#7dd3fc", "#ffffff", "#fde047"], pattern: "burst" },
@@ -50,4 +56,8 @@ export const CHAOS_EFFECTS: BuiltinEffect[] = [
 export function effectById(id: string | undefined | null): BuiltinEffect | null {
   if (!id) return null;
   return CHAOS_EFFECTS.find((e) => e.id === id) ?? null;
+}
+
+export function isEffectUnlocked(e: BuiltinEffect, unlocks: string[] | undefined | null): boolean {
+  return !e.exclusive || (unlocks ?? []).includes("effect:" + e.id);
 }

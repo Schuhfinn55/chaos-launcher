@@ -15,12 +15,16 @@ import { toast } from "@/stores/toastStore";
 import { invoke } from "@/lib/bridge";
 import { uid, formatDate } from "@/lib/utils";
 import { CAPE_FPS_OPTIONS, CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, capeFrames, deleteCape, fileToBase64, getCapeDataUrl, gifToCapeStrip, imageSize, importCape, isAllowedCapeSize, renameCape, profileFor, setActiveCape, setCapeEnabled, setCapeFps, setCosmetic, setVisibility, syncCosmetics, type CosmeticKind } from "@/lib/api/cosmetics";
-import { CHAOS_CAPES } from "@/lib/builtinCapes";
+import { CHAOS_CAPES, isCapeUnlocked } from "@/lib/builtinCapes";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
 import { wingsById } from "@/lib/builtinWings";
 import { HatsSection, EffectsSection } from "./HatsEffectsSections";
 import { WingsSection } from "./WingsSection";
+import { EmotesSection } from "./EmotesSection";
+import { emoteById } from "@/lib/builtinEmotes";
+import { isHatUnlocked } from "@/lib/builtinHats";
+import { isEffectUnlocked } from "@/lib/builtinEffects";
 import EffectPreview from "./EffectPreview";
 import type { Cape, CosmeticsApiInfo, SkinEntry } from "@/types";
 import "./CosmeticsPage.css";
@@ -79,12 +83,19 @@ export default function CosmeticsPage() {
   const [previewHatId, setPreviewHatId] = useState<string | null>(null);
   const [previewEffectId, setPreviewEffectId] = useState<string | null>(null);
   const [previewWingsId, setPreviewWingsId] = useState<string | null>(null);
+  const [previewEmoteId, setPreviewEmoteId] = useState<string | null>(null);
+  const shownEmote = emoteById(previewEmoteId);
   const shownWings = wingsById(previewWingsId ?? profile?.wingsId);
   const [cosBusy, setCosBusy] = useState(false);
   const shownHat = hatById(previewHatId ?? profile?.hatId);
   const shownEffect = effectById(previewEffectId ?? profile?.effectId);
   const selectCosmetic = async (kind: "hat" | "effect" | "wings", id: string) => {
     if (!account) return;
+    const h = kind === "hat" ? hatById(id) : null, ef = kind === "effect" ? effectById(id) : null;
+    if ((h && !isHatUnlocked(h, profile?.unlocks)) || (ef && !isEffectUnlocked(ef, profile?.unlocks))) {
+      toast.error("Legendär – nur mit Code", "Löse zuerst einen Code ein, um dieses Item zu tragen.");
+      return;
+    }
     setCosBusy(true);
     try {
       await setCosmetic(account.uuid, kind, id);
@@ -109,7 +120,7 @@ export default function CosmeticsPage() {
         {/* ---------- 3D-Vorschau ---------- */}
         <aside className="chaos-card chaos-cos-preview">
           <div className="chaos-cos-preview-canvas">
-            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} capeFps={previewCape?.fps ?? 8} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
+            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} capeFps={previewCape?.fps ?? 8} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} emote={shownEmote} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
             {showCosmetics && <EffectPreview effect={shownEffect} width={300} height={400} />}
           </div>
           <div className="chaos-cos-preview-info">
@@ -148,11 +159,11 @@ export default function CosmeticsPage() {
 
         {/* ---------- Inhalt ---------- */}
         <section className="chaos-cos-main">
-          <Tabs value={kind} onChange={(k) => { setKind(k); setPreviewCapeId(null); }} items={COSMETIC_KINDS.map((k) => ({ id: k.id, label: k.label, icon: k.icon, badge: k.available ? undefined : "bald" }))} />
+          <Tabs value={kind} onChange={(k) => { setKind(k); setPreviewCapeId(null); setPreviewEmoteId(null); }} items={COSMETIC_KINDS.map((k) => ({ id: k.id, label: k.label, icon: k.icon, badge: k.available ? undefined : "bald" }))} />
 
           {kind === "skin" && <SkinsSection model={model} setModel={setModel} />}
           {kind === "cape" && (
-            <CapesSection
+            <CapesSection unlocks={profile?.unlocks}
               account={account}
               cosmetics={cosmetics}
               reload={reloadCosmetics}
@@ -164,9 +175,10 @@ export default function CosmeticsPage() {
               onLogin={() => navigate("/accounts")}
             />
           )}
-          {kind === "hat" && <HatsSection account={account} profile={profile} busy={cosBusy} skinUrl={skinUrl} skinModel={skinModel} onSelect={(id) => selectCosmetic("hat", id)} onPreview={setPreviewHatId} previewId={previewHatId} onLogin={() => navigate("/accounts")} />}
+          {kind === "hat" && <HatsSection account={account} profile={profile} busy={cosBusy} skinUrl={skinUrl} skinModel={skinModel} onSelect={(id) => selectCosmetic("hat", id)} onPreview={setPreviewHatId} previewId={previewHatId} onLogin={() => navigate("/accounts")} onUnlocked={reloadCosmetics} />}
           {kind === "wings" && <WingsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("wings", id)} onPreview={setPreviewWingsId} previewId={previewWingsId} onLogin={() => navigate("/accounts")} onUnlocked={reloadCosmetics} />}
-          {kind === "effect" && <EffectsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("effect", id)} onPreview={setPreviewEffectId} previewId={previewEffectId} onLogin={() => navigate("/accounts")} />}
+          {kind === "effect" && <EffectsSection account={account} profile={profile} busy={cosBusy} onSelect={(id) => selectCosmetic("effect", id)} onPreview={setPreviewEffectId} previewId={previewEffectId} onLogin={() => navigate("/accounts")} onUnlocked={reloadCosmetics} />}
+          {kind === "emote" && <EmotesSection account={account} profile={profile} busy={cosBusy} onPreview={setPreviewEmoteId} previewId={previewEmoteId} onLogin={() => navigate("/accounts")} onChanged={reloadCosmetics} />}
         </section>
       </div>
     </div>
@@ -321,6 +333,7 @@ function CapesSection({
   activeCape,
   onPreview,
   previewId,
+  unlocks,
   cosmeticsEnabled,
   onEnableCosmetics,
   onLogin,
@@ -331,6 +344,7 @@ function CapesSection({
   activeCape: Cape | null;
   onPreview: (id: string | null) => void;
   previewId: string | null;
+  unlocks?: string[];
   cosmeticsEnabled: boolean;
   onEnableCosmetics: () => void;
   onLogin: () => void;
@@ -552,13 +566,16 @@ function CapesSection({
         Chaos-Capes (Vorlagen)
       </span>
       <div className="chaos-cos-templates">
-        {CHAOS_CAPES.map((b) => (
-          <button key={b.id} className="chaos-card hoverable chaos-cos-template" disabled={busy} onClick={() => importBuiltin(b)}>
-            <TemplateThumb dataUrl={templateUrls[b.id]} />
-            <strong>{b.name}</strong>
-            <span>{b.description}</span>
-          </button>
-        ))}
+        {CHAOS_CAPES.map((b) => {
+          const locked = !isCapeUnlocked(b, unlocks);
+          return (
+            <button key={b.id} className={"chaos-card hoverable chaos-cos-template" + (b.exclusive ? " legendary" : "") + (locked ? " locked" : "")} disabled={busy || locked} title={locked ? "Legendär – nur mit Code (Cosmetics › Emotes/Hüte: Code einlösen)" : undefined} onClick={() => importBuiltin(b)}>
+              <TemplateThumb dataUrl={templateUrls[b.id]} />
+              <strong>{b.exclusive ? "👑 " : ""}{b.name}{locked ? " 🔒" : ""}</strong>
+              <span>{b.description}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* API */}

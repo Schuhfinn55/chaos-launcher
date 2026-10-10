@@ -14,6 +14,8 @@ export interface BuiltinCape {
   /** Animiert: Bilder pro Sekunde (generate liefert dann einen Frame-Streifen) */
   fps?: number;
   frames?: number;
+  /** Legendär – nur per Code (Freischaltung "cape:<id>") */
+  exclusive?: boolean;
 }
 
 /** Skalierung des 64×32-Layouts. 4 → 256×128 (erlaubtes Format). */
@@ -753,7 +755,108 @@ const animVoid = () =>
     }
   });
 
+/* ---------- Legendär ---------- */
+
+/** Overlord: schwarze Dornen, pulsierender Blutkern, aufsteigende Glut. */
+const animOverlord = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    vgrad(ctx, w, h, ["#050203", "#1a0408", "#3a0810"]);
+    const pulse = 0.5 + 0.5 * Math.sin(t * TAU);
+    const g = ctx.createRadialGradient(w / 2, h * 0.42, 2, w / 2, h * 0.42, w * (0.45 + 0.1 * pulse));
+    g.addColorStop(0, `rgba(255,31,61,${0.95})`);
+    g.addColorStop(0.35, `rgba(225,29,46,${0.55 + 0.3 * pulse})`);
+    g.addColorStop(1, "rgba(80,8,16,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    // Dornenkrone
+    ctx.fillStyle = "#0b0609";
+    for (let i = 0; i < 7; i++) {
+      const x = (i + 0.5) * (w / 7);
+      const th = h * (0.18 + 0.1 * Math.sin(i * 1.7 + t * TAU));
+      ctx.beginPath(); ctx.moveTo(x - w / 14, h * 0.62); ctx.lineTo(x, h * 0.62 - th); ctx.lineTo(x + w / 14, h * 0.62); ctx.fill();
+    }
+    ctx.fillRect(0, h * 0.6, w, h * 0.08);
+    // Rubine
+    for (let i = 0; i < 7; i++) {
+      const x = (i + 0.5) * (w / 7), glow = 0.6 + 0.4 * Math.sin(t * TAU * 2 + i);
+      ctx.fillStyle = `rgba(255,77,94,${glow})`;
+      ctx.fillRect(x - 1.5, h * 0.63, 3, 3);
+    }
+    // Glut
+    const r = rng(99);
+    for (let i = 0; i < 18; i++) {
+      const x = r() * w, sp = 0.3 + r() * 0.7, y = ((1 - ((t * sp + r()) % 1)) * h);
+      ctx.fillStyle = `rgba(255,${120 + Math.floor(r() * 100)},40,${0.4 + 0.5 * r()})`;
+      ctx.fillRect(x, y, 1.5, 1.5);
+    }
+  });
+
+/** Phönix: Feuervogel mit schlagenden Schwingen über Glutregen. */
+const animPhoenix = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    vgrad(ctx, w, h, ["#1a0500", "#4a1200", "#7c2d12"]);
+    const flap = Math.sin(t * TAU);
+    const cx = w / 2, cy = h * 0.45;
+    const wing = (dir: number) => {
+      const g = ctx.createLinearGradient(cx, cy, cx + dir * w * 0.5, cy - h * 0.3 * flap);
+      g.addColorStop(0, "#fde68a"); g.addColorStop(0.5, "#f97316"); g.addColorStop(1, "rgba(225,29,46,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.quadraticCurveTo(cx + dir * w * 0.3, cy - h * 0.35 * (0.6 + 0.4 * flap), cx + dir * w * 0.5, cy - h * 0.15 * flap);
+      ctx.quadraticCurveTo(cx + dir * w * 0.3, cy + h * 0.05, cx, cy + h * 0.12);
+      ctx.fill();
+    };
+    wing(-1); wing(1);
+    // Körper + Kopf
+    ctx.fillStyle = "#fbbf24";
+    ctx.beginPath(); ctx.ellipse(cx, cy + h * 0.02, w * 0.07, h * 0.14, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = "#fde68a";
+    ctx.beginPath(); ctx.arc(cx, cy - h * 0.14, w * 0.05, 0, TAU); ctx.fill();
+    // Schweif
+    ctx.strokeStyle = "rgba(249,115,22,0.9)"; ctx.lineWidth = 2;
+    for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(cx, cy + h * 0.14); ctx.quadraticCurveTo(cx + i * w * 0.15, cy + h * 0.3, cx + i * w * 0.1 + Math.sin(t * TAU + i) * 3, h * 0.95); ctx.stroke(); }
+    // Glutregen
+    const r = rng(42);
+    for (let i = 0; i < 16; i++) {
+      const x = r() * w, y = ((t + r()) % 1) * h;
+      ctx.fillStyle = `rgba(253,230,138,${0.5 + 0.5 * r()})`;
+      ctx.fillRect(x, y, 1.5, 2);
+    }
+  });
+
+/** Void-Krone: violetter Strudel ins Nichts mit schwebender Krone. */
+const animVoidCrown = () =>
+  drawAnimatedCape(16, (ctx, w, h, t) => {
+    vgrad(ctx, w, h, ["#06030f", "#1a0b33", "#2e1065"]);
+    const cx = w / 2, cy = h * 0.55;
+    for (let i = 12; i >= 0; i--) {
+      const rad = (i / 12) * w * 0.55, a = t * TAU + i * 0.5;
+      ctx.strokeStyle = `rgba(${124 + i * 8},58,237,${0.25 + 0.05 * (12 - i)})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let k = 0; k <= 24; k++) { const ang = a + (k / 24) * TAU, rr = rad * (1 - k / 60); const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * 0.6; if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#06030f";
+    ctx.beginPath(); ctx.ellipse(cx, cy, w * 0.12, h * 0.07, 0, 0, TAU); ctx.fill();
+    // Krone
+    const bob = Math.sin(t * TAU) * 2;
+    ctx.fillStyle = "#c4b5fd";
+    const kx = cx - w * 0.18, ky = h * 0.2 + bob;
+    ctx.fillRect(kx, ky + 6, w * 0.36, 4);
+    for (let i = 0; i < 4; i++) { const x = kx + i * (w * 0.36) / 3; ctx.beginPath(); ctx.moveTo(x - 2, ky + 6); ctx.lineTo(x, ky - 4); ctx.lineTo(x + 2, ky + 6); ctx.fill(); }
+    ctx.fillStyle = `rgba(167,139,250,${0.6 + 0.4 * Math.sin(t * TAU * 2)})`;
+    ctx.fillRect(cx - 1.5, ky + 7, 3, 2);
+    // Endstaub
+    const r = rng(7);
+    for (let i = 0; i < 14; i++) { ctx.fillStyle = `rgba(196,181,253,${0.3 + 0.6 * r()})`; ctx.fillRect(r() * w, ((r() + t * 0.5) % 1) * h, 1, 1); }
+  });
+
 export const CHAOS_CAPES: BuiltinCape[] = [
+  { id: "anim-overlord", name: "Overlord", description: "Legendär: Dornenkrone, pulsierender Blutkern, Glut", generate: animOverlord, fps: 10, frames: 16, exclusive: true },
+  { id: "anim-phoenix", name: "Phönix", description: "Legendär: Feuervogel mit schlagenden Schwingen", generate: animPhoenix, fps: 10, frames: 16, exclusive: true },
+  { id: "anim-void-crown", name: "Void-Krone", description: "Legendär: Strudel ins Nichts mit schwebender Krone", generate: animVoidCrown, fps: 10, frames: 16, exclusive: true },
   { id: "anim-blood-moon", name: "Blutmond", description: "Animiert: Blutmond steigt über Bergen auf", generate: animBloodMoon, fps: 8, frames: 20 },
   { id: "anim-storm", name: "Chaos-Sturm", description: "Animiert: Regen und Blitze", generate: animStorm, fps: 12, frames: 16 },
   { id: "anim-dragon-eye", name: "Drachenauge", description: "Animiert: blickendes, blinzelndes Auge", generate: animDragonEye, fps: 12, frames: 24 },
@@ -786,3 +889,7 @@ export const CHAOS_CAPES: BuiltinCape[] = [
 
 /** Kompatibilität zum alten Namen. */
 export const BUILTIN_CAPES = CHAOS_CAPES;
+
+export function isCapeUnlocked(c: BuiltinCape, unlocks: string[] | undefined | null): boolean {
+  return !c.exclusive || (unlocks ?? []).includes("cape:" + c.id);
+}

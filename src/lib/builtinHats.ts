@@ -28,6 +28,8 @@ export interface BuiltinHat {
   glow?: boolean;
   spin?: number;
   bob?: number;
+  /** Legendär – nur per Code (Freischaltung "hat:<id>") */
+  exclusive?: boolean;
   boxes: HatBox[];
 }
 
@@ -83,6 +85,22 @@ export const CHAOS_HATS: BuiltinHat[] = [
     boxes: [B(-4.6, -9.5, -4.6, 9.2, 2, 9.2, "#f4f1f2"), B(-4, -13, -4, 8, 3.5, 8, "#e11d2e"), B(-2.5, -15.5, -2.5, 5, 2.5, 5, "#e11d2e"), B(-0.5, -17, 1, 3, 2, 3, "#e11d2e"), B(1, -18.5, 2.5, 2.5, 2.5, 2.5, "#f4f1f2")],
   },
   {
+    id: "overlord-crown", name: "Overlord-Krone", description: "Schwarze Dornenkrone mit glühenden Blutrubinen und schwebenden Splittern.", icon: "👑", glow: true, spin: 0.6, exclusive: true,
+    boxes: [B(-5, -11.5, -5, 10, 3.5, 10, "#0b0609"), B(-5.4, -9, -5.4, 10.8, 1, 10.8, "#4a0810"), B(-5, -14.5, -5, 1.6, 3, 1.6, "#e11d2e"), B(3.4, -14.5, -5, 1.6, 3, 1.6, "#e11d2e"), B(-5, -14.5, 3.4, 1.6, 3, 1.6, "#e11d2e"), B(3.4, -14.5, 3.4, 1.6, 3, 1.6, "#e11d2e"), B(-1, -17, -5.2, 2, 5.5, 1.4, "#ff1f3d"), B(-0.5, -19.5, -5, 1, 2.5, 1, "#ffe4e8"), B(-7.5, -13, -0.8, 1.6, 1.6, 1.6, "#ff4d5e"), B(5.9, -13, -0.8, 1.6, 1.6, 1.6, "#ff4d5e"), B(-0.8, -13, 5.9, 1.6, 1.6, 1.6, "#ff4d5e")],
+  },
+  {
+    id: "void-helm", name: "Void-Helm", description: "Helm aus dem Nichts: violette Risse, die pulsierend leuchten.", icon: "🟣", glow: true, bob: 0.2, exclusive: true,
+    boxes: [B(-4.6, -9.2, -4.6, 9.2, 4.4, 9.2, "#0f0a1f"), B(-4.8, -5.8, -4.8, 9.6, 1.2, 9.6, "#2e1065"), B(-4.9, -8.2, -5, 9.8, 1.2, 1, "#7c3aed"), B(-0.6, -11.5, -4.2, 1.2, 2.5, 8.4, "#4c1d95"), B(-0.4, -13, -1, 0.8, 1.8, 2, "#a78bfa"), B(-6.2, -10.5, -0.8, 1.8, 1.4, 1.6, "#a78bfa"), B(4.4, -10.5, -0.8, 1.8, 1.4, 1.6, "#a78bfa")],
+  },
+  {
+    id: "phoenix-crest", name: "Phönix-Krone", description: "Lodernde Federkrone in Orange und Gold – brennt nie aus.", icon: "🔥", glow: true, bob: 0.3, exclusive: true,
+    boxes: [B(-4.6, -9.4, -4.6, 9.2, 2.2, 9.2, "#7c2d12"), B(-1.2, -14, -3.5, 2.4, 5, 7, "#f97316"), B(-0.8, -17, -2, 1.6, 3.5, 4.5, "#fbbf24"), B(-0.5, -19.5, -1, 1, 3, 2.5, "#fde68a"), B(-5.8, -12, -1, 1.6, 3, 2, "#f97316"), B(4.2, -12, -1, 1.6, 3, 2, "#f97316"), B(-6.4, -14.5, -0.6, 1, 2.5, 1.2, "#fbbf24"), B(5.4, -14.5, -0.6, 1, 2.5, 1.2, "#fbbf24")],
+  },
+  {
+    id: "galaxy-halo", name: "Galaxie-Halo", description: "Doppelter Sternenring mit leuchtendem Kern, dreht sich ewig.", icon: "🌌", glow: true, spin: 1.8, bob: 0.4, exclusive: true,
+    boxes: [B(-5.5, -12, -5.5, 11, 0.6, 1, "#c4b5fd"), B(-5.5, -12, 4.5, 11, 0.6, 1, "#c4b5fd"), B(-5.5, -12, -4.5, 1, 0.6, 9, "#c4b5fd"), B(4.5, -12, -4.5, 1, 0.6, 9, "#c4b5fd"), B(-3.5, -14, -3.5, 7, 0.5, 0.8, "#818cf8"), B(-3.5, -14, 2.7, 7, 0.5, 0.8, "#818cf8"), B(-3.5, -14, -2.7, 0.8, 0.5, 5.4, "#818cf8"), B(2.7, -14, -2.7, 0.8, 0.5, 5.4, "#818cf8"), B(-0.9, -16.5, -0.9, 1.8, 1.8, 1.8, "#f8fafc"), B(-6.3, -12.6, -0.5, 1, 1, 1, "#f472b6"), B(5.3, -12.6, -0.5, 1, 1, 1, "#60a5fa")],
+  },
+  {
     id: "dragon-helm", name: "Drachenhelm", description: "Dunkler Schuppenhelm mit Stachelkamm, geschwungenen Hörnern und glühenden Augen.", icon: "🐲",
     boxes: [B(-4.6, -9.2, -4.6, 9.2, 4, 9.2, "#1f2937"), B(-4.8, -6.2, -5, 9.6, 1, 1, "#111827"), B(-0.6, -11, -3, 1.2, 2, 1.2, "#334155"), B(-0.6, -11.5, -0.5, 1.2, 2.5, 1.2, "#334155"), B(-0.6, -11, 2, 1.2, 2, 1.2, "#334155"), B(-3, -6.5, -5.1, 2, 1, 0.5, "#ff2d44"), B(1, -6.5, -5.1, 2, 1, 0.5, "#ff2d44"), B(-6.2, -9.5, -1, 2, 2, 2, "#0f172a"), B(-6.8, -11.5, -0.8, 1.6, 2.2, 1.6, "#1e293b"), B(-7.6, -13.3, -0.6, 1.2, 2, 1.2, "#334155"), B(4.2, -9.5, -1, 2, 2, 2, "#0f172a"), B(5.2, -11.5, -0.8, 1.6, 2.2, 1.6, "#1e293b"), B(6.4, -13.3, -0.6, 1.2, 2, 1.2, "#334155")],
   },
@@ -135,6 +153,10 @@ export const CHAOS_HATS: BuiltinHat[] = [
     boxes: [B(-4.5, -10.5, -4.5, 9, 2, 9, "#bae6fd"), B(-4.4, -13, -4.4, 1.4, 2.5, 1.4, "#e0f2fe"), B(3, -13, -4.4, 1.4, 2.5, 1.4, "#e0f2fe"), B(-4.4, -13, 3, 1.4, 2.5, 1.4, "#e0f2fe"), B(3, -13, 3, 1.4, 2.5, 1.4, "#e0f2fe"), B(-0.8, -15, -4.4, 1.6, 4.5, 1.2, "#f0f9ff"), B(-0.5, -16.5, -4.2, 1, 1.5, 0.8, "#ffffff")],
   },
 ];
+
+export function isHatUnlocked(h: BuiltinHat, unlocks: string[] | undefined | null): boolean {
+  return !h.exclusive || (unlocks ?? []).includes("hat:" + h.id);
+}
 
 export function hatById(id: string | undefined | null): BuiltinHat | null {
   if (!id) return null;

@@ -516,6 +516,11 @@ pub struct CosmeticsProfile {
     /// Per Code freigeschaltete exklusive Cosmetics (Wings-IDs), von der API bestätigt.
     #[serde(default)]
     pub unlocks: Vec<String>,
+    /// Belegung des Ingame-Emote-Rads (8 Slots, leer = "")
+    #[serde(default)]
+    pub emote_wheel: Vec<String>,
+    #[serde(default)]
+    pub emote_wheel_updated_at: i64,
     /// "everyone" | "chaos" | "none".
     #[serde(default = "default_visibility")]
     pub visibility: String,

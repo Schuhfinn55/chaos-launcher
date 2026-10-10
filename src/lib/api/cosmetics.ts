@@ -13,7 +13,7 @@ import type {
   CosmeticCode, Cape, CosmeticsApiInfo, CosmeticsProfile, CosmeticsState, PlayerSkin } from "@/types";
 
 export interface CosmeticKind {
-  id: "skin" | "cape" | "hat" | "wings" | "effect";
+  id: "skin" | "cape" | "hat" | "wings" | "effect" | "emote";
   label: string;
   icon: string;
   description: string;
@@ -27,6 +27,7 @@ export const COSMETIC_KINDS: CosmeticKind[] = [
   { id: "cape", label: "Meine Capes", icon: "🧥", description: "Eigene Capes hochladen, aktivieren und ingame tragen.", available: true },
   { id: "hat", label: "Hüte", icon: "🎩", description: "Vorgefertigte Hüte, die der Chaos Client am Kopf rendert.", available: true },
   { id: "wings", label: "Wings", icon: "🪽", description: "Animierte Flügel am Rücken – schlagen, gleiten, leuchten.", available: true },
+  { id: "emote", label: "Emotes", icon: "🕺", description: "Ganzkörper-Animationen mit Vorschau – und dein Emote-Rad.", available: true },
   { id: "effect", label: "Effekte", icon: "✨", description: "Partikel- und Aura-Effekte um deinen Spieler.", available: true },
 ];
 
@@ -184,8 +185,16 @@ export async function refreshUnlocks(accountUuid: string): Promise<string[]> {
 export async function adminCodesList(adminKey: string): Promise<CosmeticCode[]> {
   return invoke<CosmeticCode[]>("admin_codes_list", { adminKey });
 }
-export async function adminCodesCreate(adminKey: string, code: string, wings: string, maxUses: number, note: string): Promise<CosmeticCode> {
-  return invoke<CosmeticCode>("admin_codes_create", { adminKey, code, wings, maxUses, note });
+/** Belegung des Ingame-Emote-Rads (8 Slots) speichern. */
+export async function setEmoteWheel(accountUuid: string, ids: string[]): Promise<CosmeticsProfile> {
+  return invoke<CosmeticsProfile>("set_emote_wheel", { accountUuid, ids });
+}
+/** Im Spiel geänderte Rad-Belegung übernehmen; true = Profil hat sich geändert. */
+export async function syncEmoteWheelFromGame(accountUuid: string): Promise<boolean> {
+  return invoke<boolean>("sync_emote_wheel_from_game", { accountUuid });
+}
+export async function adminCodesCreate(adminKey: string, code: string, item: string, maxUses: number, note: string): Promise<CosmeticCode> {
+  return invoke<CosmeticCode>("admin_codes_create", { adminKey, code, item, maxUses, note });
 }
 export async function adminCodesDelete(adminKey: string, code: string): Promise<void> {
   await invoke("admin_codes_delete", { adminKey, code });

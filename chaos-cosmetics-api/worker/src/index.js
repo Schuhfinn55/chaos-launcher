@@ -132,11 +132,21 @@ function capeUrl(origin, id) { return `${origin}/v1/capes/${id}/texture`; }
 function remoteCape(origin, c) { return c ? { id: c.id, name: c.name, url: capeUrl(origin, c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom", fps: c.fps || 8 } : null; }
 /* ---------- Exklusive Wings (nur mit Code) ---------- */
 const EXCLUSIVE_WINGS = new Set(["overlord", "celestial"]);
+/* Weitere exklusive Items: Freischaltungs-Schlüssel "<art>:<id>" (Wings aus Kompatibilität ohne Präfix). */
+const EXCLUSIVE = {
+  wings: EXCLUSIVE_WINGS,
+  hat: new Set(["overlord-crown", "void-helm", "phoenix-crest", "galaxy-halo"]),
+  effect: new Set(["chaos-nova", "phoenix-fire", "void-storm"]),
+  emote: new Set(["breakdance", "chaos-rave", "helicopter", "levitate", "moonwalk", "dragon-roar"]),
+  cape: new Set(["anim-overlord", "anim-phoenix", "anim-void-crown"]),
+};
+const unlockKey = (kind, id) => (kind === "wings" ? id : `${kind}:${id}`);
+const isLocked = (kind, id, unlocks) => !!id && EXCLUSIVE[kind]?.has(id) && !(Array.isArray(unlocks) && unlocks.includes(unlockKey(kind, id)));
 const normCode = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 function genCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; const b = crypto.getRandomValues(new Uint8Array(8)); let s = ""; for (let i = 0; i < 8; i++) s += a[b[i] % a.length]; return "CHAOS" + s.slice(0, 4) + s.slice(4); }
 const fmtCode = (c) => c.length === 13 && c.startsWith("CHAOS") ? `CHAOS-${c.slice(5, 9)}-${c.slice(9)}` : c;
 function isAdmin(env, request) { const k = request.headers.get("x-admin-key") || ""; return !!env.ADMIN_KEY && k.length > 0 && k === env.ADMIN_KEY; }
-function codeView(c) { return { code: fmtCode(c.code), wings: c.wings, maxUses: c.maxUses, uses: c.uses || 0, note: c.note || "", createdAt: c.createdAt, redeemedBy: c.redeemedBy || [] }; }
+function codeView(c) { return { code: fmtCode(c.code), item: c.item || c.wings, wings: c.wings, maxUses: c.maxUses, uses: c.uses || 0, note: c.note || "", createdAt: c.createdAt, redeemedBy: c.redeemedBy || [] }; }
 
 /* ---------- Freunde & Präsenz ---------- */
 const PRESENCE_TTL_MS = 180000;
@@ -161,7 +171,9 @@ async function playerView(env, origin, uuid) {
   if (!p) return null;
   const hidden = p.visibility === "none";
   const unlocks = Array.isArray(p.unlocks) ? p.unlocks : [];
-  if (p.wings && EXCLUSIVE_WINGS.has(p.wings) && !unlocks.includes(p.wings)) p.wings = ""; // Besitz beim Lesen prüfen
+  if (isLocked("wings", p.wings, unlocks)) p.wings = ""; // Besitz beim Lesen prüfen
+  if (isLocked("hat", p.hat, unlocks)) p.hat = "";
+  if (isLocked("effect", p.effect, unlocks)) p.effect = "";
   let cape = !hidden && p.activeCape ? await getCape(env, p.activeCape) : null;
   if (cape && cape.owner !== uuid) cape = null; // Besitz wird beim Lesen geprüft
   return {
@@ -289,11 +301,19 @@ export default {
           // Besitz wird beim Lesen (playerView) geprüft – KV-Schreibvorgänge sind nicht sofort überall sichtbar
           pl.activeCape = b.activeCape ? sanitizeId(b.activeCape) : "";
         }
-        if ("hat" in b) pl.hat = sanitizeId(b.hat);
-        if ("effect" in b) pl.effect = sanitizeId(b.effect);
+        if ("hat" in b) {
+          const hid = sanitizeId(b.hat);
+          if (isLocked("hat", hid, pl.unlocks)) return json(403, { error: "Dieser Hut ist legendär – bitte zuerst einen Code einlösen." });
+          pl.hat = hid;
+        }
+        if ("effect" in b) {
+          const eid = sanitizeId(b.effect);
+          if (isLocked("effect", eid, pl.unlocks)) return json(403, { error: "Dieser Effekt ist legendär – bitte zuerst einen Code einlösen." });
+          pl.effect = eid;
+        }
         if ("wings" in b) {
           const w = sanitizeId(b.wings);
-          if (w && EXCLUSIVE_WINGS.has(w) && !(Array.isArray(pl.unlocks) && pl.unlocks.includes(w))) return json(403, { error: "Diese Wings sind exklusiv – bitte zuerst einen Code einlösen." });
+          if (isLocked("wings", w, pl.unlocks)) return json(403, { error: "Diese Wings sind exklusiv – bitte zuerst einen Code einlösen." });
           pl.wings = w;
         }
         if ("visibility" in b) pl.visibility = ["everyone", "chaos", "none"].includes(b.visibility) ? b.visibility : "everyone";
@@ -321,6 +341,10 @@ export default {
         const b = await readJson(request, 2 * 1024);
         const id = sanitizeId(b.id);
         if (!id) return json(400, { error: "id fehlt" });
+        if (EXCLUSIVE.emote.has(id)) {
+          const pl = await getPlayer(env, s.uuid);
+          if (isLocked("emote", id, pl?.unlocks)) return json(403, { error: "Dieses Emote ist legendär – bitte zuerst einen Code einlösen." });
+        }
         await putJson(env, "emote:" + s.uuid, { id, at: now() }, { expirationTtl: 60 });
         return json(200, { ok: true });
       }
@@ -406,15 +430,16 @@ export default {
         if (!rec) return json(404, { error: "Dieser Code existiert nicht." });
         const pl = (await getPlayer(env, s.uuid)) || { name: s.name, activeCape: "", hat: "", effect: "", wings: "", visibility: "everyone", updatedAt: now() };
         pl.unlocks = Array.isArray(pl.unlocks) ? pl.unlocks : [];
-        if (pl.unlocks.includes(rec.wings)) return json(200, { ok: true, already: true, unlocked: rec.wings, unlocks: pl.unlocks });
+        const item = rec.item || rec.wings;
+        if (pl.unlocks.includes(item)) return json(200, { ok: true, already: true, unlocked: item, unlocks: pl.unlocks });
         if (rec.maxUses > 0 && (rec.uses || 0) >= rec.maxUses) return json(410, { error: "Dieser Code wurde bereits vollständig eingelöst." });
         rec.uses = (rec.uses || 0) + 1;
         rec.redeemedBy = [...(rec.redeemedBy || []), { uuid: s.uuid, name: s.name, at: now() }].slice(-200);
         await putJson(env, "code:" + code, rec);
-        pl.unlocks.push(rec.wings);
+        pl.unlocks.push(item);
         pl.updatedAt = now();
         await putPlayer(env, s.uuid, pl);
-        return json(200, { ok: true, unlocked: rec.wings, unlocks: pl.unlocks });
+        return json(200, { ok: true, unlocked: item, unlocks: pl.unlocks });
       }
 
       /* Admin: Codes verwalten (Header X-Admin-Key) */
@@ -425,16 +450,19 @@ export default {
           const [l, idx] = await Promise.all([env.KV.list({ prefix: "code:", limit: 1000 }), getJson(env, "codes:index")]);
           const names = new Set([...l.keys.map((k) => k.name), ...((idx || []).map((c) => "code:" + c))]);
           const items = (await Promise.all([...names].map((k) => getJson(env, k)))).filter(Boolean).map(codeView).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          return json(200, { codes: items, exclusiveWings: [...EXCLUSIVE_WINGS] });
+          return json(200, { codes: items, exclusiveWings: [...EXCLUSIVE_WINGS], exclusive: Object.fromEntries(Object.entries(EXCLUSIVE).map(([k, v]) => [k, [...v]])) });
         }
         if (request.method === "POST" && p === "/v1/admin/codes") {
           const b = await readJson(request, 4 * 1024);
-          const wings = sanitizeId(b.wings);
-          if (!wings) return json(400, { error: "wings fehlt" });
+          const rawItem = String(b.item || b.wings || "");
+          const [ik, iid] = rawItem.includes(":") ? rawItem.split(":", 2) : ["wings", rawItem];
+          const item = ik === "wings" ? sanitizeId(iid) : `${sanitizeId(ik)}:${sanitizeId(iid)}`;
+          const wings = ik === "wings" ? sanitizeId(iid) : "";
+          if (!sanitizeId(iid) || !EXCLUSIVE[ik]) return json(400, { error: "item fehlt oder unbekannte Art (wings, hat, effect, emote, cape)" });
           let code = normCode(b.code) || genCode();
           if (code.length < 6 || code.length > 32) return json(400, { error: "Code muss 6–32 Zeichen (Buchstaben/Zahlen) haben" });
           if (await getJson(env, "code:" + code)) return json(409, { error: "Code existiert bereits" });
-          const rec = { code, wings, maxUses: Math.max(0, Math.min(100000, Number(b.maxUses) || 0)), uses: 0, note: String(b.note || "").slice(0, 80), createdAt: now(), redeemedBy: [] };
+          const rec = { code, item, wings, maxUses: Math.max(0, Math.min(100000, Number(b.maxUses) || 0)), uses: 0, note: String(b.note || "").slice(0, 80), createdAt: now(), redeemedBy: [] };
           await putJson(env, "code:" + code, rec);
           const idx = (await getJson(env, "codes:index")) || [];
           if (!idx.includes(code)) await putJson(env, "codes:index", [...idx, code].slice(-2000));

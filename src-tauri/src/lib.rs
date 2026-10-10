@@ -231,6 +231,8 @@ pub fn run() {
             commands::cosmetics::cosmetics_server_start,
             commands::cosmetics::cosmetics_server_stop,
             commands::cosmetics::set_cosmetic,
+            commands::cosmetics::set_emote_wheel,
+            commands::cosmetics::sync_emote_wheel_from_game,
             commands::system::discord_set_state,
             commands::system::discord_status,
             // Launch

@@ -411,6 +411,8 @@ pub fn export_for_instance(
         "effect": if settings.cosmetics_enabled { profile.map(|p| p.effect_id.clone()).unwrap_or_default() } else { String::new() },
         "wings": if settings.cosmetics_enabled { profile.map(|p| p.wings_id.clone()).unwrap_or_default() } else { String::new() },
         "unlocks": profile.map(|p| p.unlocks.clone()).unwrap_or_default(),
+        "emoteWheel": profile.map(|p| p.emote_wheel.clone()).unwrap_or_default(),
+        "emoteWheelUpdatedAt": profile.map(|p| p.emote_wheel_updated_at).unwrap_or(0),
         "library": library,
         "players": players,
         "exportedAt": now_millis(),
@@ -531,6 +533,56 @@ pub fn sanitize_id(id: &str) -> String {
 
 /// Setzt Hut ("hat"), Effekt ("effect") oder Wings ("wings") eines Accounts.
 /// Freischaltungen (von der API bestätigt) im Profil speichern.
+/// Belegung des Ingame-Emote-Rads (8 Slots) speichern.
+pub fn set_emote_wheel(account_uuid: &str, ids: &[String]) -> Result<CosmeticsProfile, String> {
+    let mut state = load()?;
+    let profile = profile_mut(&mut state, account_uuid);
+    let mut wheel: Vec<String> = ids.iter().map(|s| sanitize_id(s)).collect();
+    wheel.resize(8, String::new());
+    profile.emote_wheel = wheel;
+    profile.emote_wheel_updated_at = now_millis();
+    profile.updated_at = now_millis();
+    let out = profile.clone();
+    save(&state)?;
+    Ok(out)
+}
+
+/// Im Spiel geänderte Rad-Belegung (chaos-client/emote-wheel.json der Instanzen) übernehmen,
+/// wenn sie neuer ist als die im Launcher. Liefert true, wenn sich etwas geändert hat.
+pub fn adopt_ingame_wheel(account_uuid: &str) -> Result<bool, String> {
+    let uuid = account_uuid.replace('-', "").to_lowercase();
+    let mut best: Option<(i64, Vec<String>)> = None;
+    for inst in crate::storage::load_instances().unwrap_or_default() {
+        let Ok(home) = crate::storage::instance_home(&inst) else { continue };
+        let Ok(txt) = fs::read_to_string(home.join("chaos-client").join("emote-wheel.json")) else { continue };
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(&txt) else { continue };
+        if v.get("uuid").and_then(|u| u.as_str()).map(|u| u.replace('-', "").to_lowercase()).as_deref() != Some(uuid.as_str()) {
+            continue;
+        }
+        let at = v.get("updatedAt").and_then(|a| a.as_i64()).unwrap_or(0);
+        let ids: Vec<String> = v
+            .get("ids")
+            .and_then(|a| a.as_array())
+            .map(|a| a.iter().map(|x| sanitize_id(x.as_str().unwrap_or(""))).collect())
+            .unwrap_or_default();
+        if best.as_ref().map(|b| at > b.0).unwrap_or(true) {
+            best = Some((at, ids));
+        }
+    }
+    let Some((at, ids)) = best else { return Ok(false) };
+    let mut state = load()?;
+    let profile = profile_mut(&mut state, account_uuid);
+    if at <= profile.emote_wheel_updated_at {
+        return Ok(false);
+    }
+    let mut wheel = ids;
+    wheel.resize(8, String::new());
+    profile.emote_wheel = wheel;
+    profile.emote_wheel_updated_at = at;
+    save(&state)?;
+    Ok(true)
+}
+
 pub fn set_unlocks(account_uuid: &str, unlocks: &[String]) -> Result<CosmeticsProfile, String> {
     let mut state = load()?;
     let profile = profile_mut(&mut state, account_uuid);

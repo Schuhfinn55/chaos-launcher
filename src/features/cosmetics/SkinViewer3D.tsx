@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
 import { DoubleSide, Group, Mesh, MeshStandardMaterial, NearestFilter, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
 import type { BuiltinHat } from "@/lib/builtinHats";
+import { EmoteAnimation, resetEmotePose, type BuiltinEmote } from "@/lib/builtinEmotes";
 import { animateHat, buildHatGroup, disposeGroup } from "@/lib/hatMesh";
 import { WINGS_PLANE, WINGS_ROOT, wingsTextureUrl, type BuiltinWings } from "@/lib/builtinWings";
 
@@ -31,6 +32,8 @@ export interface SkinViewer3DProps {
   hat?: BuiltinHat | null;
   /** Animierte Wings (Federn am Rücken) */
   wings?: BuiltinWings | null;
+  /** Emote abspielen (ersetzt die Standard-Animation) */
+  emote?: BuiltinEmote | null;
   className?: string;
 }
 
@@ -49,6 +52,7 @@ export default function SkinViewer3D({
   capeFps = 8,
   hat = null,
   wings = null,
+  emote = null,
   className,
 }: SkinViewer3DProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -91,6 +95,11 @@ export default function SkinViewer3D({
   useEffect(() => {
     const v = viewerRef.current;
     if (!v) return;
+    if (emote) {
+      resetEmotePose(v.playerObject);
+      v.animation = new EmoteAnimation(emote);
+      return () => { resetEmotePose(v.playerObject); };
+    }
     switch (animation) {
       case "walk":
         v.animation = new WalkingAnimation();
@@ -107,7 +116,7 @@ export default function SkinViewer3D({
       default:
         v.animation = new IdleAnimation();
     }
-  }, [animation]);
+  }, [animation, emote]);
 
   useEffect(() => {
     const v = viewerRef.current;

@@ -71,3 +71,24 @@
 .chaos-cos-item.legendary.locked { opacity: 0.85; }
 .chaos-cos-item-img { position: relative; }
 .chaos-lock { position: absolute; right: 6px; top: 6px; font-size: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8)); }
+
+/* ---------- Emotes & Emote-Rad ---------- */
+.chaos-wheel { display: flex; flex-direction: column; gap: 10px; }
+.chaos-wheel-slots { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.chaos-wheel-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; background: var(--chaos-bg-2); border: 1px solid var(--chaos-border); cursor: pointer; min-height: 66px; transition: border-color .15s, transform .15s; }
+.chaos-wheel-slot:hover { border-color: var(--chaos-accent); transform: translateY(-1px); }
+.chaos-wheel-slot.target { border-style: dashed; border-color: var(--chaos-accent); animation: chaos-pulse 1s infinite; }
+.chaos-wheel-slot.locked { opacity: .6; }
+.chaos-wheel-num { font-size: 10px; color: var(--chaos-text-faint); }
+.chaos-wheel-icon { font-size: 22px; line-height: 1.1; }
+.chaos-wheel-name { font-size: 11px; text-align: center; line-height: 1.1; }
+.chaos-wheel-x { position: absolute; top: 1px; right: 4px; background: none; border: none; color: var(--chaos-text-faint); cursor: pointer; font-size: 14px; line-height: 1; }
+.chaos-wheel-x:hover { color: var(--chaos-accent); }
+.chaos-cos-item-img.emote { background: radial-gradient(circle at 50% 40%, var(--chaos-bg-3), var(--chaos-bg-1) 75%); flex-direction: column; gap: 4px; }
+.chaos-emote-icon { font-size: 40px; line-height: 1; }
+.chaos-emote-meta { font-size: 10px; color: var(--chaos-text-faint); }
+.chaos-emote-slot { position: absolute; left: 6px; top: 6px; font-size: 10px; background: var(--chaos-accent); color: #fff; padding: 1px 7px; border-radius: 8px; font-weight: 600; }
+.chaos-badge-accent { background: rgba(var(--chaos-accent-rgb), .2); }
+.chaos-cos-template.legendary { border-color: rgba(245, 195, 66, 0.55); }
+.chaos-cos-template.locked { opacity: .7; }
+@keyframes chaos-pulse { 50% { box-shadow: 0 0 0 3px rgba(var(--chaos-accent-rgb), .25); } }

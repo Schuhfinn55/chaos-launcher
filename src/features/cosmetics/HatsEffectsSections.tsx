@@ -8,9 +8,10 @@
  * ============================================================ */
 
 import { Empty } from "@/components/ui";
-import { CHAOS_HATS, type BuiltinHat } from "@/lib/builtinHats";
+import { CHAOS_HATS, isHatUnlocked, type BuiltinHat } from "@/lib/builtinHats";
+import { RedeemCodeForm } from "./RedeemCodeForm";
 import { useHatThumb } from "@/lib/hatThumbs";
-import { CHAOS_EFFECTS, type BuiltinEffect } from "@/lib/builtinEffects";
+import { CHAOS_EFFECTS, isEffectUnlocked, type BuiltinEffect } from "@/lib/builtinEffects";
 import type { Account, CosmeticsProfile } from "@/types";
 
 interface Common {
@@ -24,6 +25,7 @@ interface Common {
   /** Skin für die Hut-Vorschaubilder (Data-URL oder http) */
   skinUrl?: string | null;
   skinModel?: "classic" | "slim";
+  onUnlocked?: () => Promise<void>;
 }
 
 export function HatsSection(p: Common) {
@@ -45,8 +47,22 @@ export function HatsSection(p: Common) {
       <p className="chaos-faint" style={{ fontSize: 12, margin: 0 }}>
         Klick = Vorschau in 3D · „Tragen“ = ingame aktivieren. Hüte werden vom Chaos Client am Kopf gerendert und folgen jeder Kopfbewegung.
       </p>
+      <div className="chaos-legendary">
+        <div className="chaos-row chaos-wrap" style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <div>
+            <span className="chaos-section-title" style={{ color: "#f5c342" }}>👑 Legendär – nur mit Code</span>
+            <p className="chaos-faint" style={{ fontSize: 12, margin: "2px 0 0" }}>Leuchtende, animierte Kronen und Helme. Codes gibt es nur vom Chaos-Team.</p>
+          </div>
+          <RedeemCodeForm account={p.account} busy={p.busy} onUnlocked={p.onUnlocked} />
+        </div>
+        <div className="chaos-cos-grid" style={{ marginTop: 10 }}>
+          {CHAOS_HATS.filter((h) => h.exclusive).map((h) => (
+            <HatCard key={h.id} hat={h} skinUrl={p.skinUrl ?? null} skinModel={p.skinModel ?? "classic"} active={h.id === activeId} preview={p.previewId === h.id} busy={p.busy || !p.account} locked={!isHatUnlocked(h, p.profile?.unlocks)} onPreview={() => p.onPreview(p.previewId === h.id ? null : h.id)} onWear={() => p.onSelect(h.id)} />
+          ))}
+        </div>
+      </div>
       <div className="chaos-cos-grid">
-        {CHAOS_HATS.map((h) => (
+        {CHAOS_HATS.filter((h) => !h.exclusive).map((h) => (
           <HatCard key={h.id} hat={h} skinUrl={p.skinUrl ?? null} skinModel={p.skinModel ?? "classic"} active={h.id === activeId} preview={p.previewId === h.id} busy={p.busy || !p.account} onPreview={() => p.onPreview(p.previewId === h.id ? null : h.id)} onWear={() => p.onSelect(h.id)} />
         ))}
       </div>
@@ -54,18 +70,23 @@ export function HatsSection(p: Common) {
   );
 }
 
-function HatCard({ hat, skinUrl, skinModel, active, preview, busy, onPreview, onWear }: { hat: BuiltinHat; skinUrl: string | null; skinModel: "classic" | "slim"; active: boolean; preview: boolean; busy: boolean; onPreview: () => void; onWear: () => void }) {
+function HatCard({ hat, skinUrl, skinModel, active, preview, busy, locked, onPreview, onWear }: { hat: BuiltinHat; skinUrl: string | null; skinModel: "classic" | "slim"; active: boolean; preview: boolean; busy: boolean; locked?: boolean; onPreview: () => void; onWear: () => void }) {
   return (
-    <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "")} onClick={onPreview}>
+    <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "") + (hat.exclusive ? " legendary" : "") + (locked ? " locked" : "")} onClick={onPreview}>
       <div className={"chaos-cos-item-img hat" + (hat.glow ? " glow" : "")}>
         <HatThumb hat={hat} skinUrl={skinUrl} skinModel={skinModel} />
+        {locked && <span className="chaos-lock" title="Nur mit Code">🔒</span>}
       </div>
       <strong>{hat.icon} {hat.name}</strong>
       <span className="chaos-faint" style={{ fontSize: 11 }}>{hat.description}</span>
       <div className="chaos-cos-item-actions" onClick={(e) => e.stopPropagation()}>
-        <button className={"chaos-btn chaos-btn-sm" + (active ? "" : " chaos-btn-primary")} disabled={busy || active} onClick={onWear}>
-          {active ? "Getragen" : "Tragen"}
-        </button>
+        {locked ? (
+          <span className="chaos-badge" title="Code oben eingeben">🔒 Code nötig</span>
+        ) : (
+          <button className={"chaos-btn chaos-btn-sm" + (active ? "" : " chaos-btn-primary")} disabled={busy || active} onClick={onWear}>
+            {active ? "Getragen" : "Tragen"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -127,8 +148,22 @@ export function EffectsSection(p: Common) {
       <p className="chaos-faint" style={{ fontSize: 12, margin: 0 }}>
         Partikel-Effekte werden vom Chaos Client um deinen Spieler gerendert – rein kosmetisch, ohne Einfluss auf das Gameplay.
       </p>
+      <div className="chaos-legendary">
+        <div className="chaos-row chaos-wrap" style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <div>
+            <span className="chaos-section-title" style={{ color: "#f5c342" }}>👑 Legendär – nur mit Code</span>
+            <p className="chaos-faint" style={{ fontSize: 12, margin: "2px 0 0" }}>Chaos-Nova, Phönixfeuer, Void-Sturm – Druckwellen, Flammenschwingen, Wirbel. Codes gibt es nur vom Chaos-Team.</p>
+          </div>
+          <RedeemCodeForm account={p.account} busy={p.busy} onUnlocked={p.onUnlocked} />
+        </div>
+        <div className="chaos-cos-grid" style={{ marginTop: 10 }}>
+          {CHAOS_EFFECTS.filter((e) => e.exclusive).map((e) => (
+            <EffectCard key={e.id} effect={e} active={e.id === activeId} preview={p.previewId === e.id} busy={p.busy || !p.account} locked={!isEffectUnlocked(e, p.profile?.unlocks)} onPreview={() => p.onPreview(p.previewId === e.id ? null : e.id)} onUse={() => p.onSelect(e.id)} />
+          ))}
+        </div>
+      </div>
       <div className="chaos-cos-grid">
-        {CHAOS_EFFECTS.map((e) => (
+        {CHAOS_EFFECTS.filter((e) => !e.exclusive).map((e) => (
           <EffectCard key={e.id} effect={e} active={e.id === activeId} preview={p.previewId === e.id} busy={p.busy || !p.account} onPreview={() => p.onPreview(p.previewId === e.id ? null : e.id)} onUse={() => p.onSelect(e.id)} />
         ))}
       </div>
@@ -136,9 +171,9 @@ export function EffectsSection(p: Common) {
   );
 }
 
-function EffectCard({ effect, active, preview, busy, onPreview, onUse }: { effect: BuiltinEffect; active: boolean; preview: boolean; busy: boolean; onPreview: () => void; onUse: () => void }) {
+function EffectCard({ effect, active, preview, busy, locked, onPreview, onUse }: { effect: BuiltinEffect; active: boolean; preview: boolean; busy: boolean; locked?: boolean; onPreview: () => void; onUse: () => void }) {
   return (
-    <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "")} onClick={onPreview}>
+    <div className={"chaos-card hoverable chaos-cos-item" + (active ? " active" : preview ? " preview" : "") + (effect.exclusive ? " legendary" : "") + (locked ? " locked" : "")} onClick={onPreview}>
       <div className="chaos-cos-item-img effect" style={{ background: `radial-gradient(circle at 50% 60%, ${effect.colors[0]}55, transparent 70%)` }}>
         <span className="chaos-cos-effect-icon">{effect.icon}</span>
         <div className="chaos-cos-effect-dots">
@@ -146,13 +181,18 @@ function EffectCard({ effect, active, preview, busy, onPreview, onUse }: { effec
             <span key={i} style={{ background: c, boxShadow: `0 0 8px ${c}` }} />
           ))}
         </div>
+        {locked && <span className="chaos-lock" title="Nur mit Code">🔒</span>}
       </div>
       <strong>{effect.name}</strong>
       <span className="chaos-faint" style={{ fontSize: 11 }}>{effect.description}</span>
       <div className="chaos-cos-item-actions" onClick={(e) => e.stopPropagation()}>
-        <button className={"chaos-btn chaos-btn-sm" + (active ? "" : " chaos-btn-primary")} disabled={busy || active} onClick={onUse}>
-          {active ? "Aktiv" : "Aktivieren"}
-        </button>
+        {locked ? (
+          <span className="chaos-badge" title="Code oben eingeben">🔒 Code nötig</span>
+        ) : (
+          <button className={"chaos-btn chaos-btn-sm" + (active ? "" : " chaos-btn-primary")} disabled={busy || active} onClick={onUse}>
+            {active ? "Aktiv" : "Aktivieren"}
+          </button>
+        )}
       </div>
     </div>
   );
