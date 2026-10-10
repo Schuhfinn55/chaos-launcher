@@ -15,7 +15,8 @@ import { toast } from "@/stores/toastStore";
 import { invoke } from "@/lib/bridge";
 import { uid, formatDate } from "@/lib/utils";
 import { CAPE_FPS_OPTIONS, CAPE_SIZES, COSMETIC_KINDS, activeCapeFor, apiInfo, capeFrames, deleteCape, fileToBase64, getCapeDataUrl, gifToCapeStrip, imageSize, importCape, isAllowedCapeSize, renameCape, profileFor, setActiveCape, setCapeEnabled, setCapeFps, setCosmetic, setVisibility, syncCosmetics, type CosmeticKind } from "@/lib/api/cosmetics";
-import { CHAOS_CAPES, isCapeUnlocked } from "@/lib/builtinCapes";
+import { CHAOS_CAPES, isCapeUnlocked, type BuiltinCape } from "@/lib/builtinCapes";
+import { RedeemCodeForm } from "./RedeemCodeForm";
 import { hatById } from "@/lib/builtinHats";
 import { effectById } from "@/lib/builtinEffects";
 import { wingsById } from "@/lib/builtinWings";
@@ -51,6 +52,7 @@ export default function CosmeticsPage() {
   const [autoRotate, setAutoRotate] = useState(true);
   const [zoom, setZoom] = useState(0.9);
   const [previewCapeId, setPreviewCapeId] = useState<string | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<BuiltinCape | null>(null);
   const [capeUrl, setCapeUrl] = useState<string | null>(null);
   const [model, setModel] = useState<"classic" | "slim">("classic");
 
@@ -59,6 +61,11 @@ export default function CosmeticsPage() {
 
   useEffect(() => {
     let alive = true;
+    if (previewTemplate) {
+      // Vorlage (auch gesperrte legendäre) direkt aus dem Generator anzeigen
+      try { setCapeUrl(previewTemplate.generate()); } catch { setCapeUrl(null); }
+      return;
+    }
     if (!previewCape) {
       setCapeUrl(null);
       return;
@@ -67,7 +74,7 @@ export default function CosmeticsPage() {
     return () => {
       alive = false;
     };
-  }, [previewCape?.id, previewCape]);
+  }, [previewCape?.id, previewCape, previewTemplate]);
 
   const activeSkin = skins.find((s) => s.id === activeSkinId);
   const profileSkin = useProfileSkinStore((s) => (account ? s.byUuid[account.uuid] : undefined));
@@ -120,14 +127,14 @@ export default function CosmeticsPage() {
         {/* ---------- 3D-Vorschau ---------- */}
         <aside className="chaos-card chaos-cos-preview">
           <div className="chaos-cos-preview-canvas">
-            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} capeFps={previewCape?.fps ?? 8} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} emote={shownEmote} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
+            <SkinViewer3D skinUrl={skinUrl} capeUrl={showCape && showCosmetics ? capeUrl : null} capeFps={previewTemplate?.fps ?? previewCape?.fps ?? 8} model={skinModel} hat={showCosmetics ? shownHat : null} wings={showCosmetics ? shownWings : null} emote={shownEmote} width={300} height={400} animation={animation} autoRotate={autoRotate} zoom={zoom} />
             {showCosmetics && <EffectPreview effect={shownEffect} width={300} height={400} />}
           </div>
           <div className="chaos-cos-preview-info">
             <strong>{account?.username ?? "Nicht angemeldet"}</strong>
             <span className="chaos-faint" style={{ fontSize: 12 }}>
               {activeSkin ? `Skin: ${activeSkin.name}` : account ? (profileSkin ? `Account-Skin (${profileSkin.model === "slim" ? "Alex-Modell" : "Steve-Modell"})` : "Account-Skin wird geladen …") : "Melde dich an oder lade einen Skin hoch."}
-              {previewCape ? ` · Cape: ${previewCape.name}${previewCape.id === activeCape?.id ? " (aktiv)" : " (Vorschau)"}` : " · kein Cape"}
+              {previewTemplate ? ` · Cape: ${previewTemplate.name} (Vorlage)` : previewCape ? ` · Cape: ${previewCape.name}${previewCape.id === activeCape?.id ? " (aktiv)" : " (Vorschau)"}` : " · kein Cape"}
               {shownHat ? ` · ${shownHat.name}` : ""}
               {shownWings ? ` · ${shownWings.name}` : ""}
               {shownEffect ? ` · ${shownEffect.name}` : ""}
@@ -159,7 +166,7 @@ export default function CosmeticsPage() {
 
         {/* ---------- Inhalt ---------- */}
         <section className="chaos-cos-main">
-          <Tabs value={kind} onChange={(k) => { setKind(k); setPreviewCapeId(null); setPreviewEmoteId(null); }} items={COSMETIC_KINDS.map((k) => ({ id: k.id, label: k.label, icon: k.icon, badge: k.available ? undefined : "bald" }))} />
+          <Tabs value={kind} onChange={(k) => { setKind(k); setPreviewCapeId(null); setPreviewTemplate(null); setPreviewEmoteId(null); }} items={COSMETIC_KINDS.map((k) => ({ id: k.id, label: k.label, icon: k.icon, badge: k.available ? undefined : "bald" }))} />
 
           {kind === "skin" && <SkinsSection model={model} setModel={setModel} />}
           {kind === "cape" && (
@@ -168,8 +175,10 @@ export default function CosmeticsPage() {
               cosmetics={cosmetics}
               reload={reloadCosmetics}
               activeCape={activeCape}
-              onPreview={setPreviewCapeId}
+              onPreview={(id) => { setPreviewCapeId(id); setPreviewTemplate(null); }}
               previewId={previewCapeId}
+              onPreviewTemplate={setPreviewTemplate}
+              previewTemplateId={previewTemplate?.id ?? null}
               cosmeticsEnabled={settings?.cosmeticsEnabled !== false}
               onEnableCosmetics={() => saveSettings({ cosmeticsEnabled: true })}
               onLogin={() => navigate("/accounts")}
@@ -333,6 +342,8 @@ function CapesSection({
   activeCape,
   onPreview,
   previewId,
+  onPreviewTemplate,
+  previewTemplateId,
   unlocks,
   cosmeticsEnabled,
   onEnableCosmetics,
@@ -344,6 +355,8 @@ function CapesSection({
   activeCape: Cape | null;
   onPreview: (id: string | null) => void;
   previewId: string | null;
+  onPreviewTemplate: (b: BuiltinCape | null) => void;
+  previewTemplateId: string | null;
   unlocks?: string[];
   cosmeticsEnabled: boolean;
   onEnableCosmetics: () => void;
@@ -430,6 +443,7 @@ function CapesSection({
       const dataUrl = b.generate();
       const cape = await importCape(b.name, dataUrl.slice(dataUrl.indexOf(",") + 1), account?.uuid, b.fps);
       await reload();
+      onPreviewTemplate(null);
       onPreview(cape.id);
       toast.success("Cape hinzugefügt", b.name);
     } catch (e) {
@@ -561,21 +575,30 @@ function CapesSection({
         </div>
       )}
 
+      {/* Legendär */}
+      <div className="chaos-legendary" style={{ marginTop: 10 }}>
+        <div className="chaos-row chaos-wrap" style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <div>
+            <span className="chaos-section-title" style={{ color: "#f5c342" }}>👑 Legendär – nur mit Code</span>
+            <p className="chaos-faint" style={{ fontSize: 12, margin: "2px 0 0" }}>Overlord, Phönix, Void-Krone – animiert. Klick = Vorschau, „Hinzufügen“ erst nach Freischaltung.</p>
+          </div>
+          <RedeemCodeForm account={account} busy={busy} onUnlocked={reload} />
+        </div>
+        <div className="chaos-cos-templates" style={{ marginTop: 10 }}>
+          {CHAOS_CAPES.filter((b) => b.exclusive).map((b) => (
+            <TemplateCard key={b.id} cape={b} dataUrl={templateUrls[b.id]} locked={!isCapeUnlocked(b, unlocks)} selected={previewTemplateId === b.id} busy={busy} onPreview={() => onPreviewTemplate(previewTemplateId === b.id ? null : b)} onAdd={() => importBuiltin(b)} />
+          ))}
+        </div>
+      </div>
+
       {/* Vorlagen */}
       <span className="chaos-section-title" style={{ marginTop: 10 }}>
         Chaos-Capes (Vorlagen)
       </span>
       <div className="chaos-cos-templates">
-        {CHAOS_CAPES.map((b) => {
-          const locked = !isCapeUnlocked(b, unlocks);
-          return (
-            <button key={b.id} className={"chaos-card hoverable chaos-cos-template" + (b.exclusive ? " legendary" : "") + (locked ? " locked" : "")} disabled={busy || locked} title={locked ? "Legendär – nur mit Code (Cosmetics › Emotes/Hüte: Code einlösen)" : undefined} onClick={() => importBuiltin(b)}>
-              <TemplateThumb dataUrl={templateUrls[b.id]} />
-              <strong>{b.exclusive ? "👑 " : ""}{b.name}{locked ? " 🔒" : ""}</strong>
-              <span>{b.description}</span>
-            </button>
-          );
-        })}
+        {CHAOS_CAPES.filter((b) => !b.exclusive).map((b) => (
+          <TemplateCard key={b.id} cape={b} dataUrl={templateUrls[b.id]} locked={false} selected={previewTemplateId === b.id} busy={busy} onPreview={() => onPreviewTemplate(previewTemplateId === b.id ? null : b)} onAdd={() => importBuiltin(b)} />
+        ))}
       </div>
 
       {/* API */}
@@ -666,4 +689,21 @@ function drawCapeThumb(img: HTMLImageElement): string {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(img, 1 * scale, 1 * scale, 10 * scale, 16 * scale, 0, 0, 60, 96);
   return canvas.toDataURL("image/png");
+}
+
+function TemplateCard({ cape, dataUrl, locked, selected, busy, onPreview, onAdd }: { cape: BuiltinCape; dataUrl: string; locked: boolean; selected: boolean; busy: boolean; onPreview: () => void; onAdd: () => void }) {
+  return (
+    <div className={"chaos-card hoverable chaos-cos-template" + (cape.exclusive ? " legendary" : "") + (locked ? " locked" : "") + (selected ? " preview" : "")} onClick={onPreview} title={locked ? "Legendär – Code oben eingeben. Klick zeigt die Vorschau." : "Klick = Vorschau"}>
+      <TemplateThumb dataUrl={dataUrl} />
+      <strong>{cape.exclusive ? "👑 " : ""}{cape.name}</strong>
+      <span>{cape.description}</span>
+      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 4 }}>
+        {locked ? (
+          <span className="chaos-badge" title="Code oben eingeben">🔒 Code nötig</span>
+        ) : (
+          <button className="chaos-btn chaos-btn-sm chaos-btn-primary" disabled={busy} onClick={onAdd}>Hinzufügen</button>
+        )}
+      </div>
+    </div>
+  );
 }

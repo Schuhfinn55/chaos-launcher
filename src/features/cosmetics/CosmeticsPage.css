@@ -48,6 +48,8 @@
 .chaos-cos-template strong { font-size: 12px; }
 .chaos-cos-template span { font-size: 10px; color: var(--chaos-text-faint); }
 .chaos-cos-template:disabled { opacity: 0.5; cursor: not-allowed; }
+.chaos-cos-template.preview { border-color: var(--chaos-accent); }
+.chaos-cos-template.locked img { filter: saturate(0.6) brightness(0.8); }
 
 .chaos-cos-api { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
 

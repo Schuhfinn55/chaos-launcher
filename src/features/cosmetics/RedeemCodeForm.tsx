@@ -6,9 +6,8 @@ import { useState } from "react";
 import { redeemCosmeticCode } from "@/lib/api/cosmetics";
 import { unlockName } from "@/lib/unlocks";
 import { toast } from "@/stores/toastStore";
-import type { Account } from "@/types";
 
-export function RedeemCodeForm({ account, busy, onUnlocked }: { account: Account | null; busy?: boolean; onUnlocked?: () => Promise<void> | void }) {
+export function RedeemCodeForm({ account, busy, onUnlocked }: { account: { uuid: string } | null; busy?: boolean; onUnlocked?: () => Promise<void> | void }) {
   const [code, setCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
   const redeem = async () => {
