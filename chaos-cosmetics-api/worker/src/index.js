@@ -149,14 +149,15 @@ function isAdmin(env, request) { const k = request.headers.get("x-admin-key") ||
 function codeView(c) { return { code: fmtCode(c.code), item: c.item || c.wings, wings: c.wings, maxUses: c.maxUses, uses: c.uses || 0, note: c.note || "", createdAt: c.createdAt, redeemedBy: c.redeemedBy || [] }; }
 
 /* ---------- Freunde & Präsenz ---------- */
-const PRESENCE_TTL_MS = 180000;
+const PRESENCE_TTL_MS = 30 * 60 * 1000; // Online-Status gilt 30 min (Heartbeat schreibt nur alle 20 min)
+const PRESENCE_REFRESH_MS = 20 * 60 * 1000;
 async function friendsRec(env, uuid) { const r = await getJson(env, "friends:" + uuid); return r && typeof r === "object" ? { friends: r.friends || [], incoming: r.incoming || [], outgoing: r.outgoing || [] } : { friends: [], incoming: [], outgoing: [] }; }
 const putFriends = (env, uuid, r) => putJson(env, "friends:" + uuid, r);
 const without = (list, uuid) => list.filter((e) => e.uuid !== uuid);
 const has = (list, uuid) => list.some((e) => e.uuid === uuid);
 async function presenceOf(env, uuid) {
   const pr = await getJson(env, "presence:" + uuid);
-  if (!pr || now() - (pr.at || 0) > PRESENCE_TTL_MS) return { state: "offline", server: "", at: pr?.at || 0 };
+  if (!pr || pr.state === "offline" || now() - (pr.at || 0) > PRESENCE_TTL_MS) return { state: "offline", server: "", at: pr?.at || 0 };
   return { state: pr.state || "online", server: pr.server || "", at: pr.at };
 }
 async function friendsView(env, uuid) {
@@ -328,9 +329,17 @@ export default {
         const s = await bearer(env, request);
         if (!s) return json(401, { error: "Token fehlt oder abgelaufen" });
         const b = await readJson(request, 4 * 1024);
-        const state = ["online", "ingame"].includes(b.state) ? b.state : "online";
+        const state = ["online", "ingame", "offline"].includes(b.state) ? b.state : "online";
         const server = String(b.server || "").slice(0, 120);
-        await putJson(env, "presence:" + s.uuid, { name: s.name, state, server, at: now() }, { expirationTtl: 600 });
+        // KV-Schreibvorgänge sparen (Free-Plan: 1000/Tag): nur schreiben, wenn sich etwas geändert hat
+        // oder der Eintrag älter als 20 Minuten ist. Lesen ist günstig (100.000/Tag).
+        const prev = await getJson(env, "presence:" + s.uuid);
+        if (prev && prev.state === state && prev.server === server && now() - (prev.at || 0) < PRESENCE_REFRESH_MS) return json(200, { ok: true, skipped: true });
+        try {
+          await putJson(env, "presence:" + s.uuid, { name: s.name, state, server, at: now() }, { expirationTtl: 1800 });
+        } catch (e) {
+          return json(200, { ok: false, error: "Status konnte nicht gespeichert werden (Kontingent)" });
+        }
         return json(200, { ok: true });
       }
 

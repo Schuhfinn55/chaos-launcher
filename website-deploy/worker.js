@@ -30,12 +30,14 @@ export default {
       const target = m[1] === "launcher" ? s.launcher?.url : m[1] === "msi" ? s.launcher?.msiUrl : m[1] === "portable" ? s.launcher?.portableUrl : s.client?.url;
       if (!target) return new Response("Download nicht verfügbar", { status: 404, headers: cors });
       if (m[1] !== "client") {
-        // Zähler (KV ist nicht atomar – für eine Anzeige völlig ausreichend)
-        const real = Number((await env.KV.get(KEY)) || 0) + 1;
-        await env.KV.put(KEY, String(real));
-        const day = new Date().toISOString().slice(0, 10);
-        const dayKey = "stats:downloads:" + day;
-        await env.KV.put(dayKey, String(Number((await env.KV.get(dayKey)) || 0) + 1), { expirationTtl: 60 * 60 * 24 * 400 });
+        // Zähler (KV ist nicht atomar – für eine Anzeige völlig ausreichend). Darf den Download nie blockieren:
+        // bei erschöpftem Tageskontingent (Free-Plan: 1000 Schreibvorgänge) wird nur nicht gezählt.
+        try {
+          const real = Number((await env.KV.get(KEY)) || 0) + 1;
+          await env.KV.put(KEY, String(real));
+        } catch (e) {
+          console.warn("Download-Zähler nicht geschrieben:", String(e));
+        }
       }
       return Response.redirect(target, 302);
     }

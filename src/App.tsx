@@ -122,7 +122,7 @@ export default function App() {
     if (!activeAccountUuid) return;
     const beat = () => { presenceHeartbeat(activeAccountUuid).catch(() => {}); };
     const t0 = setTimeout(beat, 4000);
-    const iv = setInterval(beat, 60_000);
+    const iv = setInterval(beat, 2 * 60_000); // Worker schreibt nur bei Änderung oder alle 20 min (KV-Kontingent)
     return () => { clearTimeout(t0); clearInterval(iv); };
   }, [activeAccountUuid]);
 
