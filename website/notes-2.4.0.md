@@ -1,0 +1,8 @@
+- Neuer Emotes-Tab unter Cosmetics: alle 32 Emotes mit echter 3D-Vorschau auf deinem Skin, dazu dein Emote-Rad mit 8 frei belegbaren Slots
+- 16 neue Emotes im Chaos Client (2.8.1): Griddy, Orange Justice, Hampelmann, Liegestütze, Schlafen, Rage, Lachen, Schulterzucken, Zeigen, Weinen – und 6 legendäre nur per Code: Breakdance, Chaos Rave, Helikopter, Levitation, Moonwalk, Drachenbrüllen
+- Legendäre Cosmetics nur per Code: 4 Hüte (Overlord-Krone, Void-Helm, Phönix-Krone, Galaxie-Halo), 3 Effekte (Chaos-Nova, Phönixfeuer, Void-Sturm), 3 animierte Capes (Overlord, Phönix, Void-Krone)
+- Codes lassen sich in jedem Tab einlösen; Vorlagen-Capes per Klick in der 3D-Vorschau anschauen
+- Hüte-Tab zeigt jeden Hut auf deinem eigenen Kopf; Hut-Position in der 3D-Vorschau korrigiert
+- Account-Wechsel im Spiel: Button oben links im Titelbildschirm und in der Serverliste, erkennt Accounts aus anderen Launchern (NoRisk, Prism, Modrinth, Minecraft Launcher …), Microsoft-Login direkt aus dem Spiel
+- 31 neue Client-Module: Hitboxes, Hit Color, Health Indicators, Combo Counter, Reach Display, Low Shield, TNT Timer, Light Level, Compass, Inventory HUD, Item Counter, Auto Reconnect, Confirm Disconnect, No Fog, No Hurt Cam, Low Fire, Slot Locks, Streamer Mode, Weather Changer, Arrow Trail, Hide Armor, Clear Background, Window Title und mehr
+- Emotes: 3D Skin Layers und Hüte folgen den Animationen, Chat fasst doppelte Nachrichten zusammen
