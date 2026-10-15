@@ -8,6 +8,7 @@ import MusicPlayer from "@/components/MusicPlayer";
 import StartupOverlay from "@/components/StartupOverlay";
 import UpdateDialog from "@/components/UpdateDialog";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import CommandPalette from "@/components/CommandPalette";
 import { ToastHost } from "@/components/ui";
 import { invoke, listen } from "@/lib/bridge";
 import { setLanguage } from "@/lib/i18n";
@@ -285,6 +286,7 @@ export default function App() {
             </ErrorBoundary>
           </div>
         </div>
+        <CommandPalette />
         <MusicPlayer />
         <UpdateDialog ready={!starting && !showTutorial} />
         <ToastHost />

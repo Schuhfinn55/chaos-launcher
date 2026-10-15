@@ -7,7 +7,7 @@
  * ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SkinViewer3D, { type ViewerAnimation } from "./SkinViewer3D";
 import { ConfirmDialog, Empty, Modal, PageHead, Tabs, Toggle } from "@/components/ui";
 import { useAccountStore, useCosmeticsStore, useProfileSkinStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
@@ -44,8 +44,15 @@ export default function CosmeticsPage() {
 
   const [kind, setKind] = useState<KindId>(() => {
     const q = new URLSearchParams(window.location.hash.split("?")[1] || "").get("kind");
-    return q && ["skin", "cape", "hat", "wings", "effect"].includes(q) ? (q as KindId) : "cape";
+    return q && ["skin", "cape", "hat", "wings", "effect", "emote"].includes(q) ? (q as KindId) : "cape";
   });
+  // Deep-Links (Suche, Seitenleiste) wechseln den Tab auch, wenn die Seite schon offen ist
+  const routerLocation = useLocation();
+  useEffect(() => {
+    const q = new URLSearchParams(routerLocation.search).get("kind");
+    if (q && ["skin", "cape", "hat", "wings", "effect", "emote"].includes(q) && q !== kind) { setKind(q as KindId); setPreviewCapeId(null); setPreviewTemplate(null); setPreviewEmoteId(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routerLocation.search]);
   const [showCape, setShowCape] = useState(true);
   const [showCosmetics, setShowCosmetics] = useState(true);
   const [animation, setAnimation] = useState<ViewerAnimation>("idle");

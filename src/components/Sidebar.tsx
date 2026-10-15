@@ -50,6 +50,16 @@ const MAIN: Item[] = [
     ),
   },
   {
+    to: "/cosmetics?kind=skin",
+    key: "nav.skins",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+        <circle cx="12" cy="7" r="3.5" />
+        <path d="M5 21v-3a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v3" />
+      </svg>
+    ),
+  },
+  {
     to: "/cosmetics",
     key: "nav.cosmetics",
     icon: (
@@ -150,43 +160,28 @@ const EXTRAS: Item[] = [
   },
 ];
 
+const ALL: Item[] = [...MAIN, ...EXTRAS];
+const GROUPS: { key: string; items: string[]; small?: boolean }[] = [
+  { key: "nav.group.play", items: ["/play", "/profiles", "/mods", "/worlds"] },
+  { key: "nav.group.look", items: ["/cosmetics?kind=skin", "/cosmetics"] },
+  { key: "nav.group.community", items: ["/friends", "/servers", "/news"] },
+  { key: "nav.group.more", items: ["/ingame", "/music", "/cinema", "/settings"], small: true },
+];
+/** Aktiv-Logik: Skins nur bei kind=skin, Cosmetics bei allen anderen Cosmetics-Tabs. */
+function isActive(to: string, current: string): boolean {
+  if (to === "/cosmetics?kind=skin") return current.startsWith("/cosmetics") && current.includes("kind=skin");
+  if (to === "/cosmetics") return current.startsWith("/cosmetics") && !current.includes("kind=skin");
+  return current.split("?")[0].startsWith(to);
+}
+
 export default function Sidebar() {
   const { t } = useT();
   const account = useAccountStore((s) => s.active);
   const update = useStatusStore((s) => s.update);
   const running = useStatusStore((s) => s.running);
-  const [extrasOpen, setExtrasOpen] = useState(false);
-  const [flyoutTop, setFlyoutTop] = useState(120);
-  const extrasBtn = useRef<HTMLButtonElement>(null);
-  const flyoutRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const extrasActive = EXTRAS.some((e) => location.pathname.startsWith(e.to));
 
-  // Flyout schließen bei Navigation, Klick außerhalb oder ESC
-  useEffect(() => {
-    setExtrasOpen(false);
-  }, [location.pathname]);
-  useEffect(() => {
-    if (!extrasOpen) return;
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (flyoutRef.current?.contains(t) || extrasBtn.current?.contains(t)) return;
-      setExtrasOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setExtrasOpen(false);
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [extrasOpen]);
-  const toggleExtras = () => {
-    const r = extrasBtn.current?.getBoundingClientRect();
-    if (r) setFlyoutTop(Math.max(8, Math.min(r.top, window.innerHeight - 320)));
-    setExtrasOpen((v) => !v);
-  };
 
   return (
     <aside className="chaos-sidebar">
@@ -196,38 +191,25 @@ export default function Sidebar() {
       </button>
 
       <nav className="chaos-sidebar-nav">
-        {MAIN.map((item) => (
-          <NavLink key={item.to} to={item.to} className={({ isActive }) => "onyx-sidebar-item chaos-sidebar-item" + (isActive ? " active" : "")} title={t(item.key)}>
-            <span className="chaos-sidebar-icon">{item.icon}</span>
-            <span className="chaos-sidebar-label">{t(item.key)}</span>
-            {item.to === "/play" && running.length > 0 && <span className="chaos-sidebar-dot" title="Minecraft läuft" />}
-            {item.to === "/settings" && update && <span className="chaos-sidebar-dot update" title="Update verfügbar" />}
-          </NavLink>
+        {GROUPS.map((g) => (
+          <div key={g.key} className="chaos-sidebar-group">
+            <span className="chaos-sidebar-group-label">{t(g.key)}</span>
+            {g.items.map((to) => {
+              const item = ALL.find((i) => i.to === to);
+              if (!item) return null;
+              const active = isActive(item.to, location.pathname + location.search);
+              return (
+                <NavLink key={item.to} to={item.to} className={"onyx-sidebar-item chaos-sidebar-item" + (g.small ? " small" : "") + (active ? " active" : "")} title={t(item.key)}>
+                  <span className="chaos-sidebar-icon">{item.icon}</span>
+                  <span className="chaos-sidebar-label">{t(item.key)}</span>
+                  {item.to === "/play" && running.length > 0 && <span className="chaos-sidebar-dot" title="Minecraft läuft" />}
+                  {item.to === "/settings" && update && <span className="chaos-sidebar-dot update" title="Update verfügbar" />}
+                </NavLink>
+              );
+            })}
+          </div>
         ))}
-
-        <button ref={extrasBtn} className={"chaos-sidebar-item chaos-sidebar-extras" + (extrasOpen ? " open" : "") + (extrasActive ? " active" : "")} onClick={toggleExtras} title={t("nav.extras")} aria-expanded={extrasOpen}>
-          <span className="chaos-sidebar-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <circle cx="5" cy="12" r="2" />
-              <circle cx="12" cy="12" r="2" />
-              <circle cx="19" cy="12" r="2" />
-            </svg>
-          </span>
-          <span className="chaos-sidebar-label">{t("nav.extras")}</span>
-        </button>
       </nav>
-      {extrasOpen && (
-        <div ref={flyoutRef} className="chaos-sidebar-flyout" style={{ top: flyoutTop }} role="menu">
-          <div className="chaos-sidebar-flyout-head">{t("nav.extras")}</div>
-          {EXTRAS.map((item) => (
-            <NavLink key={item.to} to={item.to} className={({ isActive }) => "chaos-sidebar-flyout-item" + (isActive ? " active" : "")} role="menuitem">
-              <span className="chaos-sidebar-icon">{item.icon}</span>
-              <span>{t(item.key)}</span>
-            </NavLink>
-          ))}
-        </div>
-      )}
-
       <div className="chaos-sidebar-footer">
         <NavLink to="/accounts" className={({ isActive }) => "chaos-sidebar-account" + (isActive ? " active" : "")} title={account ? account.username : t("nav.notLoggedIn")}>
           {account ? (

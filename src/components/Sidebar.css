@@ -255,3 +255,25 @@
 .chaos-sidebar-flyout-item:hover { background: var(--chaos-bg-2); color: var(--chaos-text); }
 .chaos-sidebar-flyout-item.active { background: rgba(var(--chaos-accent-rgb), 0.15); color: var(--chaos-accent-light); }
 .chaos-sidebar-flyout-item .chaos-sidebar-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+
+/* Gruppen in der Seitenleiste (alles sichtbar statt Flyout) */
+.chaos-sidebar-group { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; padding-bottom: 4px; }
+.chaos-sidebar-group + .chaos-sidebar-group { border-top: 1px solid var(--chaos-border); padding-top: 6px; }
+.chaos-sidebar-group-label { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--chaos-text-faint); font-weight: 700; margin: 2px 0 1px; }
+.chaos-sidebar-nav .chaos-sidebar-item { height: 50px; }
+.chaos-sidebar-nav .chaos-sidebar-item.small { height: 42px; }
+
+/* Breite Seitenleiste: Einträge als Zeilen (Icon + Text), damit alle Bereiche ohne Scrollen sichtbar sind */
+.chaos-sidebar-nav { align-items: stretch; padding: 0 10px; gap: 2px; }
+.chaos-sidebar-group { align-items: stretch; gap: 1px; padding-bottom: 3px; }
+.chaos-sidebar-group-label { margin: 3px 0 1px 10px; font-size: 8.5px; }
+.chaos-sidebar-nav .chaos-sidebar-item, .chaos-sidebar-nav .chaos-sidebar-item.small { width: 100%; height: 29px; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 10px; }
+.chaos-sidebar-nav .chaos-sidebar-item .chaos-sidebar-icon svg { width: 18px; height: 18px; }
+.chaos-sidebar-nav .chaos-sidebar-item .chaos-sidebar-label { font-size: 11.5px; letter-spacing: 0.2px; text-transform: none; max-width: none; font-weight: 600; }
+.chaos-sidebar-nav .chaos-sidebar-item.active::before { left: -10px; }
+.chaos-sidebar-nav .chaos-sidebar-dot { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.chaos-sidebar-footer { width: 100%; padding: 10px 10px 8px; align-items: stretch; }
+.chaos-sidebar-account { width: 100%; justify-content: flex-start; gap: 8px; padding: 0 8px; }
+.chaos-sidebar-account-name { display: inline; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chaos-sidebar-account { height: 38px; flex-direction: row; }
+.chaos-sidebar-footer { padding-top: 6px; gap: 6px; }

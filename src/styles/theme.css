@@ -50,7 +50,7 @@
   /* ---------- Maße ---------- */
   --chaos-radius: 14px;
   --chaos-radius-sm: 8px;
-  --chaos-sidebar-w: 84px;
+  --chaos-sidebar-w: 170px;
   --chaos-topbar-h: 56px;
   --chaos-glow: 0 0 24px rgba(var(--chaos-accent-rgb), 0.35);
   --chaos-panel-alpha: 1;

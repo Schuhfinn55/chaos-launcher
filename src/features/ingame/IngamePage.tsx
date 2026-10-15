@@ -30,7 +30,7 @@ type Tab = "mods" | "profile";
 export default function IngamePage() {
   const [tab, setTab] = useState<Tab>("mods");
   const [cat, setCat] = useState<ModuleCategory>("display");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.hash.split("?")[1] || "").get("q") || "");
   const [openSettings, setOpenSettings] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ text: string; kind: "info" | "error" | "ok" } | null>(null);
   const [installing, setInstalling] = useState<string | null>(null);

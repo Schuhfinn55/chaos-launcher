@@ -4,6 +4,7 @@ import Avatar from "@/components/Avatar";
 import { useAccountStore, useInstanceStore, useStatusStore } from "@/stores/useStore";
 import { useT } from "@/lib/i18n/useT";
 import { APP_VERSION } from "@/lib/config/branding";
+import { openSearch } from "@/components/CommandPalette";
 import "./Topbar.css";
 
 export default function Topbar() {
@@ -24,6 +25,12 @@ export default function Topbar() {
         </span>
         <span className="chaos-topbar-version">v{APP_VERSION}</span>
       </div>
+
+      <button className="chaos-topbar-search" onClick={openSearch} title="Alles finden (Strg+K)">
+        <span>🔍</span>
+        <span>{t("nav.search")}</span>
+        <kbd>Strg K</kbd>
+      </button>
 
       <div className="chaos-topbar-spacer" />
 
