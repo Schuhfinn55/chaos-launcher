@@ -135,7 +135,7 @@ const EXCLUSIVE_WINGS = new Set(["overlord", "celestial"]);
 /* Weitere exklusive Items: Freischaltungs-Schlüssel "<art>:<id>" (Wings aus Kompatibilität ohne Präfix). */
 const EXCLUSIVE = {
   wings: EXCLUSIVE_WINGS,
-  hat: new Set(["overlord-crown", "void-helm", "phoenix-crest", "galaxy-halo"]),
+  hat: new Set(["overlord-crown", "void-helm", "phoenix-crest", "galaxy-halo", "panda"]),
   effect: new Set(["chaos-nova", "phoenix-fire", "void-storm"]),
   emote: new Set(["breakdance", "chaos-rave", "helicopter", "levitate", "moonwalk", "dragon-roar"]),
   cape: new Set(["anim-overlord", "anim-phoenix", "anim-void-crown"]),

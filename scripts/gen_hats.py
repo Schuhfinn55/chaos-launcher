@@ -48,6 +48,21 @@ _galaxy = ([B(-5.5, -12, -5.5, 11, 0.6, 1, "#c4b5fd"), B(-5.5, -12, 4.5, 11, 0.6
            + [B(-3.5, -14, -3.5, 7, 0.5, 0.8, "#818cf8"), B(-3.5, -14, 2.7, 7, 0.5, 0.8, "#818cf8"), B(-3.5, -14, -2.7, 0.8, 0.5, 5.4, "#818cf8"), B(2.7, -14, -2.7, 0.8, 0.5, 5.4, "#818cf8")]
            + [B(-0.9, -16.5, -0.9, 1.8, 1.8, 1.8, "#f8fafc"), B(-6.3, -12.6, -0.5, 1, 1, 1, "#f472b6"), B(5.3, -12.6, -0.5, 1, 1, 1, "#60a5fa")])
 
+# Sitzender Panda auf dem Kopf (legendär): weißer Körper/Kopf, schwarze Ohren, Augenflecken, Arme, Beine, Schulterband
+_W, _K = "#f4f1f2", "#141416"
+_panda = (
+    [B(-3, -14, -3, 6, 6, 6, _W),                                   # Körper (sitzt auf dem Kopf)
+     B(-3.2, -14.2, -3.2, 6.4, 1.8, 6.4, _K),                       # Schulterband
+     B(-3.5, -19.2, -4, 7, 5.6, 6.8, _W),                            # Kopf
+     B(-3.8, -20.6, -2, 2, 2, 2, _K), B(1.8, -20.6, -2, 2, 2, 2, _K), # Ohren
+     B(-2.9, -18, -4.4, 2.1, 2.1, 0.5, _K), B(0.8, -18, -4.4, 2.1, 2.1, 0.5, _K), # Augenflecken
+     B(-2.2, -17.5, -4.7, 0.8, 0.8, 0.35, _W), B(1.4, -17.5, -4.7, 0.8, 0.8, 0.35, _W), # Augen
+     B(-0.6, -16.3, -4.6, 1.2, 0.8, 0.4, _K),                        # Nase
+     B(-4.4, -13.6, -1.8, 1.5, 4.2, 2.6, _K), B(2.9, -13.6, -1.8, 1.5, 4.2, 2.6, _K), # Arme
+     B(-3.1, -9.6, -5.4, 2.3, 1.6, 3.2, _K), B(0.8, -9.6, -5.4, 2.3, 1.6, 3.2, _K),   # Beine nach vorn
+     B(-0.8, -10.4, 2.6, 1.6, 1.6, 1.2, _K)]                         # Schwanz
+)
+
 HATS = [
     H("top-hat", "Zylinder", "Klassischer schwarzer Zylinder mit rotem Band.", "🎩",
       [B(-6, -9, -6, 12, 1, 12, "#111113"), B(-4, -16, -4, 8, 7, 8, "#1a1a1e"), B(-4.3, -11, -4.3, 8.6, 2, 8.6, "#e11d2e")]),
@@ -81,6 +96,7 @@ HATS = [
       [B(-4.6, -9.5, -4.6, 9.2, 2, 9.2, "#f4f1f2"), B(-4, -13, -4, 8, 3.5, 8, "#e11d2e"), B(-2.5, -15.5, -2.5, 5, 2.5, 5, "#e11d2e"),
        B(-0.5, -17, 1, 3, 2, 3, "#e11d2e"), B(1, -18.5, 2.5, 2.5, 2.5, 2.5, "#f4f1f2")]),
     # ---- neu ----
+    H("panda", "Panda", "Ein kleiner Panda, der auf deinem Kopf sitzt und leicht wippt.", "🐼", _panda, bob=0.25, exclusive=True),
     H("overlord-crown", "Overlord-Krone", "Schwarze Dornenkrone mit glühenden Blutrubinen und schwebenden Splittern.", "👑", _ov_crown, glow=True, spin=0.6, exclusive=True),
     H("void-helm", "Void-Helm", "Helm aus dem Nichts: violette Risse, die pulsierend leuchten.", "🟣", _void_helm, glow=True, bob=0.2, exclusive=True),
     H("phoenix-crest", "Phönix-Krone", "Lodernde Federkrone in Orange und Gold – brennt nie aus.", "🔥", _phoenix, glow=True, bob=0.3, exclusive=True),
