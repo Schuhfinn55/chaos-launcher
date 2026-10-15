@@ -1,0 +1,4 @@
+- Neuer legendärer Hut: Panda – ein kleiner Panda, der auf deinem Kopf sitzt (nur mit Code)
+- Downloads auf der Website funktionieren jetzt auch, wenn das Tageskontingent des Zählers aufgebraucht ist
+- Online-Status für die Freundesliste wird deutlich seltener gesendet (schont das Server-Kontingent, Codes und Cosmetics bleiben zuverlässig)
+- Client 2.8.2 mit dem Panda-Hut
