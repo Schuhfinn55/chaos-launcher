@@ -96,7 +96,7 @@ HATS = [
       [B(-4.6, -9.5, -4.6, 9.2, 2, 9.2, "#f4f1f2"), B(-4, -13, -4, 8, 3.5, 8, "#e11d2e"), B(-2.5, -15.5, -2.5, 5, 2.5, 5, "#e11d2e"),
        B(-0.5, -17, 1, 3, 2, 3, "#e11d2e"), B(1, -18.5, 2.5, 2.5, 2.5, 2.5, "#f4f1f2")]),
     # ---- neu ----
-    H("panda", "Panda", "Ein kleiner Panda, der auf deinem Kopf sitzt und leicht wippt.", "🐼", _panda, bob=0.25, exclusive=True),
+    H("panda", "Panda", "Ein kleiner Panda, der auf deinem Kopf sitzt.", "🐼", _panda, exclusive=True),
     H("overlord-crown", "Overlord-Krone", "Schwarze Dornenkrone mit glühenden Blutrubinen und schwebenden Splittern.", "👑", _ov_crown, glow=True, spin=0.6, exclusive=True),
     H("void-helm", "Void-Helm", "Helm aus dem Nichts: violette Risse, die pulsierend leuchten.", "🟣", _void_helm, glow=True, bob=0.2, exclusive=True),
     H("phoenix-crest", "Phönix-Krone", "Lodernde Federkrone in Orange und Gold – brennt nie aus.", "🔥", _phoenix, glow=True, bob=0.3, exclusive=True),
