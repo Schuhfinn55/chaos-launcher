@@ -189,6 +189,7 @@ pub fn run() {
             // Medien
             commands::media::save_media_file,
             commands::media::read_media_file,
+            commands::media::media_file_path,
             commands::media::delete_media_file,
             // Welten
             commands::worlds::list_worlds,

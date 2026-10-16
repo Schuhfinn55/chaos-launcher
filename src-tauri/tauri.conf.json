@@ -24,7 +24,15 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPDATA/chaos-launcher/media/**",
+          "$APPDATA/chaos-launcher/media/*",
+          "$APPDATA/chaos-launcher/media/music/*"
+        ]
+      }
     }
   },
   "bundle": {

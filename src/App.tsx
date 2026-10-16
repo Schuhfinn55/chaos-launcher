@@ -11,6 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import CommandPalette from "@/components/CommandPalette";
 import { ToastHost } from "@/components/ui";
 import { invoke, listen } from "@/lib/bridge";
+import { mediaSrc } from "@/lib/api/media";
 import { setLanguage } from "@/lib/i18n";
 import HomePage from "@/features/home/HomePage";
 import PlayPage from "@/features/play/PlayPage";
@@ -204,18 +205,11 @@ export default function App() {
       setBlobUrl("");
       return;
     }
-    let revoke: string | null = null;
-    invoke<number[]>("read_media_file", { fileName: activeCustomTheme.mediaFileName })
-      .then((bytes) => {
-        const blob = new Blob([new Uint8Array(bytes)], { type: activeCustomTheme.mediaType === "video" ? "video/mp4" : "image/gif" });
-        const url = URL.createObjectURL(blob);
-        revoke = url;
-        setBlobUrl(url);
-      })
+    let revoke: (() => void) | null = null;
+    mediaSrc(activeCustomTheme.mediaFileName, activeCustomTheme.mediaType === "video" ? "video/mp4" : "image/gif")
+      .then((m) => { revoke = m.revoke ?? null; setBlobUrl(m.url); })
       .catch(() => setBlobUrl(""));
-    return () => {
-      if (revoke) URL.revokeObjectURL(revoke);
-    };
+    return () => { revoke?.(); };
   }, [activeCustomTheme?.mediaFileName, activeCustomTheme?.mediaType]);
 
   useEffect(() => {

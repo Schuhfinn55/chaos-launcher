@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { useSettingsStore } from "@/stores/useStore";
 import { invoke } from "@/lib/bridge";
+import { mediaSrc } from "@/lib/api/media";
 import type { CustomTheme } from "@/types";
 import "./CinemaPage.css";
 
@@ -36,21 +37,11 @@ export default function CinemaPage() {
       setBlobUrl("");
       return;
     }
-    let revoke: string | null = null;
-    invoke<number[]>("read_media_file", { fileName: selected.mediaFileName })
-      .then((bytes: number[]) => {
-        const u8 = new Uint8Array(bytes);
-        const blob = new Blob([u8], {
-          type: selected.mediaType === "video" ? "video/mp4" : "image/gif",
-        });
-        const url = URL.createObjectURL(blob);
-        revoke = url;
-        setBlobUrl(url);
-      })
+    let revoke: (() => void) | null = null;
+    mediaSrc(selected.mediaFileName, selected.mediaType === "video" ? "video/mp4" : "image/gif")
+      .then((m) => { revoke = m.revoke ?? null; setBlobUrl(m.url); })
       .catch(() => setBlobUrl(""));
-    return () => {
-      if (revoke) URL.revokeObjectURL(revoke);
-    };
+    return () => { revoke?.(); };
   }, [selected?.mediaFileName, selected?.mediaType]);
 
   if (mediaThemes.length === 0) {

@@ -31,6 +31,19 @@ pub fn read_media_file(fileName: String) -> Result<Vec<u8>, String> {
     std::fs::read(&path).map_err(|e| format!("Mediendatei lesen: {e}"))
 }
 
+/// Absoluter Pfad einer Mediendatei – das Frontend streamt sie über das Asset-Protokoll
+/// (convertFileSrc), statt sie komplett über die IPC-Brücke zu laden.
+#[tauri::command]
+#[allow(non_snake_case)]
+pub fn media_file_path(fileName: String) -> Result<String, String> {
+    let file_name = super::safe_file_name(&fileName)?;
+    let path = storage::media_dir().join(&file_name);
+    if !path.exists() {
+        return Err("Mediendatei nicht gefunden".to_string());
+    }
+    Ok(path.to_string_lossy().to_string())
+}
+
 /// Löscht eine Mediendatei.
 #[tauri::command]
 #[allow(non_snake_case)]

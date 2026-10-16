@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@/lib/bridge";
+import { mediaSrc } from "@/lib/api/media";
 import { useMusicStore } from "@/stores/musicStore";
 import type { Track } from "@/stores/musicStore";
 import "./MusicPlayer.css";
@@ -56,18 +57,11 @@ export default function MusicPlayer() {
       store.setBlobUrl("");
       return;
     }
-    let revoke: string | null = null;
-    invoke<number[]>("read_media_file", { fileName: current.fileName })
-      .then((bytes: number[]) => {
-        const blob = new Blob([new Uint8Array(bytes)], { type: "audio/mpeg" });
-        const url = URL.createObjectURL(blob);
-        revoke = url;
-        store.setBlobUrl(url);
-      })
+    let revoke: (() => void) | null = null;
+    mediaSrc(current.fileName, "audio/mpeg")
+      .then((m) => { revoke = m.revoke ?? null; store.setBlobUrl(m.url); })
       .catch(() => store.setBlobUrl(""));
-    return () => {
-      if (revoke) URL.revokeObjectURL(revoke);
-    };
+    return () => { revoke?.(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.fileName, current?.type, store.currentIdx]);
 
