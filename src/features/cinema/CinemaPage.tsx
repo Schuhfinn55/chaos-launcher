@@ -28,6 +28,11 @@ export default function CinemaPage() {
   );
   const [blobUrl, setBlobUrl] = useState<string>("");
   const [muted, setMuted] = useState(true);
+  // Solange das Kino offen ist: Hintergrund-Video und dessen Stummschalter global ausblenden
+  useEffect(() => {
+    document.body.classList.add("onyx-on-cinema");
+    return () => document.body.classList.remove("onyx-on-cinema");
+  }, []);
   const [volume, setVolume] = useState(50);
 
   const selected = mediaThemes.find((t) => t.id === selectedId) ?? mediaThemes[0];

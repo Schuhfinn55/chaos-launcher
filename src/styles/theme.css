@@ -773,3 +773,7 @@ body.onyx-has-anim-bg {
 .chaos-grow { flex: 1; min-width: 0; }
 .chaos-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chaos-wrap { flex-wrap: wrap; }
+
+/* Kino offen: Hintergrund-Video + globaler Stummschalter weg (nur die Kino-Steuerung bleibt) */
+body.onyx-on-cinema .onyx-video-controls { display: none !important; }
+body.onyx-on-cinema .onyx-anim-video, body.onyx-on-cinema .onyx-anim-gif { visibility: hidden !important; }
