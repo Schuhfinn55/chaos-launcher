@@ -67,6 +67,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let _ = APP.set(app.handle().clone());
+            // Medienordner für das Asset-Protokoll freigeben (Hintergrund-Video/GIF, Kino, Musik werden gestreamt)
+            {
+                let media = storage::media_dir();
+                let _ = std::fs::create_dir_all(&media);
+                if let Err(e) = app.asset_protocol_scope().allow_directory(&media, true) {
+                    log::warn!("[Chaos] Asset-Freigabe für {}: {e}", media.display());
+                }
+            }
             // Alte Onyx-Daten übernehmen, Datenordner anlegen
             match storage::migrate_legacy_data() {
                 Ok(migrated) => commands::system::set_migrated(migrated),

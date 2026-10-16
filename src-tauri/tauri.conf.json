@@ -28,9 +28,10 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
+          "$DATA/chaos-launcher/media/**",
+          "$DATA/chaos-launcher/media/*",
           "$APPDATA/chaos-launcher/media/**",
-          "$APPDATA/chaos-launcher/media/*",
-          "$APPDATA/chaos-launcher/media/music/*"
+          "$APPDATA/chaos-launcher/media/*"
         ]
       }
     }
