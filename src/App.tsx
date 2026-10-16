@@ -188,8 +188,15 @@ export default function App() {
     document.addEventListener("visibilitychange", on);
     return () => document.removeEventListener("visibilitychange", on);
   }, []);
+  // Auf der Kino-Seite läuft das Hintergrund-Video nicht (sonst doppelte Wiedergabe + zwei Stummschalter)
+  const [onCinema, setOnCinema] = useState(typeof window !== "undefined" && window.location.hash.includes("/cinema"));
+  useEffect(() => {
+    const on = () => setOnCinema(window.location.hash.includes("/cinema"));
+    window.addEventListener("hashchange", on);
+    return () => window.removeEventListener("hashchange", on);
+  }, []);
   const bgMode = settings?.bgAnimation ?? "idle";
-  const bgActive = bgMode === "always" ? !docHidden : bgMode === "off" ? false : !docHidden && runningInstances.length === 0;
+  const bgActive = !onCinema && (bgMode === "always" ? !docHidden : bgMode === "off" ? false : !docHidden && runningInstances.length === 0);
   const videoMuted = activeCustomTheme?.videoMuted ?? true;
   const videoVolume = (activeCustomTheme?.videoVolume ?? 0) / 100;
   const [blobUrl, setBlobUrl] = useState<string>("");
@@ -251,7 +258,7 @@ export default function App() {
           <>
             <video ref={videoRef} className="onyx-anim-video" src={blobUrl} autoPlay={bgActive} loop muted={videoMuted} playsInline preload="auto" style={bgActive ? undefined : { visibility: "hidden" }} />
             <div className="onyx-anim-veil" />
-            <div className="onyx-video-controls">
+            {bgActive && <div className="onyx-video-controls">
               <button
                 className="onyx-video-mute-btn"
                 onClick={() => {
@@ -279,7 +286,7 @@ export default function App() {
                   title="Lautstärke"
                 />
               )}
-            </div>
+            </div>}
           </>
         )}
         {activeCustomTheme && activeCustomTheme.mediaType === "gif" && blobUrl && bgActive && (
