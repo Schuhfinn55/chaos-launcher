@@ -166,6 +166,8 @@ export interface Settings {
   // Allgemein
   language?: "de" | "en";
   animations?: boolean;
+  /** Hintergrund-Video/GIF: immer, nur wenn kein Spiel läuft und das Fenster sichtbar ist, oder aus */
+  bgAnimation?: "always" | "idle" | "off";
   notifications?: boolean;
   launchBehavior?: "keep" | "minimize" | "close";
   /** FPS-Boost: hohe Prozesspriorität + Hochleistungs-GPU für Java */

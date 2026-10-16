@@ -169,6 +169,15 @@ function Display({ s, set }: P) {
         </div>
       </Section>
       <Section title="Hintergrund" desc="Vorgefertigte Hintergründe, Live-Themes oder eigenes Bild/GIF/Video.">
+        <div className="chaos-row chaos-wrap" style={{ gap: 10, alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 13 }}>Hintergrund-Animation (Video/GIF)</span>
+          <select className="onyx-select" value={s.bgAnimation ?? "idle"} onChange={(e) => set({ bgAnimation: e.target.value as "always" | "idle" | "off" })}>
+            <option value="idle">Nur wenn kein Spiel läuft (empfohlen)</option>
+            <option value="always">Immer abspielen</option>
+            <option value="off">Aus – spart CPU und GPU</option>
+          </select>
+          <span className="chaos-faint" style={{ fontSize: 11 }}>Ein laufendes Hintergrund-Video kostet Leistung. Während Minecraft läuft oder der Launcher minimiert ist, wird es automatisch pausiert.</span>
+        </div>
         <div className="chaos-theme-grid">
           {BUILTIN_THEMES.map((t) => (
             <button key={t.id} className={"chaos-theme-card" + (s.theme === t.id ? " active" : "")} onClick={() => set({ theme: t.id })}>

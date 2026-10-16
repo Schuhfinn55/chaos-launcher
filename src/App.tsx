@@ -28,7 +28,7 @@ import FriendsPage from "@/features/friends/FriendsPage";
 import AccountsPage from "@/features/accounts/AccountsPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import EmoteSheet from "@/features/dev/EmoteSheet";
-import { useAccountStore, useCosmeticsStore, useFriendStore, useSettingsStore, useSkinStore } from "@/stores/useStore";
+import { useAccountStore, useCosmeticsStore, useFriendStore, useSettingsStore, useSkinStore, useStatusStore } from "@/stores/useStore";
 import { syncCosmetics } from "@/lib/api/cosmetics";
 import { presenceHeartbeat } from "@/lib/api/friends";
 import { BUILTIN_THEMES } from "@/lib/themes";
@@ -178,9 +178,26 @@ export default function App() {
   }, [settings?.theme, settings?.customThemes]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Hintergrund-Video/GIF kostet CPU/GPU: standardmäßig pausieren, sobald Minecraft läuft oder das Fenster
+  // minimiert ist (Einstellung „Hintergrund-Animation“: always | idle | off)
+  const runningInstances = useStatusStore((s) => s.running);
+  const [docHidden, setDocHidden] = useState(typeof document !== "undefined" && document.hidden);
+  useEffect(() => {
+    const on = () => setDocHidden(document.hidden);
+    document.addEventListener("visibilitychange", on);
+    return () => document.removeEventListener("visibilitychange", on);
+  }, []);
+  const bgMode = settings?.bgAnimation ?? "idle";
+  const bgActive = bgMode === "always" ? !docHidden : bgMode === "off" ? false : !docHidden && runningInstances.length === 0;
   const videoMuted = activeCustomTheme?.videoMuted ?? true;
   const videoVolume = (activeCustomTheme?.videoVolume ?? 0) / 100;
   const [blobUrl, setBlobUrl] = useState<string>("");
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (bgActive) v.play().catch(() => {});
+    else v.pause();
+  }, [bgActive, blobUrl]);
 
   useEffect(() => {
     if (!activeCustomTheme?.mediaFileName) {
@@ -238,7 +255,7 @@ export default function App() {
         {activeTheme.animated && activeTheme.animationClass && <div className={"onyx-anim-overlay " + activeTheme.animationClass} />}
         {activeCustomTheme && activeCustomTheme.mediaType === "video" && blobUrl && (
           <>
-            <video ref={videoRef} className="onyx-anim-video" src={blobUrl} autoPlay loop muted={videoMuted} playsInline />
+            <video ref={videoRef} className="onyx-anim-video" src={blobUrl} autoPlay={bgActive} loop muted={videoMuted} playsInline preload="auto" style={bgActive ? undefined : { visibility: "hidden" }} />
             <div className="onyx-anim-veil" />
             <div className="onyx-video-controls">
               <button
@@ -271,7 +288,7 @@ export default function App() {
             </div>
           </>
         )}
-        {activeCustomTheme && activeCustomTheme.mediaType === "gif" && blobUrl && (
+        {activeCustomTheme && activeCustomTheme.mediaType === "gif" && blobUrl && bgActive && (
           <>
             <img className="onyx-anim-gif" src={blobUrl} alt="" />
             <div className="onyx-anim-veil" />
