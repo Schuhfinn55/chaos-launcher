@@ -434,6 +434,111 @@
       "exclusive": true
     },
     {
+      "id": "tempest",
+      "name": "Tempest",
+      "description": "LEGENDÄR · Nachtblaue Sturmschwingen, durch die Blitze jagen – Gelenk und Spitzen flackern weiß – nur mit Code.",
+      "icon": "⚡",
+      "colors": [
+        "#0B1F3A",
+        "#38BDF8",
+        "#E0FBFF"
+      ],
+      "flapSpeed": 0.07,
+      "flapAmp": 24,
+      "openAngle": 42,
+      "tilt": 6,
+      "scale": 1.18,
+      "glow": true,
+      "particle": "tempest",
+      "frames": 8,
+      "fps": 12,
+      "exclusive": true
+    },
+    {
+      "id": "rebirth",
+      "name": "Phoenix Rebirth",
+      "description": "LEGENDÄR · Federn aus wanderndem Feuer, Gold bis Weißglut, mit Glutregen – nur mit Code.",
+      "icon": "🔥",
+      "colors": [
+        "#FDE68A",
+        "#F97316",
+        "#DC2626"
+      ],
+      "flapSpeed": 0.08,
+      "flapAmp": 20,
+      "openAngle": 44,
+      "tilt": 14,
+      "scale": 1.15,
+      "glow": true,
+      "particle": "rebirth",
+      "frames": 8,
+      "fps": 9,
+      "exclusive": true
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora Borealis",
+      "description": "LEGENDÄR · Polarlicht wandert durch die Federn, Sterne funkeln, Lichtschleier ziehen vorbei – nur mit Code.",
+      "icon": "🌌",
+      "colors": [
+        "#99F6E4",
+        "#6D28D9",
+        "#FFFFFF"
+      ],
+      "flapSpeed": 0.065,
+      "flapAmp": 16,
+      "openAngle": 42,
+      "tilt": 12,
+      "scale": 1.14,
+      "glow": true,
+      "particle": "aurora",
+      "frames": 8,
+      "fps": 8,
+      "exclusive": true
+    },
+    {
+      "id": "void-reaper",
+      "name": "Void Reaper",
+      "description": "LEGENDÄR · Schwarze Sensenschwingen, durch die violette Energie pulst, mit Sternenstaub aus dem Nichts – nur mit Code.",
+      "icon": "💀",
+      "colors": [
+        "#140A24",
+        "#7C3AED",
+        "#F5F3FF"
+      ],
+      "flapSpeed": 0.06,
+      "flapAmp": 24,
+      "openAngle": 40,
+      "tilt": 6,
+      "scale": 1.2,
+      "glow": true,
+      "particle": "void-reaper",
+      "frames": 8,
+      "fps": 10,
+      "exclusive": true
+    },
+    {
+      "id": "frostbite",
+      "name": "Frostbite",
+      "description": "LEGENDÄR · Eiskristalle mit wanderndem Kälteschimmer und tanzenden Eisfunken – nur mit Code.",
+      "icon": "🧊",
+      "colors": [
+        "#E0F2FE",
+        "#38BDF8",
+        "#FFFFFF"
+      ],
+      "flapSpeed": 0.055,
+      "flapAmp": 12,
+      "openAngle": 40,
+      "tilt": 12,
+      "scale": 1.15,
+      "glow": true,
+      "particle": "frostbite",
+      "frames": 8,
+      "fps": 8,
+      "exclusive": true
+    },
+    {
       "id": "seraph",
       "name": "Seraphim",
       "description": "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.",

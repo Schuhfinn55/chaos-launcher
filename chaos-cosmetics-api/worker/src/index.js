@@ -131,7 +131,7 @@ const getCape = (env, id) => getJson(env, "cape:" + id);
 function capeUrl(origin, id) { return `${origin}/v1/capes/${id}/texture`; }
 function remoteCape(origin, c) { return c ? { id: c.id, name: c.name, url: capeUrl(origin, c.id), sha1: c.sha1, version: c.version || 1, kind: c.kind || "custom", fps: c.fps || 8 } : null; }
 /* ---------- Exklusive Wings (nur mit Code) ---------- */
-const EXCLUSIVE_WINGS = new Set(["overlord", "celestial"]);
+const EXCLUSIVE_WINGS = new Set(["overlord", "celestial", "tempest", "rebirth", "aurora", "void-reaper", "frostbite"]);
 /* Weitere exklusive Items: Freischaltungs-Schlüssel "<art>:<id>" (Wings aus Kompatibilität ohne Präfix). */
 const EXCLUSIVE = {
   wings: EXCLUSIVE_WINGS,

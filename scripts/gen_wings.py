@@ -382,6 +382,97 @@ def draw_celestial(L, k, n):
         L.paint(intersect(ellipse(x, y, 1.2, 1.2), L.mask()), lambda x_, y_: rgba("#FFFFFF"))
 
 
+def _draw_energy(L, k, n, mem_top, mem_bot, bone, vein, outline, edge, dark, bright, joint_a, joint_b, tip_a, tip_b, speed=1.0):
+    """Animierte Energie-Membran (Overlord-Technik mit freier Palette): Welle läuft die Adern entlang, Gelenk und Spitzen pulsieren."""
+    t = k / n
+    pulse = 0.5 + 0.5 * math.sin(t * math.tau)
+    draw_membrane(L, rgba(mem_top), rgba(mem_bot), rgba(bone), rgba(vein), rgba(outline), glow_c=None, glow_edge=False)
+    L.edge(L.mask(), lambda x, y: rgba(edge))
+    R, E, T1, T2, T3, B = _mem_points()
+    veins = (T1, T2, T3, mid(T2, T3), mid(T3, B))
+    d, b = rgba(dark), rgba(bright)
+    for i, T in enumerate(veins):
+        steps = 40
+        for sidx in range(steps + 1):
+            f = sidx / steps
+            px, py = E[0] + (T[0] - E[0]) * f, E[1] + (T[1] - E[1]) * f
+            wave = 0.5 + 0.5 * math.sin((f * 2.0 - t * speed - i * 0.15) * math.tau)
+            c = mix(d, b, wave ** 3)
+            L.paint(intersect(ellipse(px, py, 0.9, 0.9), L.mask()), lambda x, y, c=c: c)
+    L.paint(intersect(ellipse(E[0], E[1], 2.2, 2.2), L.mask()), lambda x, y: mix(rgba(joint_a), rgba(joint_b), pulse * 0.6))
+    for T in (T1, T2, T3):
+        L.paint(intersect(ellipse(T[0], T[1], 2.0, 2.0), L.mask()), lambda x, y: mix(rgba(tip_a), rgba(tip_b), pulse * 0.7))
+
+
+def draw_tempest(L, k, n):
+    """Tempest: nachtblaue Sturmschwinge, Blitze jagen durch die Adern, Gelenk und Spitzen flackern weiß-cyan."""
+    _draw_energy(L, k, n, "#0B1F3A", "#040B16", "#06101F", "#1E5F8A", "#030812", "#1B4F7A", "#1D6FA8", "#E0FBFF", "#38BDF8", "#FFFFFF", "#0EA5E9", "#BAE6FD", speed=1.5)
+    # zusätzliche Blitzsplitter
+    rnd = random.Random(900 + k)
+    for _ in range(5):
+        x, y = rnd.uniform(14, 48), rnd.uniform(6, 48)
+        L.paint(intersect(ellipse(x, y, 1.1, 1.1), L.mask()), lambda x_, y_: rgba("#E0FBFF"))
+
+
+def draw_rebirth(L, k, n):
+    """Phoenix Rebirth: Federn, deren Feuer von Gold über Orange bis Weißglut wandert, mit Glutfunken."""
+    t = k / n
+    pal = [(rgba("#FDE68A"), rgba("#F97316")), (rgba("#FFF7ED"), rgba("#DC2626")), (rgba("#FBBF24"), rgba("#7C2D12")), (rgba("#FFEDD5"), rgba("#EA580C"))]
+    seg = t * len(pal)
+    i = int(seg) % len(pal)
+    j = (i + 1) % len(pal)
+    f = seg - int(seg)
+    base = mix(pal[i][0], pal[j][0], f)
+    tip = mix(pal[i][1], pal[j][1], f)
+    draw_feathered(L, base, tip, rgba("#FFFBEB"), outline_f=0.6, stars=((255, 240, 200, 255), 16, (255, 120, 40, 255)), tip_glow=mix(tip, rgba("#FFFFFF"), 0.55), seed=k * 7)
+    rnd = random.Random(700 + k)
+    for _ in range(8):
+        x, y = rnd.uniform(6, 40), rnd.uniform(4, 34)
+        L.paint(intersect(ellipse(x, y, 1.0, 1.0), L.mask()), lambda x_, y_: rgba("#FFF1A8"))
+
+
+def draw_aurora_legend(L, k, n):
+    """Aurora Borealis: Polarlicht wandert durch die Federn (Türkis → Grün → Violett → Blau), Sterne funkeln, Spitzen leuchten weiß."""
+    t = k / n
+    pal = [(rgba("#99F6E4"), rgba("#0D9488")), (rgba("#BBF7D0"), rgba("#15803D")), (rgba("#DDD6FE"), rgba("#6D28D9")), (rgba("#BFDBFE"), rgba("#1D4ED8"))]
+    seg = t * len(pal)
+    i = int(seg) % len(pal)
+    j = (i + 1) % len(pal)
+    f = seg - int(seg)
+    base = mix(pal[i][0], pal[j][0], f)
+    tip = mix(pal[i][1], pal[j][1], f)
+    draw_feathered(L, base, tip, rgba("#F0FDFA"), outline_f=0.5, stars=((255, 255, 255, 255), 26, (204, 251, 241, 255)), tip_glow=mix(tip, rgba("#FFFFFF"), 0.6), seed=k * 5)
+    # Lichtschleier, der über die Federn zieht
+    for y in range(4, 40, 3):
+        x = 10 + ((t * 48 + y * 0.6) % 42)
+        L.paint(intersect(ellipse(x, y, 2.4, 1.0), L.mask()), lambda x_, y_: rgba("#FFFFFF", 160))
+
+
+def draw_void_reaper(L, k, n):
+    """Void Reaper: schwarze Sensenschwinge, violette Energie pulst durch die Adern, Sternenstaub im Nichts."""
+    _draw_energy(L, k, n, "#140A24", "#05030A", "#0B0612", "#5B21B6", "#030206", "#3B0F6E", "#4C1D95", "#F5F3FF", "#A78BFA", "#FFFFFF", "#7C3AED", "#DDD6FE", speed=1.2)
+    rnd = random.Random(1200 + k)
+    for _ in range(12):
+        x, y = rnd.uniform(8, 50), rnd.uniform(4, 50)
+        L.paint(intersect(ellipse(x, y, 0.7, 0.7), L.mask()), lambda x_, y_: rgba("#EDE9FE"))
+
+
+def draw_frostbite(L, k, n):
+    """Frostbite: Eiskristalle, über die ein kalter Schimmer läuft, mit tanzenden Eisfunken."""
+    t = k / n
+    shimmer = 0.5 + 0.5 * math.sin(t * math.tau)
+    light = mix(rgba("#E0F2FE"), rgba("#FFFFFF"), shimmer * 0.6)
+    draw_crystal(L, light, rgba("#38BDF8"), rgba("#0369A1"), mix(rgba("#BAE6FD"), rgba("#FFFFFF"), shimmer))
+    # Glanzband wandert von der Wurzel zur Spitze
+    for y in range(2, 54, 2):
+        x = 4 + ((t * 56 + y * 0.35) % 52)
+        L.paint(intersect(ellipse(x, y, 1.6, 0.9), L.mask()), lambda x_, y_: rgba("#FFFFFF", 150))
+    rnd = random.Random(300 + k)
+    for _ in range(10):
+        x, y = rnd.uniform(4, 52), rnd.uniform(2, 52)
+        L.paint(intersect(ellipse(x, y, 0.8, 0.8), L.mask()), lambda x_, y_: rgba("#F0F9FF"))
+
+
 DESIGNS = [
     W_("angel", "Engelsflügel", "Weiße Federn mit cremefarbenem Schimmer – sanfter, ruhiger Flügelschlag.", "🕊",
        lambda L: draw_feathered(L, rgba("#F4F6FA"), rgba("#C9D2E3"), rgba("#FFFFFF")),
@@ -443,6 +534,16 @@ DESIGNS = [
        draw_overlord, ["#4A0810", "#FF1F3D", "#FFE4E8"], flapSpeed=0.06, flapAmp=22, openAngle=40, tilt=6, scale=1.15, glow=True, particle="overlord", frames=8, fps=10, exclusive=True),
     W_("celestial", "Celestial Seraph", "LEGENDÄR · Schillernde Federn, die ihre Farbe wechseln, mit Sternenstaub und Lichtspuren – nur mit Code.", "🌟",
        draw_celestial, ["#BAE6FD", "#6D28D9", "#B45309"], flapSpeed=0.065, flapAmp=16, openAngle=40, tilt=12, scale=1.12, glow=False, particle="celestial", frames=8, fps=8, exclusive=True),
+    W_("tempest", "Tempest", "LEGENDÄR · Nachtblaue Sturmschwingen, durch die Blitze jagen – Gelenk und Spitzen flackern weiß – nur mit Code.", "⚡",
+       draw_tempest, ["#0B1F3A", "#38BDF8", "#E0FBFF"], flapSpeed=0.07, flapAmp=24, openAngle=42, tilt=6, scale=1.18, glow=True, particle="tempest", frames=8, fps=12, exclusive=True),
+    W_("rebirth", "Phoenix Rebirth", "LEGENDÄR · Federn aus wanderndem Feuer, Gold bis Weißglut, mit Glutregen – nur mit Code.", "🔥",
+       draw_rebirth, ["#FDE68A", "#F97316", "#DC2626"], flapSpeed=0.08, flapAmp=20, openAngle=44, tilt=14, scale=1.15, glow=True, particle="rebirth", frames=8, fps=9, exclusive=True),
+    W_("aurora", "Aurora Borealis", "LEGENDÄR · Polarlicht wandert durch die Federn, Sterne funkeln, Lichtschleier ziehen vorbei – nur mit Code.", "🌌",
+       draw_aurora_legend, ["#99F6E4", "#6D28D9", "#FFFFFF"], flapSpeed=0.065, flapAmp=16, openAngle=42, tilt=12, scale=1.14, glow=True, particle="aurora", frames=8, fps=8, exclusive=True),
+    W_("void-reaper", "Void Reaper", "LEGENDÄR · Schwarze Sensenschwingen, durch die violette Energie pulst, mit Sternenstaub aus dem Nichts – nur mit Code.", "💀",
+       draw_void_reaper, ["#140A24", "#7C3AED", "#F5F3FF"], flapSpeed=0.06, flapAmp=24, openAngle=40, tilt=6, scale=1.2, glow=True, particle="void-reaper", frames=8, fps=10, exclusive=True),
+    W_("frostbite", "Frostbite", "LEGENDÄR · Eiskristalle mit wanderndem Kälteschimmer und tanzenden Eisfunken – nur mit Code.", "🧊",
+       draw_frostbite, ["#E0F2FE", "#38BDF8", "#FFFFFF"], flapSpeed=0.055, flapAmp=12, openAngle=40, tilt=12, scale=1.15, glow=True, particle="frostbite", frames=8, fps=8, exclusive=True),
     W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
        lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
        ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),

@@ -56,10 +56,55 @@ const env = (t: number, i: number, hold: number, out: number) => (t < i ? ease(t
 const P = () => new Pose();
 const E = (id: string, name: string, description: string, icon: string, seconds: number, loop: boolean, pose: (t: number) => Pose, exclusive = false): BuiltinEmote => ({ id, name, description, icon, seconds, loop, exclusive, pose });
 
+/** Winkel auf −180..180 normieren – beim Ausblenden dreht ein Salto sonst rückwärts. */
+const wrap = (d: number) => { d %= 360; if (d >= 180) d -= 360; if (d < -180) d += 360; return d; };
+
+/* ---------------- Breakdance: Keyframes + dynamische Phasen (identisch zum Client) ---------------- */
+function mixPose(a: Pose, b: Pose, t: number): Pose {
+  const o = new Pose();
+  for (let i = 0; i < 6; i++) {
+    if (a.set[i] || b.set[i]) {
+      const ap = a.set[i] ? a.pitch[i] : 0, bp = b.set[i] ? b.pitch[i] : 0, ay = a.set[i] ? a.yaw[i] : 0, by = b.set[i] ? b.yaw[i] : 0, ar = a.set[i] ? a.roll[i] : 0, br = b.set[i] ? b.roll[i] : 0;
+      o.part(i, ap + (bp - ap) * t, ay + (by - ay) * t, ar + (br - ar) * t);
+    }
+  }
+  o.offsetY = a.offsetY + (b.offsetY - a.offsetY) * t;
+  o.offsetZ = a.offsetZ + (b.offsetZ - a.offsetZ) * t;
+  o.groupPitch = a.groupPitch + wrap(b.groupPitch - a.groupPitch) * t;
+  o.groupYaw = a.groupYaw + wrap(b.groupYaw - a.groupYaw) * t;
+  return o;
+}
+const kfStand = () => P().rArm(-70, -35, 0).lArm(-70, 35, 0).head(5, 0, 0).body(0, 0, 0).legs(0, 0, 3);
+const kfCrouch = () => P().body(25, 0, 0).head(-10, 0, 0).legs(-85, 0, 10).arms(-40, 0, 15).offset(8, 0);
+const kfFootwork = () => P().group(55, 0).offset(9, 0).arms(-95, 0, 20).head(-45, 0, 0).legs(-30, 0, 10).body(0, 0, 0);
+const kfFreeze = () => P().group(165, 0).offset(2, 0).rArm(-172, 0, 10).lArm(-60, 0, -40).rLeg(-20, 0, 45).lLeg(-5, 0, -45).head(-20, 0, 0).body(0, 0, 0);
+const kfBack = () => P().group(276, 0).offset(8.8, 0).arms(-10, 0, 88).rLeg(-55, 0, 38).lLeg(-55, 0, -38).head(-22, 0, 0).body(0, 0, 0);
+const kfStandEnd = () => { const p = kfStand(); p.groupPitch = 360; return p; };
+const BD_T = [0, 0.7, 1.2, 1.6, 3.0, 3.5, 4.4, 4.9, 6.0, 6.5];
+function breakdance(t: number): Pose {
+  const k = [kfStand(), kfStand(), kfCrouch(), kfFootwork(), kfFootwork(), kfFreeze(), kfFreeze(), kfBack(), kfBack(), kfStandEnd()];
+  let i = 0;
+  while (i < BD_T.length - 2 && t >= BD_T[i + 1]) i++;
+  const f = ease((t - BD_T[i]) / (BD_T[i + 1] - BD_T[i]));
+  const p = mixPose(k[i], k[i + 1], f);
+  if (t >= 1.6 && t < 3.0) {
+    const w = (t - 1.6) * TAU * 1.4;
+    p.rLeg(-30 - 35 * sin(w), 0, 10 + 25 * cos(w)).lLeg(-30 + 35 * sin(w), 0, -10 - 25 * cos(w));
+    p.groupYaw = 360 * (t - 1.6) / 1.4;
+  } else if (t >= 4.9 && t < 6.0) {
+    const w = (t - 4.9) * TAU * 2, sc = sin(w);
+    p.rLeg(-55 - 15 * sc, 0, 38 + 10 * sc).lLeg(-55 + 15 * sc, 0, -38 + 10 * sc);
+    p.groupYaw = 720 * ease((t - 4.9) / 1.1);
+  } else {
+    p.groupYaw = 0;
+  }
+  return p;
+}
+
 export const CHAOS_EMOTES: BuiltinEmote[] = [
   /* ---- Klassiker ---- */
   E("wave", "Winken", "Arm hoch und kräftig winken – mit Blickkontakt.", "👋", 2.6, false, (t) => { const w = sin(t * TAU * 2.2); return P().rArm(-150 + w * 6, 0, 35 + w * 28).lArm(-8, 0, -4).head(-8, -18, 0).body(0, -6, 0); }),
-  E("dab", "Dab", "Der Klassiker. Kopf in die Armbeuge, anderer Arm gestreckt nach oben.", "😎", 1.4, false, (t) => { const p = t < 0.18 ? ease(t / 0.18) : t < 1.05 ? 1 : 1 - ease((t - 1.05) / 0.35), b = 1 + 0.03 * sin(t * TAU * 3); return P().rArm(-108 * p * b, 0, -56 * p).lArm(-138 * p * b, 0, -72 * p).head(26 * p, -36 * p, -14 * p).body(5 * p, -16 * p, -4 * p).rLeg(-5 * p, 0, 2 * p).lLeg(5 * p, 0, -2 * p).offset(1.2 * p * sin(t * TAU * 3), 0); }),
+  E("dab", "Dab", "Der Klassiker. Kopf in die Armbeuge, anderer Arm gestreckt nach oben.", "😎", 1.4, false, (t) => { const p = t < 0.18 ? ease(t / 0.18) : t < 1.05 ? 1 : 1 - ease((t - 1.05) / 0.35), b = 1 + 0.03 * sin(t * TAU * 3); return P().rArm(-156 * p * b, 0, 41 * p).lArm(-165 * p * b, 0, 51 * p).head(24 * p, -36 * p, -12 * p).body(5 * p, -16 * p, -4 * p).rLeg(-5 * p, 0, 2 * p).lLeg(5 * p, 0, -2 * p).offset(1.2 * p * sin(t * TAU * 3), 0); }),
   E("dance", "Chaos Dance", "Hüften, Arme, Kopf – alles im Takt. Läuft, bis du dich bewegst.", "🕺", 6, true, (t) => { const a = sin(t * TAU * 1.9), b = sin(t * TAU * 0.95), c = cos(t * TAU * 1.9); return P().head(6 * c, 22 * b, 8 * a).body(4 + 3 * c, 16 * b, 4 * a).rArm(-95 - 45 * a, -12 * b, 28 + 18 * c).lArm(-95 + 45 * a, 12 * b, -28 + 18 * c).rLeg(-14 * Math.max(0, a), 10 * b, 4).lLeg(14 * Math.max(0, -a), 10 * b, -4).offset(-2.5 * abs(a), 0); }),
   E("floss", "Floss", "Arme schwingen, Hüfte gegenläufig – der Floss.", "🌊", 4, true, (t) => { const s = sin(t * TAU * 2.4); return P().body(0, 14 * s, 6 * s).rArm(-10 + 18 * s, 0, 42 * s).lArm(-10 - 18 * s, 0, 42 * s).head(4, -10 * s, -5 * s).rLeg(0, 0, 3 * s).lLeg(0, 0, 3 * s); }),
   E("flex", "Flex", "Beide Bizeps zeigen, Kopf stolz von links nach rechts.", "💪", 2.6, false, (t) => { const look = sin(t * TAU * 0.55), pump = 1 + 0.05 * sin(t * TAU * 2.5); return P().rArm(-125 * pump, -35, 78).lArm(-125 * pump, 35, -78).head(-10, 38 * look, 0).body(-4, 10 * look, 0).offset(-0.5, 0); }),
@@ -70,13 +115,13 @@ export const CHAOS_EMOTES: BuiltinEmote[] = [
   E("bow", "Verbeugung", "Tiefe Verbeugung mit Hand auf der Brust.", "🙇", 2.4, false, (t) => { const p = env(t, 0.6, 1.7, 0.7); return P().body(32 * p, 0, 0).head(30 * p, 0, 0).rArm(-60 * p, -40 * p, -20 * p).lArm(10 * p, 0, -15 * p).offset(2 * p, -4 * p); }),
   E("clap", "Applaus", "Schnelles, lautes Klatschen.", "👏", 2.6, false, (t) => { const c = abs(sin(t * TAU * 3.2)); return P().rArm(-72, -30 + 26 * c, 20 - 32 * c).lArm(-72, 30 - 26 * c, -20 + 32 * c).head(-6, 0, 0).body(0, 0, 0).offset(-0.6 * c, 0); }),
   E("cheer", "Jubel", "Arme hoch, hüpfen, feiern.", "🎉", 3, true, (t) => { const j = abs(sin(t * TAU * 1.5)), a = sin(t * TAU * 3); return P().rArm(-165 + 10 * a, -10, 22 + 10 * a).lArm(-165 - 10 * a, 10, -22 + 10 * a).head(-18, 0, 6 * a).body(-3, 0, 0).legs(-6 * j, 0, 0).offset(-6 * j, 0); }),
-  E("salute", "Salut", "Zackiger Gruß an die Stirn.", "🫡", 1.8, false, (t) => { const p = env(t, 0.25, 1.4, 0.4); return P().rArm(-150 * p, 0, -42 * p).lArm(0, 0, 2).head(-6 * p, 0, 0).body(-2 * p, 0, 0); }),
-  E("facepalm", "Facepalm", "Hand ins Gesicht, Kopf runter.", "🤦", 2.2, false, (t) => { const p = env(t, 0.3, 1.7, 0.5), shake = sin(t * TAU * 1.5) * 6 * p; return P().rArm(-152 * p, 0, -34 * p).head(26 * p, shake, 0).body(6 * p, 0, 0).lArm(0, 0, 3); }),
+  E("salute", "Salut", "Zackiger Gruß an die Stirn.", "🫡", 1.8, false, (t) => { const p = env(t, 0.25, 1.4, 0.4); return P().rArm(-150 * p, -36 * p, 0).lArm(0, 0, 2).head(-6 * p, 0, 0).body(-2 * p, 0, 0); }),
+  E("facepalm", "Facepalm", "Hand ins Gesicht, Kopf runter.", "🤦", 2.2, false, (t) => { const p = env(t, 0.3, 1.7, 0.5), shake = sin(t * TAU * 1.5) * 6 * p; return P().rArm(-148 * p, -30 * p, 0).head(26 * p, shake, 0).body(6 * p, 0, 0).lArm(0, 0, 3); }),
   E("headbang", "Headbang", "Kopf schütteln, Arme oben – Metal.", "🤘", 4, true, (t) => { const h = sin(t * TAU * 2.6), a = sin(t * TAU * 1.3); return P().head(28 + 30 * h, 0, 0).rArm(-150, -20, 30 + 8 * a).lArm(-150, 20, -30 - 8 * a).body(6 + 4 * h, 0, 0).offset(-1.5 * abs(h), 0).legs(0, 0, 0); }),
-  E("think", "Nachdenken", "Hand ans Kinn, Blick in die Ferne.", "🤔", 2.4, false, (t) => { const p = env(t, 0.3, 2.0, 0.4); return P().rArm(-122 * p, 0, -32 * p).head(-6 * p, 24 * p * sin(t * TAU * 0.4), 10 * p).body(0, 8 * p, 0); }),
+  E("think", "Nachdenken", "Hand ans Kinn, Blick in die Ferne.", "🤔", 2.4, false, (t) => { const p = env(t, 0.3, 2.0, 0.4); return P().rArm(-126 * p, -42 * p, 0).head(-4 * p, 24 * p * sin(t * TAU * 0.4), 8 * p).body(0, 8 * p, 0); }),
   /* ---- Neu (frei) ---- */
-  E("griddy", "Griddy", "Beine kicken abwechselnd, Arme kreuzen vorm Körper – der Griddy.", "🏈", 4, true, (t) => { const s = sin(t * TAU * 2.2), c = cos(t * TAU * 2.2); return P().rLeg(-38 * Math.max(0, s), 0, 6).lLeg(-38 * Math.max(0, -s), 0, -6).rArm(-75 + 12 * c, -35, 18).lArm(-75 - 12 * c, 35, -18).body(4, 9 * s, 0).head(-4, -7 * s, 3 * c).offset(-2 * abs(s), 0); }),
-  E("orange", "Orange Justice", "Arme kreisen wild, Körper wippt – purer Spaß.", "🍊", 3.2, true, (t) => { const a = sin(t * TAU * 1.25), b = cos(t * TAU * 1.25), s = sin(t * TAU * 2.5); return P().rArm(-90 + 85 * a, 0, 55 + 25 * b).lArm(-90 - 85 * a, 0, -55 - 25 * b).body(6 + 4 * s, 0, 11 * b).head(-6, 0, -9 * b).rLeg(-10 * Math.max(0, s), 0, 5).lLeg(-10 * Math.max(0, -s), 0, -5).offset(-3 * abs(s), 0); }),
+  E("griddy", "Griddy", "Hände als Fernglas vor den Augen, Beine kicken abwechselnd nach außen – der Griddy.", "🏈", 2.4, true, (t) => { const s = sin(t * TAU * 2.5), b = osc(t + 0.6, 1 / 2.4); return P().rArm(-150 * b - 22 * (1 - b), -32 * b, 34 * (1 - b)).lArm(-150 * b - 22 * (1 - b), 32 * b, -34 * (1 - b)).rLeg(-48 * Math.max(0, s), 0, 6 + 18 * Math.max(0, s)).lLeg(-48 * Math.max(0, -s), 0, -6 - 18 * Math.max(0, -s)).body(6, 10 * s, 0).head(-6 + 4 * b, -8 * s, 0).offset(-3 * abs(s), 0); }),
+  E("orange", "Orange Justice", "Arme seitlich pumpen, Körper wippt von links nach rechts – der Klassiker.", "🍊", 2.5, true, (t) => { const w = t * TAU * 1.6, s = sin(w), c = cos(w), h = sin(w * 0.5); return P().rArm(-25 + 50 * s, 0, 82).lArm(-25 - 50 * s, 0, -82).body(4, 0, 12 * h).head(-4, 0, -10 * h).rLeg(-6 * Math.max(0, c), 0, 4 + 14 * Math.max(0, h)).lLeg(-6 * Math.max(0, -c), 0, -4 - 14 * Math.max(0, -h)).offset(-3.5 * abs(s), 0); }),
   E("jumpjack", "Hampelmann", "Hoch, Arme und Beine spreizen, runter – und wieder.", "🤸", 2.4, true, (t) => { const j = osc(t, 1.5), s = sin(t * TAU * 1.5); return P().rArm(0, 0, 12 + 158 * j).lArm(0, 0, -12 - 158 * j).rLeg(0, 0, 5 + 22 * j).lLeg(0, 0, -5 - 22 * j).head(-4 * j, 0, 0).body(0, 0, 0).offset(-9 * abs(s), 0); }),
   E("pushup", "Liegestütze", "Runter auf den Boden und pumpen.", "🏋", 4, true, (t) => { const p = osc(t, 1); return P().group(86, 0).offset(8.5 + 2.5 * p, 0).arms(-100 + 30 * p, 0, 8).legs(0, 0, 3).head(-38, 0, 0).body(0, 0, 0); }),
   E("sleep", "Schlafen", "Hinlegen, Arme an den Körper, tief durchatmen.", "💤", 8, true, (t) => { const b = sin(t * TAU * 0.25); return P().group(-88, 0).offset(8.5, 0).arms(12, 0, 6).legs(4, 0, 2).head(-8 + 2 * b, 14, 0).body(0, 0, 0); }),
@@ -84,9 +129,9 @@ export const CHAOS_EMOTES: BuiltinEmote[] = [
   E("laugh", "Lachen", "Nach vorn gebeugt, Hände am Bauch, schüttelt sich.", "😂", 3, false, (t) => { const p = env(t, 0.3, 2.4, 0.6), s = sin(t * TAU * 6); return P().body(18 * p + 4 * s * p, 0, 0).head((8 + 6 * s) * p, 0, 5 * s * p).rArm(-55 * p, -45 * p, -12 * p).lArm(-55 * p, 45 * p, 12 * p).offset(1.5 * p, 0); }),
   E("shrug", "Schulterzucken", "Hände hoch, Kopf schief – keine Ahnung.", "🤷", 2.2, false, (t) => { const p = env(t, 0.3, 1.6, 0.5); return P().rArm(-28 * p, 0, 62 * p).lArm(-28 * p, 0, -62 * p).head(-4 * p, 10 * p, 16 * p).body(0, 0, 4 * p).offset(-0.8 * p, 0); }),
   E("point", "Zeigen", "Da! Arm ausgestreckt nach vorn.", "👉", 2, false, (t) => { const p = env(t, 0.2, 1.5, 0.4); return P().rArm(-92 * p, -8 * p, 4 * p).lArm(0, 0, 2).head(-3 * p, -6 * p, 0).body(-2 * p, -8 * p, 0); }),
-  E("cry", "Weinen", "Hände vors Gesicht, Schultern zucken.", "😭", 3.2, false, (t) => { const p = env(t, 0.4, 2.5, 0.6), s = sin(t * TAU * 4); return P().rArm(-150 * p, 0, -36 * p).lArm(-150 * p, 0, 36 * p).head(24 * p, 0, 0).body((9 + 2 * s) * p, 0, 0).offset(0.8 * p, 0); }),
+  E("cry", "Weinen", "Hände vors Gesicht, Schultern zucken.", "😭", 3.2, false, (t) => { const p = env(t, 0.4, 2.5, 0.6), s = sin(t * TAU * 4); return P().rArm(-150 * p, -32 * p, 0).lArm(-150 * p, 32 * p, 0).head(24 * p, 0, 0).body((9 + 2 * s) * p, 0, 0).offset(0.8 * p, 0); }),
   /* ---- Legendär (nur mit Code) ---- */
-  E("breakdance", "Breakdance", "Backspin: auf dem Rücken um die eigene Achse, Beine als Schere, Arme weit.", "🌪", 3, true, (t) => { const w = t * TAU * 2, sc = sin(w); return P().group(-80, 360 * (t / 1.5)).offset(8.8, 0).rLeg(-55 - 15 * sc, 0, 38 + 10 * sc).lLeg(-55 + 15 * sc, 0, -38 + 10 * sc).rArm(-10, 0, 88).lArm(-10, 0, -88).head(-22, 0, 0).body(0, 0, 0); }, true),
+  E("breakdance", "Breakdance", "Verschränkte Arme, Footwork am Boden, Handstand-Freeze, Windmill – und zurück auf die Füße.", "🌪", 6.5, true, breakdance, true),
   E("chaos-rave", "Chaos Rave", "Volle Energie: Arme fliegen, Körper dreht, nichts steht still.", "🔥", 4, true, (t) => { const a = sin(t * TAU * 3), b = cos(t * TAU * 3), s = sin(t * TAU * 1.5); return P().group(0, 360 * (t / 4)).rArm(-150 + 35 * a, -15, 30 + 30 * b).lArm(-150 - 35 * a, 15, -30 + 30 * b).body(5, 22 * s, 6 * a).head(-10 + 6 * a, -12 * s, 8 * b).rLeg(-28 * Math.max(0, a), 0, 6).lLeg(-28 * Math.max(0, -a), 0, -6).offset(-4 * abs(a), 0); }, true),
   E("helicopter", "Helikopter", "Arme waagerecht, immer schneller drehen – und abheben.", "🚁", 3, true, (t) => { const p = t / 3, lift = -4 - 6 * osc(t, 0.33); return P().group(0, 720 * p).arms(0, 0, 90).legs(0, 0, 3).head(-8, 0, 0).body(0, 0, 0).offset(lift, 0); }, true),
   E("levitate", "Levitation", "Im Schneidersitz schwebend, langsam um die eigene Achse.", "🧘", 6, true, (t) => { const f = sin(t * TAU * 0.5); return P().group(0, 360 * (t / 6)).rLeg(-88, 32, -14).lLeg(-88, -32, 14).rArm(-45, -28, 22).lArm(-45, 28, -22).head(10 + 3 * f, 0, 0).body(0, 0, 0).offset(-12 + 2.5 * f, -1); }, true),
@@ -116,8 +161,6 @@ export function normalizeWheel(ids: string[] | undefined | null): string[] {
 }
 
 const rad = (d: number) => (d * Math.PI) / 180;
-/** Winkel auf −180..180 normieren – beim Ausblenden dreht ein Salto sonst rückwärts. */
-const wrap = (d: number) => { d %= 360; if (d >= 180) d -= 360; if (d < -180) d += 360; return d; };
 
 /**
  * skinview3d-Animation, die die Emote-Pose auf das Spielermodell legt.
