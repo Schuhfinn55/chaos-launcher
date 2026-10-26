@@ -2,31 +2,36 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.4.1",
-        "fileName": "ChaosLauncher-2.4.1-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.4.1/ChaosLauncher-2.4.1-setup.exe",
-        "sha256": "d0bf0fb7a6c72b5160817812b0b742fba524ea916585d215e25cf64e3dd165ce",
-        "size": 8004832,
-        "publishedAt": "2026-10-15",
-        "notes": "- Neuer legendärer Hut: Panda – ein kleiner Panda, der auf deinem Kopf sitzt (nur mit Code)\n- Downloads auf der Website funktionieren jetzt auch, wenn das Tageskontingent des Zählers aufgebraucht ist\n- Online-Status für die Freundesliste wird deutlich seltener gesendet (schont das Server-Kontingent, Codes und Cosmetics bleiben zuverlässig)\n- Client 2.8.2 mit dem Panda-Hut",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.4.1/ChaosLauncher-2.4.1.msi",
-        "msiSha256": "dade9a25113bf1458adeeae2465da99acf5bc5e3658e8702b47a0a7fcbb7ab27",
-        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.4.1/ChaosLauncher-2.4.1-portable.zip",
-        "portableSha256": "9e5e89f2f10477f8a72aceeef9e5b15820adfe0687fb59ece0437ed799d6f784",
-        "portableSize": 10326895
+        "version": "2.5.0",
+        "fileName": "ChaosLauncher-2.5.0-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/ChaosLauncher-2.5.0-setup.exe",
+        "sha256": "396742c0d2df7c8817a1c60535560e02732255f38f82479e654211f3ca33e6d5",
+        "size": 8365951,
+        "publishedAt": "2026-10-26",
+        "notes": "- Neue Navigation: alle Bereiche direkt sichtbar in gruppierter Seitenleiste (Spielen, Aussehen, Community, Mehr), Skins als eigener Eintrag, kein verstecktes Extras-Menü mehr\n- Globale Suche mit Strg+K: findet Seiten, Cosmetics-Tabs, jeden Hut, Wings, Effekt, Emote, Cape, Client-Module, Einstellungen und Aktionen\n- 5 neue legendäre Wings mit animierten Texturen (nur mit Code): Tempest, Phoenix Rebirth, Aurora Borealis, Void Reaper, Frostbite\n- Emotes überarbeitet (Client 2.8.3): Breakdance als komplette Choreografie (Footwork, Handstand-Freeze, Windmill), Griddy und Orange Justice nach Fortnite-Vorbild, Dab, Salut, Facepalm, Nachdenken und Weinen mit korrekter Armführung\n- Hintergrund-Videos und GIFs werden jetzt von der Platte gestreamt statt in den Speicher geladen – kein Hängen beim Start, kein RAM-Fresser mehr\n- Hintergrund-Video pausiert automatisch, während Minecraft läuft oder der Launcher minimiert ist (einstellbar unter Darstellung)\n- Kino: Hintergrund-Video läuft dort nicht mehr doppelt, nur noch ein Stummschalter",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/ChaosLauncher-2.5.0.msi",
+        "msiSha256": "cca3a33c00ad3a8db3dc60f37d2c52edc152b0769f6e262f095509767adfd2ed",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/ChaosLauncher-2.5.0-portable.zip",
+        "portableSha256": "833b089f83e7681d716c7e95309d08ae78c648f2e33f37731e4c60af3d77327c",
+        "portableSize": 10700003
       },
       "client": {
-        "version": "2.8.2",
-        "fileName": "chaos-client-2.8.2.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.4.1/chaos-client-2.8.2.jar",
-        "sha256": "ebfbc74d9e9d67408b6d3d7162ac3ece2dde9547616844906c05fd18250c82fd",
-        "size": 1407860,
-        "publishedAt": "2026-10-15",
-        "notes": "Neuer legendärer Hut: Panda (sitzt auf dem Kopf, nur mit Code). Enthält Low Shield und alle Neuerungen aus 2.8.1."
+        "version": "2.8.3",
+        "fileName": "chaos-client-2.8.3.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/chaos-client-2.8.3.jar",
+        "sha256": "47d40a13c5b2688e974aed519e6c67f9e936bf7b522a602872778e2de6a24017",
+        "size": 1613163,
+        "publishedAt": "2026-10-26",
+        "notes": "Emotes überarbeitet: Breakdance als komplette Choreografie (verschränkte Arme, Footwork, Handstand-Freeze, Windmill, zurück auf die Füße), Griddy und Orange Justice nach Fortnite-Vorbild, Dab, Salut, Facepalm, Nachdenken und Weinen mit korrekter Armführung. 5 neue legendäre Wings mit animierten Texturen und eigenen Partikeln: Tempest, Phoenix Rebirth, Aurora Borealis, Void Reaper, Frostbite (nur mit Code)."
       }
     }
   },
   "history": [
+    {
+      "version": "2.5.0",
+      "date": "2026-10-26",
+      "notes": "- Neue Navigation: alle Bereiche direkt sichtbar in gruppierter Seitenleiste (Spielen, Aussehen, Community, Mehr), Skins als eigener Eintrag, kein verstecktes Extras-Menü mehr\n- Globale Suche mit Strg+K: findet Seiten, Cosmetics-Tabs, jeden Hut, Wings, Effekt, Emote, Cape, Client-Module, Einstellungen und Aktionen\n- 5 neue legendäre Wings mit animierten Texturen (nur mit Code): Tempest, Phoenix Rebirth, Aurora Borealis, Void Reaper, Frostbite\n- Emotes überarbeitet (Client 2.8.3): Breakdance als komplette Choreografie (Footwork, Handstand-Freeze, Windmill), Griddy und Orange Justice nach Fortnite-Vorbild, Dab, Salut, Facepalm, Nachdenken und Weinen mit korrekter Armführung\n- Hintergrund-Videos und GIFs werden jetzt von der Platte gestreamt statt in den Speicher geladen – kein Hängen beim Start, kein RAM-Fresser mehr\n- Hintergrund-Video pausiert automatisch, während Minecraft läuft oder der Launcher minimiert ist (einstellbar unter Darstellung)\n- Kino: Hintergrund-Video läuft dort nicht mehr doppelt, nur noch ein Stummschalter"
+    },
     {
       "version": "2.4.1",
       "date": "2026-10-15",
@@ -123,6 +128,6 @@
       "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-15",
+  "updatedAt": "2026-10-26",
   "downloads": "github"
 }

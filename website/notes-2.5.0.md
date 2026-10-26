@@ -1,0 +1,7 @@
+- Neue Navigation: alle Bereiche direkt sichtbar in gruppierter Seitenleiste (Spielen, Aussehen, Community, Mehr), Skins als eigener Eintrag, kein verstecktes Extras-Menü mehr
+- Globale Suche mit Strg+K: findet Seiten, Cosmetics-Tabs, jeden Hut, Wings, Effekt, Emote, Cape, Client-Module, Einstellungen und Aktionen
+- 5 neue legendäre Wings mit animierten Texturen (nur mit Code): Tempest, Phoenix Rebirth, Aurora Borealis, Void Reaper, Frostbite
+- Emotes überarbeitet (Client 2.8.3): Breakdance als komplette Choreografie (Footwork, Handstand-Freeze, Windmill), Griddy und Orange Justice nach Fortnite-Vorbild, Dab, Salut, Facepalm, Nachdenken und Weinen mit korrekter Armführung
+- Hintergrund-Videos und GIFs werden jetzt von der Platte gestreamt statt in den Speicher geladen – kein Hängen beim Start, kein RAM-Fresser mehr
+- Hintergrund-Video pausiert automatisch, während Minecraft läuft oder der Launcher minimiert ist (einstellbar unter Darstellung)
+- Kino: Hintergrund-Video läuft dort nicht mehr doppelt, nur noch ein Stummschalter
