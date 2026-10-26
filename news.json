@@ -1,0 +1,35 @@
+[
+  {
+    "id": "launcher-2.1",
+    "title": "Chaos Launcher 2.1 ist da",
+    "summary": "Echter Account-Skin, 16 HD-Capes, 12 Hüte und 14 Effekte – sichtbar für alle Chaos-Spieler. Dazu Extras-Menü, CurseForge in der Mod-Suche und Auto-Updates über chaoslauncher.duckdns.org.",
+    "body": "Cape, Hut und Effekt werden vor jedem Spielstart automatisch mit der Chaos-Cosmetics-API abgeglichen. Der Chaos Client 2.1 rendert Hüte am Kopf und Partikel-Effekte um den Spieler. Updates für Launcher und Client kommen jetzt direkt von der Website.",
+    "category": "launcher",
+    "date": "2026-10-03",
+    "url": "https://chaoslauncher.duckdns.org/#changelog",
+    "pinned": true
+  },
+  {
+    "id": "chaos-client-2",
+    "title": "Chaos Client 2.0: RIGHT SHIFT öffnet alles",
+    "summary": "Neues Ingame-Menü mit Suche und 15 Kategorien, HUD-Editor mit Snap-Raster, 44 Module, Keybind-Manager, Client-Profile mit Import/Export und Chaos Theme.",
+    "category": "update",
+    "date": "2026-10-02",
+    "url": "https://chaoslauncher.duckdns.org/#client"
+  },
+  {
+    "id": "cosmetics-api",
+    "title": "Cosmetics für alle sichtbar",
+    "summary": "Die Chaos-Cosmetics-API läuft auf dem Chaoscraft-Server. Jeder mit Chaos Launcher sieht Capes, Hüte und Effekte der anderen – ohne etwas einzustellen.",
+    "category": "server",
+    "date": "2026-10-03"
+  },
+  {
+    "id": "chaoscraft-smp",
+    "title": "ChaoscraftSMP Saison läuft",
+    "summary": "Erstelle mit einem Klick das Chaoscraft-Profil (Fabric 1.21.11 mit Performance-Mods) und tritt dem Server direkt aus dem Launcher bei.",
+    "category": "server",
+    "date": "2026-10-01",
+    "url": "https://chaoscraftsmp.duckdns.org"
+  }
+]
