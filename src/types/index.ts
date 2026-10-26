@@ -600,6 +600,25 @@ export interface LaunchError {
   actions: string[];
 }
 
+/** Ergebnis der Crash-Analyse (Kommando analyze_crash / Event game://exited). */
+export interface CrashAnalysis {
+  crashed: boolean;
+  cause: string;
+  explanation: string;
+  solution: string;
+  modName: string | null;
+  actions: string[];
+}
+
+/** Event game://exited: Minecraft-Prozess ist beendet, bei Crash mit Analyse. */
+export interface GameExit {
+  instanceId: string;
+  instanceName: string;
+  code: number | null;
+  elapsed: number;
+  analysis: CrashAnalysis | null;
+}
+
 /** Fortschrittsmeldung vom Rust-Backend (Event launch://progress). */
 export interface LaunchProgress {
   phase: string;

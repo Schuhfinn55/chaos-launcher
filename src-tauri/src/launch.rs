@@ -816,16 +816,36 @@ pub async fn launch_instance(
                 let is_chaos = !server.is_empty() && server.to_lowercase().contains(&chaos_addr.to_lowercase()) || server.to_lowercase().contains("chaoscraft") || instance.name.to_lowercase().contains("chaoscraft");
                 crate::discord::set_playing(&crate::discord::effective_app_id(&settings_c), &inst_name, &mc_ver, if server.is_empty() { None } else { Some(server.as_str()) }, is_chaos, settings_c.discord_show_state);
             }
+            let home_c = home.to_path_buf();
+            let started_at = std::time::SystemTime::now();
             tokio::task::spawn_blocking(move || {
-                let _ = child.wait();
+                let status = child.wait().ok();
+                let code = status.and_then(|s| s.code());
                 let elapsed = (crate::system::now_secs() as u64).saturating_sub(session_start);
-                log_step(format!("Minecraft-Prozess (PID {pid}) beendet. Spielzeit: {elapsed}s"));
+                log_step(format!("Minecraft-Prozess (PID {pid}) beendet (Exit-Code {}). Spielzeit: {elapsed}s", code.map_or("?".to_string(), |c| c.to_string())));
                 if let Ok(mut running) = RUNNING_PROC.write() {
                     running.remove(&instance_id);
                 }
                 add_play_time(&instance_id, elapsed);
                 if settings_c.discord_rpc {
                     crate::discord::set_idle(&crate::discord::effective_app_id(&settings_c));
+                }
+                // Crash? Exit-Code ≠ 0 oder ein neuer Crash-Report seit dem Start → Log analysieren und an die Oberfläche melden
+                let fresh_report = crate::commands::launching::newest_crash_report(&home_c, Some(started_at)).is_some();
+                let analysis = if code != Some(0) || fresh_report {
+                    let a = crate::commands::launching::analyze_home(&home_c, Some(started_at));
+                    if a.crashed {
+                        log_step(format!("Crash erkannt: {} – {}", a.cause, a.mod_name.clone().unwrap_or_default()));
+                        Some(a)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                if let Some(app) = crate::APP.get() {
+                    use tauri::Emitter;
+                    let _ = app.emit("game://exited", GameExit { instance_id: instance_id.clone(), instance_name: inst_name.clone(), code, elapsed, analysis });
                 }
             });
             Ok(format!("Minecraft '{}' gestartet.", instance.name))
@@ -1531,4 +1551,15 @@ pub fn jar_mod_version(src: &Path) -> Option<String> {
         return None;
     }
     v.get("version").and_then(|x| x.as_str()).map(|s| s.to_string())
+}
+
+/// Event "game://exited": Minecraft-Prozess ist beendet (mit optionaler Crash-Analyse).
+#[derive(serde::Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GameExit {
+    pub instance_id: String,
+    pub instance_name: String,
+    pub code: Option<i32>,
+    pub elapsed: u64,
+    pub analysis: Option<crate::commands::launching::CrashAnalysis>,
 }

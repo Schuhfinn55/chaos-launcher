@@ -11,6 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { Modal } from "@/components/ui";
 import type { LaunchError } from "@/types";
 import { openPath, repairInstance, resetProfile, downloadJava } from "@/lib/api/launcher";
+import { disableCrashingMod, findInstalledMod } from "@/lib/crash";
+import { useInstanceStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import "./ErrorDialog.css";
 
@@ -25,24 +27,30 @@ const ACTION_LABEL: Record<string, string> = {
   open_mods: "Mods öffnen",
   open_profile: "Profil öffnen",
   open_crash: "Crash-Report öffnen",
+  disable_mod: "Mod deaktivieren",
 };
 
 export default function ErrorDialog({
   error,
   instanceId,
   javaVersion,
+  modName,
   onClose,
   onRetry,
 }: {
   error: LaunchError | null;
   instanceId?: string;
   javaVersion?: number;
+  /** Von der Crash-Analyse erkannte Mod (für "Mod deaktivieren") */
+  modName?: string | null;
   onClose: () => void;
   onRetry?: () => void;
 }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const instance = useInstanceStore((s) => s.instances.find((i) => i.id === instanceId));
+  const crashingMod = findInstalledMod(instance, modName);
 
   if (!error) return null;
 
@@ -100,6 +108,18 @@ export default function ErrorDialog({
           onClose();
           navigate("/profiles");
           break;
+        case "disable_mod": {
+          if (!instanceId) break;
+          const mod = await disableCrashingMod(instanceId, modName);
+          if (mod) {
+            toast.success(`"${mod.title}" deaktiviert`, "Starte Minecraft jetzt neu – die Mod wird nicht mehr geladen.");
+            onClose();
+          } else {
+            toast.warning("Mod nicht gefunden", `"${modName ?? "?"}" ist nicht in der Mod-Liste des Profils. Entferne die Datei im Mods-Ordner.`);
+            await openPath(`instance:${instanceId}`).catch(() => {});
+          }
+          break;
+        }
       }
     } catch (e) {
       toast.error("Aktion fehlgeschlagen", String(e));
@@ -108,8 +128,10 @@ export default function ErrorDialog({
     }
   };
 
-  const primary = error.actions.filter((a) => a !== "open_logs" && a !== "retry");
-  const secondary = error.actions.filter((a) => a === "open_logs" || a === "retry");
+  const label = (a: string) => (a === "disable_mod" && crashingMod ? `"${crashingMod.title}" deaktivieren` : (ACTION_LABEL[a] ?? a));
+  const visible = error.actions.filter((a) => a !== "disable_mod" || (instanceId && modName));
+  const primary = visible.filter((a) => a !== "open_logs" && a !== "retry");
+  const secondary = visible.filter((a) => a === "open_logs" || a === "retry");
 
   return (
     <Modal open onClose={onClose} width={560}>
@@ -124,12 +146,12 @@ export default function ErrorDialog({
           <div className="chaos-errdlg-actions">
             {primary.map((a) => (
               <button key={a} className="chaos-btn chaos-btn-primary" disabled={busy !== null} onClick={() => run(a)}>
-                {busy === a ? "…" : (ACTION_LABEL[a] ?? a).toUpperCase()}
+                {busy === a ? "…" : label(a).toUpperCase()}
               </button>
             ))}
             {secondary.map((a) => (
               <button key={a} className="chaos-btn" disabled={busy !== null} onClick={() => run(a)}>
-                {busy === a ? "…" : (ACTION_LABEL[a] ?? a).toUpperCase()}
+                {busy === a ? "…" : label(a).toUpperCase()}
               </button>
             ))}
             <button className="chaos-btn chaos-btn-ghost" onClick={() => setShowDetails((v) => !v)}>

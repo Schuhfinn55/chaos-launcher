@@ -22,6 +22,7 @@ import type {
   UpdateInfo,
   PlayerSkin,
   ClientUpdateInfo,
+  GameExit,
 } from "@/types";
 
 /* -------------------- Profile / Instanzen -------------------- */
@@ -300,12 +301,15 @@ interface StatusStore {
   instanceStatus: Record<string, InstanceStatus>;
   serverStatus: Record<string, ServerStatus>;
   running: string[];
+  /** Letzter erkannter Minecraft-Crash (globaler Dialog) */
+  crash: GameExit | null;
   setAppInfo: (a: AppInfo) => void;
   setUpdate: (u: UpdateInfo | null) => void;
   setClientUpdate: (u: ClientUpdateInfo | null) => void;
   setInstanceStatus: (s: InstanceStatus) => void;
   setServerStatus: (s: ServerStatus) => void;
   setRunning: (ids: string[]) => void;
+  setCrash: (c: GameExit | null) => void;
 }
 
 export const useStatusStore = create<StatusStore>((set) => ({
@@ -316,12 +320,14 @@ export const useStatusStore = create<StatusStore>((set) => ({
   instanceStatus: {},
   serverStatus: {},
   running: [],
+  crash: null,
   setAppInfo: (appInfo) => set({ appInfo }),
   setUpdate: (update) => set({ update, updateChecked: true }),
   setClientUpdate: (clientUpdate) => set({ clientUpdate }),
   setInstanceStatus: (s) => set((st) => ({ instanceStatus: { ...st.instanceStatus, [s.instanceId]: s } })),
   setServerStatus: (s) => set((st) => ({ serverStatus: { ...st.serverStatus, [`${s.address}:${s.port}`]: s } })),
   setRunning: (running) => set({ running }),
+  setCrash: (crash) => set({ crash }),
 }));
 
 /* -------------------- Ingame-Module / Profile -------------------- */

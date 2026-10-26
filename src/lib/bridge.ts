@@ -18,7 +18,7 @@ if (!isTauri && typeof window !== "undefined" && import.meta.env.DEV && new URLS
   localStorage.setItem("chaos.tutorialDone", "true");
   localStorage.setItem("chaos.accounts", JSON.stringify([{ uuid: "2a05b91e5af6403c9bbf5d0e16c29ed9", username: "YtChaosfabi44", active: true, kind: "microsoft", addedAt: now }]));
   localStorage.setItem("chaos.instances", JSON.stringify([
-    { id: "i1", name: "Chaoscraft SMP", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "", ramMb: 6144, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#e11d2e", createdAt: now - 86400000 * 20, lastPlayed: now - 3600000, playtimeSeconds: 154000, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [mod("sodium", "Sodium"), mod("fabric-api", "Fabric API"), mod("lithium", "Lithium"), mod("iris", "Iris Shaders"), mod("simple-voice-chat", "Simple Voice Chat"), mod("appleskin", "AppleSkin")] },
+    { id: "i1", name: "Chaoscraft SMP", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "", ramMb: 6144, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#e11d2e", createdAt: now - 86400000 * 20, lastPlayed: now - 3600000, playtimeSeconds: 154000, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [mod("sodium", "Sodium"), mod("fabric-api", "Fabric API"), mod("lithium", "Lithium"), mod("iris", "Iris Shaders"), mod("simple-voice-chat", "Simple Voice Chat"), mod("appleskin", "AppleSkin"), { ...mod("autocrop-1.2-mc1.21.11", "AutoCrop"), source: "local", fileName: "AutoCrop-1.2-mc1.21.11.jar" }] },
     { id: "i2", name: "PvP 1.21.11", mcVersion: "1.21.11", loader: "fabric", loaderVersion: "", ramMb: 4096, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#3b82f6", createdAt: now - 86400000 * 5, lastPlayed: now - 86400000, playtimeSeconds: 32000, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [mod("sodium", "Sodium")] },
     { id: "i3", name: "Vanilla 1.21.11", mcVersion: "1.21.11", loader: "vanilla", loaderVersion: "", ramMb: 4096, minRamMb: 0, javaPath: "", jvmArgs: "", iconColor: "#22c55e", createdAt: now - 86400000 * 2, lastPlayed: 0, playtimeSeconds: 0, resolutionWidth: 0, resolutionHeight: 0, gameDir: "", mods: [] },
   ]));
@@ -386,6 +386,16 @@ const mocks: Record<string, MockHandler> = {
   },
   async list_crash_reports() {
     return [];
+  },
+  async analyze_crash() {
+    return {
+      crashed: true,
+      cause: "Mod passt nicht zur Minecraft-Version",
+      explanation: "'AutoCrop' (autocrop) ruft Code auf, den es in dieser Minecraft-Version nicht gibt. Die Mod ist veraltet oder wurde für eine andere Version gebaut – der Launcher und der Chaos Client sind nicht die Ursache.",
+      solution: "Deaktiviere die Mod im Profil (ein Klick unten) oder installiere eine Version, die zu dieser Minecraft-Version passt. Danach Minecraft neu starten.",
+      modName: "autocrop",
+      actions: ["disable_mod", "open_mods", "open_crash", "open_logs"],
+    };
   },
   async discord_set_state() {
     return true;

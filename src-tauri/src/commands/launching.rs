@@ -159,7 +159,7 @@ pub fn cancel_launch() -> Result<bool, String> {
 
 /* ---------- Crash-Analyse ---------- */
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CrashAnalysis {
     pub crashed: bool,
@@ -175,25 +175,35 @@ pub struct CrashAnalysis {
 pub fn analyze_crash(instanceId: String) -> Result<CrashAnalysis, String> {
     let inst = find_instance(&instanceId)?;
     let home = storage::instance_home(&inst)?;
+    Ok(analyze_home(&home, None))
+}
+
+/// Analysiert das Minecraft-Log der laufenden/letzten Sitzung plus den neuesten Crash-Report.
+/// `since`: nur Crash-Reports berücksichtigen, die nach diesem Zeitpunkt entstanden sind
+/// (sonst würde nach jedem normalen Beenden ein alter Crash gemeldet).
+pub fn analyze_home(home: &std::path::Path, since: Option<std::time::SystemTime>) -> CrashAnalysis {
     let mc_log = home.join("logs").join("minecraft-launcher.log");
     let log_content = std::fs::read_to_string(&mc_log).unwrap_or_default();
+    let crash_content = newest_crash_report(home, since).map(|p| std::fs::read_to_string(p).unwrap_or_default()).unwrap_or_default();
+    let combined = format!("{log_content}
+{crash_content}");
+    analyze_patterns(&combined)
+}
+
+/// Pfad des neuesten Crash-Reports (optional nur solche nach `since`).
+pub fn newest_crash_report(home: &std::path::Path, since: Option<std::time::SystemTime>) -> Option<std::path::PathBuf> {
     let crash_dir = home.join("crash-reports");
-    let mut crash_content = String::new();
-    if let Ok(entries) = std::fs::read_dir(&crash_dir) {
-        let mut newest: Option<(std::path::PathBuf, std::time::SystemTime)> = None;
-        for entry in entries.flatten() {
-            if let Ok(modified) = entry.metadata().and_then(|m| m.modified()) {
-                if newest.as_ref().map_or(true, |(_, t)| modified > *t) {
-                    newest = Some((entry.path(), modified));
-                }
-            }
+    let mut newest: Option<(std::path::PathBuf, std::time::SystemTime)> = None;
+    for entry in std::fs::read_dir(&crash_dir).ok()?.flatten() {
+        let Ok(modified) = entry.metadata().and_then(|m| m.modified()) else { continue };
+        if since.map_or(false, |s| modified < s) {
+            continue;
         }
-        if let Some((path, _)) = newest {
-            crash_content = std::fs::read_to_string(&path).unwrap_or_default();
+        if newest.as_ref().map_or(true, |(_, t)| modified > *t) {
+            newest = Some((entry.path(), modified));
         }
     }
-    let combined = format!("{log_content}\n{crash_content}");
-    Ok(analyze_patterns(&combined))
+    newest.map(|(p, _)| p)
 }
 
 fn analyze_patterns(full: &str) -> CrashAnalysis {
@@ -206,6 +216,31 @@ fn analyze_patterns(full: &str) -> CrashAnalysis {
         mod_name,
         actions: actions.iter().map(|s| s.to_string()).collect(),
     };
+    // Fabric-Entrypoint-Fehler / fehlende Methoden & Klassen: Mod wurde für eine andere Minecraft-Version gebaut
+    if lower.contains("could not execute entrypoint")
+        || lower.contains("nosuchmethodexception")
+        || lower.contains("nosuchmethoderror")
+        || lower.contains("noclassdeffounderror")
+        || lower.contains("nosuchfielderror")
+        || lower.contains("abstractmethoderror")
+        || lower.contains("incompatibleclasschangeerror")
+    {
+        let m = extract_mod_name(full);
+        let title = m.as_ref().and_then(|id| mod_title_from_report(full, id));
+        let shown = match (&m, &title) {
+            (Some(id), Some(t)) => format!("'{t}' ({id})"),
+            (Some(id), None) => format!("'{id}'"),
+            _ => "Eine Mod".to_string(),
+        };
+        return mk(
+            true,
+            "Mod passt nicht zur Minecraft-Version",
+            format!("{shown} ruft Code auf, den es in dieser Minecraft-Version nicht gibt. Die Mod ist veraltet oder wurde für eine andere Version gebaut – der Launcher und der Chaos Client sind nicht die Ursache."),
+            "Deaktiviere die Mod im Profil (ein Klick unten) oder installiere eine Version, die zu dieser Minecraft-Version passt. Danach Minecraft neu starten.",
+            m,
+            &["disable_mod", "open_mods", "open_crash", "open_logs"],
+        );
+    }
     if lower.contains("mixin") && (lower.contains("failed") || lower.contains("could not find any targets") || lower.contains("invalidinjectionexception")) {
         let m = extract_mod_name(full);
         return mk(
@@ -250,7 +285,7 @@ fn analyze_patterns(full: &str) -> CrashAnalysis {
 
 fn extract_mod_name(text: &str) -> Option<String> {
     let lower = text.to_lowercase();
-    for key in ["from mod ", "mod '", "mod id '", "modid '"] {
+    for key in ["provided by '", "from mod ", "mod '", "mod id '", "modid '"] {
         if let Some(pos) = lower.find(key) {
             let after = &text[pos + key.len()..];
             let name: String = after.chars().take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '-').collect();
@@ -260,4 +295,51 @@ fn extract_mod_name(text: &str) -> Option<String> {
         }
     }
     None
+}
+
+/// Anzeigename einer Mod aus der Mod-Liste des Crash-Reports (Zeile "<id>: <Name> <Version>").
+fn mod_title_from_report(text: &str, id: &str) -> Option<String> {
+    let prefix = format!("{id}: ");
+    for line in text.lines() {
+        let t = line.trim();
+        if let Some(rest) = t.strip_prefix(&prefix) {
+            // Letztes Token ist die Version – nur wenn mehr als ein Token da ist
+            let parts: Vec<&str> = rest.split_whitespace().collect();
+            let name = if parts.len() > 1 { parts[..parts.len() - 1].join(" ") } else { rest.to_string() };
+            if !name.is_empty() {
+                return Some(name);
+            }
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn entrypoint_failure_names_the_mod() {
+        let report = "---- Minecraft Crash Report ----\nDescription: Initializing game\n\njava.lang.RuntimeException: Could not execute entrypoint stage 'client' due to errors, provided by 'autocrop' at 'com.danz.autocrop.AutoCropMod'!\nCaused by: java.lang.RuntimeException: Failed to construct key mapping for this Minecraft version.\nCaused by: java.lang.NoSuchMethodException: net.minecraft.class_304.<init>(java.lang.String,net.minecraft.class_3675$class_307,int,java.lang.String)\n\tFabric Mods: \n\t\tappleskin: AppleSkin 3.0.8+mc1.21.11\n\t\tautocrop: AutoCrop 1.2-mc1.21.11\n\t\tfabricloader: Fabric Loader 0.19.5\n\t\t\tmixinextras: MixinExtras 0.5.5\n";
+        let a = analyze_patterns(report);
+        assert!(a.crashed);
+        assert_eq!(a.cause, "Mod passt nicht zur Minecraft-Version");
+        assert_eq!(a.mod_name.as_deref(), Some("autocrop"));
+        assert!(a.explanation.contains("'AutoCrop' (autocrop)"), "{}", a.explanation);
+        assert!(a.actions.iter().any(|x| x == "disable_mod"));
+    }
+
+    #[test]
+    fn mixin_failure_still_detected() {
+        let log = "Mixin apply for mod sodium failed sodium.mixins.json: InvalidInjectionException from mod sodium";
+        let a = analyze_patterns(log);
+        assert_eq!(a.cause, "Inkompatible Mod (Mixin-Fehler)");
+        assert_eq!(a.mod_name.as_deref(), Some("sodium"));
+    }
+
+    #[test]
+    fn clean_exit_is_not_a_crash() {
+        let a = analyze_patterns("[Render thread/INFO]: Stopping!\n");
+        assert!(!a.crashed);
+    }
 }

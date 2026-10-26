@@ -9,8 +9,12 @@ import StartupOverlay from "@/components/StartupOverlay";
 import UpdateDialog from "@/components/UpdateDialog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CommandPalette from "@/components/CommandPalette";
+import CrashDialog from "@/components/CrashDialog";
 import { ToastHost } from "@/components/ui";
-import { invoke, listen } from "@/lib/bridge";
+import { invoke, isTauri, listen } from "@/lib/bridge";
+import { runningInstances as fetchRunning } from "@/lib/api/launcher";
+import { toast } from "@/stores/toastStore";
+import type { CrashAnalysis, GameExit } from "@/types";
 import { mediaSrc } from "@/lib/api/media";
 import { setLanguage } from "@/lib/i18n";
 import HomePage from "@/features/home/HomePage";
@@ -109,6 +113,25 @@ export default function App() {
     listen("accounts-changed", () => { void loadAccounts(); }).then((u) => (un = u));
     return () => { un?.(); };
   }, [loadAccounts]);
+
+  // Minecraft beendet → Laufstatus aktualisieren; bei erkanntem Crash den Crash-Dialog öffnen (auf jeder Seite)
+  const setCrash = useStatusStore((s) => s.setCrash);
+  const setRunning = useStatusStore((s) => s.setRunning);
+  useEffect(() => {
+    let un: (() => void) | undefined;
+    listen<GameExit>("game://exited", (e) => {
+      fetchRunning().then(setRunning).catch(() => {});
+      if (e.analysis?.crashed) {
+        setCrash(e);
+        toast.error("Minecraft ist abgestürzt", e.analysis.cause);
+      }
+    }).then((u) => (un = u));
+    // Dev: `?crash=1` zeigt den Dialog mit einem Beispiel-Crash
+    if (!isTauri && import.meta.env.DEV && new URLSearchParams(window.location.search).get("crash")) {
+      invoke<CrashAnalysis>("analyze_crash", { instanceId: "i1" }).then((analysis) => setCrash({ instanceId: "i1", instanceName: "Chaoscraft SMP", code: -1, elapsed: 12, analysis })).catch(() => {});
+    }
+    return () => { un?.(); };
+  }, [setCrash, setRunning]);
 
   // Cosmetics beim Launcher-Start (und nach Account-Wechsel/Login) automatisch zur Community-API hochladen,
   // damit andere Chaos-Spieler Cape, Hut, Wings und Effekt sehen. Ergebnis/Fehler stehen im launch.log.
@@ -305,6 +328,7 @@ export default function App() {
           </div>
         </div>
         <CommandPalette />
+        <CrashDialog />
         <MusicPlayer />
         <UpdateDialog ready={!starting && !showTutorial} />
         <ToastHost />
