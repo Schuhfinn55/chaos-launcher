@@ -539,6 +539,27 @@
       "exclusive": true
     },
     {
+      "id": "voltage",
+      "name": "Voltage",
+      "description": "LEGENDÄR · Nachtschwarze Federn, in denen elektrisch-blaue Energie glüht – Blitze zucken über und um die Schwingen – nur mit Code.",
+      "icon": "🌩",
+      "colors": [
+        "#0B1120",
+        "#22D3EE",
+        "#F0FDFF"
+      ],
+      "flapSpeed": 0.075,
+      "flapAmp": 22,
+      "openAngle": 42,
+      "tilt": 8,
+      "scale": 1.2,
+      "glow": true,
+      "particle": "voltage",
+      "frames": 8,
+      "fps": 12,
+      "exclusive": true
+    },
+    {
       "id": "seraph",
       "name": "Seraphim",
       "description": "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.",

@@ -457,6 +457,60 @@ def draw_void_reaper(L, k, n):
         L.paint(intersect(ellipse(x, y, 0.7, 0.7), L.mask()), lambda x_, y_: rgba("#EDE9FE"))
 
 
+def draw_voltage(L, k, n):
+    """Voltage: nachtschwarze Federn, in denen elektrisch-blaue Energie glüht (Welle läuft zu den Spitzen);
+    Blitze springen über die Schwinge und zucken darüber hinaus, Funken an den Spitzen."""
+    t = k / n
+    mid_c, bright, white = rgba("#0E7490"), rgba("#22D3EE"), rgba("#F0FDFF")
+    draw_feathered(L, rgba("#0B1120"), rgba("#0E7490"), rgba("#111827"), outline_f=0.4, tip_glow=mix(bright, white, 0.35), seed=k * 3)
+    # Innenleuchten: nur Pixel, die rundum von Feder umgeben sind (Kontur bleibt dunkel wie im Vorbild)
+    shape = L.mask()
+    m = shape.load()
+    core = Image.new("L", (IW, IH), 0)
+    cp = core.load()
+    for y in range(1, IH - 1):
+        for x in range(1, IW - 1):
+            if m[x, y] and m[x - 1, y] and m[x + 1, y] and m[x, y - 1] and m[x, y + 1]:
+                cp[x, y] = 255
+    R = (3, 24)
+    px = L.img.load()
+
+    def col(x, y):
+        d = math.hypot(x - R[0], y - R[1]) / 50.0
+        wave = (0.5 + 0.5 * math.sin((d * 2.5 - t * 2.0) * math.tau)) ** 2
+        glow = min(1.0, max(0.0, d * 1.4 - 0.2)) * (0.25 + 0.75 * wave)
+        return mix(px[x, y], mix(mid_c, bright, wave), glow * 0.6)
+
+    L.paint(core, col)
+    # Blitze: gezackte Linien ab dem Flügelarm, auch über die Silhouette hinaus (dort auf transparentem Grund)
+    rnd = random.Random(4100 + k)
+    on_wing = [(x, y) for y in range(IH) for x in range(IW) if m[x, y]]
+    for _ in range(3):
+        x, y = rnd.choice(on_wing)
+        ang = rnd.uniform(-10, 100)
+        pts = [(x, y)]
+        for _s in range(rnd.randint(3, 5)):
+            ang += rnd.uniform(-55, 55)
+            ln = rnd.uniform(2.5, 5.5)
+            x, y = x + math.cos(math.radians(ang)) * ln, y + math.sin(math.radians(ang)) * ln
+            pts.append((x, y))
+        if rnd.random() < 0.7:  # Abzweig
+            i = rnd.randint(1, len(pts) - 2)
+            bx, by = pts[i]
+            ba = ang + rnd.uniform(-110, 110)
+            branch = [(bx, by), (bx + math.cos(math.radians(ba)) * 3, by + math.sin(math.radians(ba)) * 3), (bx + math.cos(math.radians(ba + 40)) * 5, by + math.sin(math.radians(ba + 40)) * 5)]
+        else:
+            branch = []
+        for seg in (pts, branch):
+            for p0, p1 in zip(seg, seg[1:]):
+                L.paint(line(p0, p1, 1), lambda x_, y_: rgba("#67E8F9", 190))
+        for p0, p1 in list(zip(pts, pts[1:]))[1:-1]:
+            L.paint(line(p0, p1, 1), lambda x_, y_: white)
+    # Funken an den Spitzen und im Leuchten
+    L.dots(core, white, every=60, seed=41 + k)
+    L.dots(core, bright, every=34, seed=43 + k)
+
+
 def draw_frostbite(L, k, n):
     """Frostbite: Eiskristalle, über die ein kalter Schimmer läuft, mit tanzenden Eisfunken."""
     t = k / n
@@ -544,6 +598,8 @@ DESIGNS = [
        draw_void_reaper, ["#140A24", "#7C3AED", "#F5F3FF"], flapSpeed=0.06, flapAmp=24, openAngle=40, tilt=6, scale=1.2, glow=True, particle="void-reaper", frames=8, fps=10, exclusive=True),
     W_("frostbite", "Frostbite", "LEGENDÄR · Eiskristalle mit wanderndem Kälteschimmer und tanzenden Eisfunken – nur mit Code.", "🧊",
        draw_frostbite, ["#E0F2FE", "#38BDF8", "#FFFFFF"], flapSpeed=0.055, flapAmp=12, openAngle=40, tilt=12, scale=1.15, glow=True, particle="frostbite", frames=8, fps=8, exclusive=True),
+    W_("voltage", "Voltage", "LEGENDÄR · Nachtschwarze Federn, in denen elektrisch-blaue Energie glüht – Blitze zucken über und um die Schwingen – nur mit Code.", "🌩",
+       draw_voltage, ["#0B1120", "#22D3EE", "#F0FDFF"], flapSpeed=0.075, flapAmp=22, openAngle=42, tilt=8, scale=1.2, glow=True, particle="voltage", frames=8, fps=12, exclusive=True),
     W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
        lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
        ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),
