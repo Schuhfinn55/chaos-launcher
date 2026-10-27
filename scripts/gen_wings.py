@@ -457,58 +457,84 @@ def draw_void_reaper(L, k, n):
         L.paint(intersect(ellipse(x, y, 0.7, 0.7), L.mask()), lambda x_, y_: rgba("#EDE9FE"))
 
 
+def spike(base, ang_deg, length, width):
+    """Spitze Einzelfeder: schmale Basis, scharfe Spitze."""
+    a = math.radians(ang_deg)
+    d = (math.cos(a), math.sin(a))
+    q = (-d[1], d[0])
+    bx, by = base
+
+    def P(t, s_):
+        return (bx + d[0] * t + q[0] * s_, by + d[1] * t + q[1] * s_)
+
+    return [P(0, -width * 0.35), P(length * 0.3, -width / 2), P(length * 0.75, -width * 0.3), P(length, 0), P(length * 0.75, width * 0.3), P(length * 0.3, width / 2), P(0, width * 0.35)]
+
+
 def draw_voltage(L, k, n):
-    """Voltage: nachtschwarze Federn, in denen elektrisch-blaue Energie glüht (Welle läuft zu den Spitzen);
-    Blitze springen über die Schwinge und zucken darüber hinaus, Funken an den Spitzen."""
+    """Voltage (nach Vorbild): Fächer aus langen, einzeln stehenden, spitzen Federn mit hellem Cyan-Kern und dunkler
+    Kontur; dunkle Oberkante (Arm + Deckfedern); dünne Blitze zucken um die Schwinge herum, Funken in der Luft."""
     t = k / n
-    mid_c, bright, white = rgba("#0E7490"), rgba("#22D3EE"), rgba("#F0FDFF")
-    draw_feathered(L, rgba("#0B1120"), rgba("#0E7490"), rgba("#111827"), outline_f=0.4, tip_glow=mix(bright, white, 0.35), seed=k * 3)
-    # Innenleuchten: nur Pixel, die rundum von Feder umgeben sind (Kontur bleibt dunkel wie im Vorbild)
+    dark, deep, teal, cyan, ice, white = rgba("#060B14"), rgba("#0C2D4A"), rgba("#0891B2"), rgba("#22D3EE"), rgba("#A5F3FC"), rgba("#F0FDFF")
+    S, E = (4.0, 31.0), (17.0, 13.0)  # Schulter → Ellbogen (Arm zeigt nach oben-außen)
+    nf = 10
+    feathers = []
+    for i in range(nf):
+        f = i / (nf - 1)
+        base = (E[0] + (S[0] - E[0]) * f * 0.85, E[1] + (S[1] - E[1]) * f * 0.85)
+        ang = -38 + 118 * f
+        ln = 36 - 11 * f * f
+        ln = clamp_len(base, ang, ln, margin=1.0)
+        feathers.append((base, ang, ln, 6.0 - 0.8 * f, i))
+    # Federn von unten nach oben zeichnen (obere liegen vorne)
+    for (b, ang, ln, w, i) in reversed(feathers):
+        m = poly(spike(b, ang, ln, w))
+
+        def col(x, y, b=b, ln=ln, i=i):
+            d = math.hypot(x - b[0], y - b[1]) / ln
+            wave = 0.5 + 0.5 * math.sin((d * 1.6 - t * 2.0 + i * 0.07) * math.tau)
+            c = mix(deep, teal, min(1.0, d * 3.2))
+            c = mix(c, cyan, min(1.0, max(0.0, d - 0.12) * 1.5) * (0.6 + 0.4 * wave))
+            return mix(c, ice, max(0.0, d - 0.6) * 1.8 * wave)
+
+        L.paint(m, col)
+        L.edge(m, lambda x, y: dark)
+        # heller Kiel in der Federmitte
+        a = math.radians(ang)
+        p0 = (b[0] + math.cos(a) * ln * 0.22, b[1] + math.sin(a) * ln * 0.22)
+        p1 = (b[0] + math.cos(a) * ln * 0.9, b[1] + math.sin(a) * ln * 0.9)
+        L.paint(intersect(line(p0, p1, 1), m), lambda x, y, b=b, ln=ln: mix(ice, white, max(0.0, math.hypot(x - b[0], y - b[1]) / ln - 0.4)))
+    # Dunkle Oberkante: Arm + kurze Deckfedern
+    arm = line(S, E, 5)
+    L.paint(arm, lambda x, y: mix(dark, rgba("#13213A"), 0.5 + 0.5 * math.sin((x + y) * 0.9)))
+    L.edge(arm, lambda x, y: dark)
+    for j in range(5):
+        f = j / 4
+        base = (E[0] + (S[0] - E[0]) * f * 0.8 + 1.5, E[1] + (S[1] - E[1]) * f * 0.8 + 1.0)
+        m = poly(spike(base, -30 + 70 * f, 11 - 2 * f, 4.5))
+        L.paint(m, lambda x, y: rgba("#0B1324"))
+        L.edge(m, lambda x, y: dark)
+        L.edge(m, lambda x, y: rgba("#1D4ED8", 120), dirs=((1, 0), (0, 1)))
+    # Blitze: dünn, hell, um die Schwinge herum (starten an Federspitzen, laufen nach außen)
     shape = L.mask()
-    m = shape.load()
-    core = Image.new("L", (IW, IH), 0)
-    cp = core.load()
-    for y in range(1, IH - 1):
-        for x in range(1, IW - 1):
-            if m[x, y] and m[x - 1, y] and m[x + 1, y] and m[x, y - 1] and m[x, y + 1]:
-                cp[x, y] = 255
-    R = (3, 24)
-    px = L.img.load()
-
-    def col(x, y):
-        d = math.hypot(x - R[0], y - R[1]) / 50.0
-        wave = (0.5 + 0.5 * math.sin((d * 2.5 - t * 2.0) * math.tau)) ** 2
-        glow = min(1.0, max(0.0, d * 1.4 - 0.2)) * (0.25 + 0.75 * wave)
-        return mix(px[x, y], mix(mid_c, bright, wave), glow * 0.6)
-
-    L.paint(core, col)
-    # Blitze: gezackte Linien ab dem Flügelarm, auch über die Silhouette hinaus (dort auf transparentem Grund)
-    rnd = random.Random(4100 + k)
-    on_wing = [(x, y) for y in range(IH) for x in range(IW) if m[x, y]]
-    for _ in range(3):
-        x, y = rnd.choice(on_wing)
-        ang = rnd.uniform(-10, 100)
+    rnd = random.Random(5100 + k)
+    tips = [(b[0] + math.cos(math.radians(ang)) * ln * rnd.uniform(0.5, 1.0), b[1] + math.sin(math.radians(ang)) * ln * rnd.uniform(0.5, 1.0)) for (b, ang, ln, w, i) in feathers]
+    rnd.shuffle(tips)
+    for (x, y) in tips[:5]:
+        ang = math.degrees(math.atan2(y - S[1], x - S[0])) + rnd.uniform(-50, 50)
         pts = [(x, y)]
         for _s in range(rnd.randint(3, 5)):
-            ang += rnd.uniform(-55, 55)
-            ln = rnd.uniform(2.5, 5.5)
+            ang += rnd.uniform(-70, 70)
+            ln = rnd.uniform(2.0, 5.0)
             x, y = x + math.cos(math.radians(ang)) * ln, y + math.sin(math.radians(ang)) * ln
             pts.append((x, y))
-        if rnd.random() < 0.7:  # Abzweig
-            i = rnd.randint(1, len(pts) - 2)
-            bx, by = pts[i]
-            ba = ang + rnd.uniform(-110, 110)
-            branch = [(bx, by), (bx + math.cos(math.radians(ba)) * 3, by + math.sin(math.radians(ba)) * 3), (bx + math.cos(math.radians(ba + 40)) * 5, by + math.sin(math.radians(ba + 40)) * 5)]
-        else:
-            branch = []
-        for seg in (pts, branch):
-            for p0, p1 in zip(seg, seg[1:]):
-                L.paint(line(p0, p1, 1), lambda x_, y_: rgba("#67E8F9", 190))
-        for p0, p1 in list(zip(pts, pts[1:]))[1:-1]:
+        for p0, p1 in zip(pts, pts[1:]):
+            L.paint(line(p0, p1, 1), lambda x_, y_: rgba("#67E8F9", 200))
+        for p0, p1 in list(zip(pts, pts[1:]))[::2]:
             L.paint(line(p0, p1, 1), lambda x_, y_: white)
-    # Funken an den Spitzen und im Leuchten
-    L.dots(core, white, every=60, seed=41 + k)
-    L.dots(core, bright, every=34, seed=43 + k)
+    # Funken in der Luft um die Schwinge
+    for _ in range(10):
+        x, y = rnd.uniform(6, IW - 1), rnd.uniform(1, IH - 1)
+        L.paint(ellipse(x, y, 0.6, 0.6), lambda x_, y_: rnd.choice((white, cyan)))
 
 
 def draw_frostbite(L, k, n):
@@ -599,7 +625,7 @@ DESIGNS = [
     W_("frostbite", "Frostbite", "LEGENDÄR · Eiskristalle mit wanderndem Kälteschimmer und tanzenden Eisfunken – nur mit Code.", "🧊",
        draw_frostbite, ["#E0F2FE", "#38BDF8", "#FFFFFF"], flapSpeed=0.055, flapAmp=12, openAngle=40, tilt=12, scale=1.15, glow=True, particle="frostbite", frames=8, fps=8, exclusive=True),
     W_("voltage", "Voltage", "LEGENDÄR · Nachtschwarze Federn, in denen elektrisch-blaue Energie glüht – Blitze zucken über und um die Schwingen – nur mit Code.", "🌩",
-       draw_voltage, ["#0B1120", "#22D3EE", "#F0FDFF"], flapSpeed=0.075, flapAmp=22, openAngle=42, tilt=8, scale=1.2, glow=True, particle="voltage", frames=8, fps=12, exclusive=True),
+       draw_voltage, ["#060B14", "#22D3EE", "#F0FDFF"], flapSpeed=0.075, flapAmp=20, openAngle=48, tilt=18, scale=1.25, glow=True, particle="voltage", frames=8, fps=12, exclusive=True),
     W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
        lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
        ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),
