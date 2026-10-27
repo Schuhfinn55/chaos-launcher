@@ -475,14 +475,14 @@ def draw_voltage(L, k, n):
     Kontur; dunkle Oberkante (Arm + Deckfedern); dünne Blitze zucken um die Schwinge herum, Funken in der Luft."""
     t = k / n
     dark, deep, teal, cyan, ice, white = rgba("#060B14"), rgba("#0C2D4A"), rgba("#0891B2"), rgba("#22D3EE"), rgba("#A5F3FC"), rgba("#F0FDFF")
-    S, E = (4.0, 31.0), (17.0, 13.0)  # Schulter → Ellbogen (Arm zeigt nach oben-außen)
+    S, E = (4.0, 42.0), (15.0, 26.0)  # Ansatz unterhalb der Schultern (Rückenmitte) → Ellbogen, Arm zeigt nach oben-außen
     nf = 10
     feathers = []
     for i in range(nf):
         f = i / (nf - 1)
         base = (E[0] + (S[0] - E[0]) * f * 0.85, E[1] + (S[1] - E[1]) * f * 0.85)
-        ang = -38 + 118 * f
-        ln = 36 - 11 * f * f
+        ang = -42 + 124 * f
+        ln = 33 - 12 * f * f
         ln = clamp_len(base, ang, ln, margin=1.0)
         feathers.append((base, ang, ln, 6.0 - 0.8 * f, i))
     # Federn von unten nach oben zeichnen (obere liegen vorne)
@@ -625,7 +625,7 @@ DESIGNS = [
     W_("frostbite", "Frostbite", "LEGENDÄR · Eiskristalle mit wanderndem Kälteschimmer und tanzenden Eisfunken – nur mit Code.", "🧊",
        draw_frostbite, ["#E0F2FE", "#38BDF8", "#FFFFFF"], flapSpeed=0.055, flapAmp=12, openAngle=40, tilt=12, scale=1.15, glow=True, particle="frostbite", frames=8, fps=8, exclusive=True),
     W_("voltage", "Voltage", "LEGENDÄR · Nachtschwarze Federn, in denen elektrisch-blaue Energie glüht – Blitze zucken über und um die Schwingen – nur mit Code.", "🌩",
-       draw_voltage, ["#060B14", "#22D3EE", "#F0FDFF"], flapSpeed=0.075, flapAmp=20, openAngle=48, tilt=18, scale=1.25, glow=True, particle="voltage", frames=8, fps=12, exclusive=True),
+       draw_voltage, ["#060B14", "#22D3EE", "#F0FDFF"], flapSpeed=0.075, flapAmp=18, openAngle=42, tilt=12, scale=0.92, glow=True, particle="voltage", frames=8, fps=12, exclusive=True),
     W_("seraph", "Seraphim", "Drei Lagen leuchtend weißer Federn mit goldenem Saum – überirdisch.", "👼",
        lambda L: draw_feathered(L, rgba("#FFFFFF"), rgba("#F5C342"), rgba("#FFF8E1"), outline_f=0.68, stars=((255, 255, 255, 255), 18, (255, 241, 184, 255))),
        ["#FFFFFF", "#F5C342", "#FFF8E1"], flapSpeed=0.06, flapAmp=14, openAngle=44, tilt=14, scale=1.12, glow=True, particle="glow"),
