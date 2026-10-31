@@ -678,15 +678,8 @@ pub async fn launch_instance(
         // Kompakte Objekt-Header (JDK 25+): 10–20 % weniger Heap bei gleicher Welt
         jvm_args.push("-XX:+UseCompactObjectHeaders".to_string());
     }
-    if java.version >= 19 {
-        // Start-Cache (Class-Data-Sharing): beim ersten Beenden angelegt, danach starten JDK-Klassen vorgeladen
-        let cds = home.join("chaos-start-cache.jsa");
-        jvm_args.push("-XX:+AutoCreateSharedArchive".to_string());
-        jvm_args.push(format!("-XX:SharedArchiveFile={}", cds.to_string_lossy()));
-        if !cds.exists() {
-            log_step("Start-Cache wird beim ersten Beenden angelegt (nächster Start schneller)");
-        }
-    }
+    // KEIN Class-Data-Sharing-Archiv (-XX:+AutoCreateSharedArchive): Mit dem Minecraft-Klassenpfad bleibt die JVM
+    // (JDK 21) beim Start in einer Endlosschleife hängen, solange die Archivdatei noch nicht existiert – reproduziert 2026-10-31.
     // Eigene JVM-Args (global + Profil)
     for extra in [settings.custom_jvm_args.as_str(), instance.jvm_args.as_str()] {
         for a in split_args(extra) {
