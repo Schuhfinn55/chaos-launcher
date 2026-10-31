@@ -47,3 +47,21 @@
 .chaos-fps-hints { margin: 0; padding-left: 18px; font-size: 12px; color: var(--chaos-text-dim); display: flex; flex-direction: column; gap: 4px; }
 .chaos-fps-mod { display: flex; align-items: center; gap: 10px; font-size: 12px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.03); }
 .chaos-fps-mod .chaos-faint { flex: 1; }
+
+/* FPS-Boost: Performance-Mods */
+.chaos-fps-perf {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chaos-fps-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chaos-fps-chips .chaos-badge {
+  opacity: 0.75;
+}
+.chaos-fps-chips .chaos-badge.chaos-badge-accent {
+  opacity: 1;
+}

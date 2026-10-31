@@ -21,6 +21,8 @@ export const AUTO_MODS: AutoMod[] = [
   { slug: "ferrite-core", title: "FerriteCore", reason: "Weniger RAM-Verbrauch", projectType: "mod" },
   { slug: "entityculling", title: "EntityCulling", reason: "Überspringt unsichtbare Entities", projectType: "mod" },
   { slug: "immediatelyfast", title: "ImmediatelyFast", reason: "Schnelleres GUI-Rendering", projectType: "mod" },
+  { slug: "krypton", title: "Krypton", reason: "Netzwerk schlanker – weniger RAM", projectType: "mod" },
+  { slug: "c2me-fabric", title: "C2ME", reason: "Chunks laden parallel – schnellerer Start", projectType: "mod" },
   { slug: "modernfix", title: "ModernFix", reason: "Bug-Fixes & Performance", projectType: "mod" },
   { slug: "modmenu", title: "Mod Menu", reason: "Ingame-Liste aller Mods", projectType: "mod" },
   { slug: "appleskin", title: "AppleSkin", reason: "Sättigungsanzeige", projectType: "mod" },

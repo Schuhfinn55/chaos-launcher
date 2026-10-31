@@ -28,6 +28,8 @@ const BASE: PresetMod[] = [
   { slug: "lithium", title: "Lithium", projectType: "mod" },
   { slug: "ferrite-core", title: "FerriteCore", projectType: "mod" },
   { slug: "entityculling", title: "EntityCulling", projectType: "mod" },
+  { slug: "krypton", title: "Krypton", projectType: "mod" },
+  { slug: "c2me-fabric", title: "C2ME", projectType: "mod" },
   { slug: "modmenu", title: "Mod Menu", projectType: "mod" },
 ];
 

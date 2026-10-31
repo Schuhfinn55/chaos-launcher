@@ -618,8 +618,24 @@ pub async fn launch_instance(
             .replace("${resolution_height}", &instance.resolution_height.to_string())
     };
 
-    let max_ram = instance.ram_mb.max(1024);
-    let min_ram = if instance.min_ram_mb > 0 { instance.min_ram_mb.min(max_ram) } else { (max_ram / 2).max(512) };
+    // RAM-Lage des PCs: wenig RAM → Heap deckeln, klein starten, Speicher zurückgeben
+    let mem = crate::system::memory_info();
+    let low_ram = mem.total_mb > 0 && mem.total_mb <= 8 * 1024;
+    let mut max_ram = instance.ram_mb.max(1024);
+    if mem.total_mb > 0 {
+        let cap = mem.total_mb.saturating_sub(2048).max(1024) as u32;
+        if max_ram > cap {
+            log_step(format!("RAM: Profil will {max_ram} MB, der PC hat nur {} MB – Heap auf {cap} MB begrenzt (sonst Auslagerung)", mem.total_mb));
+            max_ram = cap;
+        }
+    }
+    let min_ram = if instance.min_ram_mb > 0 {
+        instance.min_ram_mb.min(max_ram)
+    } else if low_ram {
+        512.min(max_ram)
+    } else {
+        (max_ram / 2).max(512)
+    };
 
     let mut jvm_args: Vec<String> = vec![
         format!("-Xmx{max_ram}m"),
@@ -637,7 +653,6 @@ pub async fn launch_instance(
         "-XX:+DisableExplicitGC",
         "-XX:G1NewSizePercent=30",
         "-XX:G1MaxNewSizePercent=40",
-        "-XX:G1HeapRegionSize=8M",
         "-XX:G1ReservePercent=20",
         "-XX:G1HeapWastePercent=5",
         "-XX:G1MixedGCCountTarget=4",
@@ -650,6 +665,27 @@ pub async fn launch_instance(
         "-XX:+UseStringDeduplication",
     ] {
         jvm_args.push(f.to_string());
+    }
+    // Regionengröße passend zum Heap (8 MB lohnt erst ab ~4 GB; bei kleinen Heaps verschwendet es Speicher)
+    jvm_args.push(format!("-XX:G1HeapRegionSize={}M", if max_ram <= 3072 { 4 } else { 8 }));
+    if low_ram {
+        // Ungenutzten Heap regelmäßig an Windows zurückgeben – auf 4–8-GB-PCs entscheidend gegen Auslagerung
+        jvm_args.push("-XX:G1PeriodicGCInterval=45000".to_string());
+        jvm_args.push("-XX:G1PeriodicGCSystemLoadThreshold=0".to_string());
+        log_step(format!("RAM-Sparmodus: {} MB im PC → Heap {max_ram} MB, Start mit {min_ram} MB, Speicher wird zurückgegeben", mem.total_mb));
+    }
+    if java.version >= 25 {
+        // Kompakte Objekt-Header (JDK 25+): 10–20 % weniger Heap bei gleicher Welt
+        jvm_args.push("-XX:+UseCompactObjectHeaders".to_string());
+    }
+    if java.version >= 19 {
+        // Start-Cache (Class-Data-Sharing): beim ersten Beenden angelegt, danach starten JDK-Klassen vorgeladen
+        let cds = home.join("chaos-start-cache.jsa");
+        jvm_args.push("-XX:+AutoCreateSharedArchive".to_string());
+        jvm_args.push(format!("-XX:SharedArchiveFile={}", cds.to_string_lossy()));
+        if !cds.exists() {
+            log_step("Start-Cache wird beim ersten Beenden angelegt (nächster Start schneller)");
+        }
     }
     // Eigene JVM-Args (global + Profil)
     for extra in [settings.custom_jvm_args.as_str(), instance.jvm_args.as_str()] {

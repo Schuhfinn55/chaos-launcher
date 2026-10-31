@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { applyFpsBoost, fpsReport } from "@/lib/api/launcher";
+import { installSlugList } from "@/lib/api/mods";
 import { useInstanceStore } from "@/stores/useStore";
 import { toast } from "@/stores/toastStore";
 import type { FpsReport, Instance } from "@/types";
@@ -13,7 +14,9 @@ import type { FpsReport, Instance } from "@/types";
 export default function FpsBoostCard({ instance }: { instance: Instance }) {
   const [rep, setRep] = useState<FpsReport | null>(null);
   const [busy, setBusy] = useState(false);
+  const [installing, setInstalling] = useState<string | null>(null);
   const update = useInstanceStore((s) => s.update);
+  const reloadInstances = useInstanceStore((s) => s.load);
 
   const load = useCallback(async () => {
     try {
@@ -40,6 +43,30 @@ export default function FpsBoostCard({ instance }: { instance: Instance }) {
     }
   };
 
+  const installPerfMods = async () => {
+    if (!rep) return;
+    const missing = rep.perfMods.filter((m) => !m.installed);
+    const disabled = rep.perfMods.filter((m) => m.installed && !m.enabled);
+    setInstalling("Starte …");
+    try {
+      if (disabled.length > 0) {
+        const keys = new Set(disabled.map((m) => m.slug.replace(/-/g, "")));
+        await update(instance.id, {
+          mods: instance.mods.map((m) => (keys.has(m.id.replace(/[-_ ]/g, "")) || disabled.some((d) => `${m.fileName} ${m.title}`.toLowerCase().replace(/[-_ ]/g, "").includes(d.slug.replace(/-/g, ""))) ? { ...m, enabled: true } : m)),
+        });
+      }
+      const r = await installSlugList(instance.id, missing.map((m) => ({ slug: m.slug, title: m.title, projectType: "mod" as const })), (st) => setInstalling(st));
+      await reloadInstances();
+      await load();
+      if (r.failed.length) toast.warning(`${r.added} Mods installiert`, `Nicht verfügbar: ${r.failed.join(", ")}`);
+      else toast.success("Performance-Mods installiert", `${r.added + disabled.length} Mods bereit – beim nächsten Start aktiv.`);
+    } catch (e) {
+      toast.error("Installation fehlgeschlagen", String(e));
+    } finally {
+      setInstalling(null);
+    }
+  };
+
   const toggleMod = async (id: string, enabled: boolean) => {
     await update(instance.id, { mods: instance.mods.map((m) => (m.id === id ? { ...m, enabled } : m)) });
     await load();
@@ -49,7 +76,9 @@ export default function FpsBoostCard({ instance }: { instance: Instance }) {
   const usedMb = Math.max(0, rep.totalRamMb - rep.availableRamMb);
   const usedPct = rep.totalRamMb ? Math.min(100, Math.round((usedMb / rep.totalRamMb) * 100)) : 0;
   const ramTight = rep.availableRamMb < rep.heapMb + 1536;
-  const optimized = rep.maxFps >= 260 && !rep.vsync && !rep.entityShadows && rep.fpsBoostEnabled && rep.gpuPreferenceSet;
+  const perfReady = rep.perfMods.filter((m) => m.installed && m.enabled).length;
+  const perfMissing = rep.perfMods.length - perfReady;
+  const optimized = rep.maxFps >= 260 && !rep.vsync && !rep.entityShadows && rep.fpsBoostEnabled && rep.gpuPreferenceSet && perfMissing === 0;
 
   return (
     <section className="chaos-fps">
@@ -98,6 +127,28 @@ export default function FpsBoostCard({ instance }: { instance: Instance }) {
           Prozesspriorität: <strong className={rep.fpsBoostEnabled ? "ok" : "warn"}>{rep.fpsBoostEnabled ? "hoch" : "normal"}</strong>
         </span>
       </div>
+
+      {rep.perfMods.length > 0 && (
+        <div className="chaos-fps-perf">
+          <div className="chaos-row" style={{ gap: 8, alignItems: "center" }}>
+            <span>
+              Performance-Mods: <strong className={perfMissing === 0 ? "ok" : "warn"}>{perfReady} / {rep.perfMods.length}</strong>
+            </span>
+            {perfMissing > 0 && (
+              <button className="chaos-btn chaos-btn-sm chaos-btn-primary" disabled={installing !== null} onClick={installPerfMods} title="Fehlende Mods von Modrinth installieren, deaktivierte einschalten">
+                {installing ?? `Performance-Mods installieren (${perfMissing})`}
+              </button>
+            )}
+          </div>
+          <div className="chaos-fps-chips">
+            {rep.perfMods.map((m) => (
+              <span key={m.slug} className={"chaos-badge " + (m.installed && m.enabled ? "chaos-badge-accent" : "")} title={m.reason + (m.installed ? (m.enabled ? "" : " · installiert, aber aus") : " · fehlt")}>
+                {m.installed && m.enabled ? "✓ " : m.installed ? "⏸ " : "+ "}{m.title}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {rep.hints.length > 0 && (
         <ul className="chaos-fps-hints">

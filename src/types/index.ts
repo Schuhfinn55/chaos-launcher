@@ -336,7 +336,17 @@ export interface FpsReport {
   renderDistance: number;
   fpsBoostEnabled: boolean;
   heavyMods: HeavyMod[];
+  /** Empfohlene Performance-Mods (nur Fabric/Quilt) mit Installationsstatus */
+  perfMods: PerfMod[];
   hints: string[];
+}
+
+export interface PerfMod {
+  slug: string;
+  title: string;
+  reason: string;
+  installed: boolean;
+  enabled: boolean;
 }
 
 /** Echter Account-Skin (vom Backend über den Mojang-Sessionserver geladen). */

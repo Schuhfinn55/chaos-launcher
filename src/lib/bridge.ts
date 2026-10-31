@@ -137,7 +137,15 @@ const mocks: Record<string, MockHandler> = {
     return [];
   },
   async fps_report() {
-    return { totalRamMb: 16384, availableRamMb: 6000, heapMb: 4096, displayWidth: 1920, displayHeight: 1080, displayHz: 144, gpus: ["Mock GPU"], gpuUsed: "Mock GPU", gpuPreferenceSet: true, maxFps: 260, vsync: false, entityShadows: false, renderDistance: 10, fpsBoostEnabled: true, heavyMods: [], hints: [] };
+    return { totalRamMb: 16384, availableRamMb: 6000, heapMb: 4096, displayWidth: 1920, displayHeight: 1080, displayHz: 144, gpus: ["Mock GPU"], gpuUsed: "Mock GPU", gpuPreferenceSet: true, maxFps: 260, vsync: false, entityShadows: false, renderDistance: 10, fpsBoostEnabled: true, heavyMods: [], perfMods: [
+      { slug: "sodium", title: "Sodium", reason: "Rendering – der größte FPS-Gewinn", installed: true, enabled: true },
+      { slug: "lithium", title: "Lithium", reason: "Spiellogik und Ticks schneller", installed: true, enabled: true },
+      { slug: "ferrite-core", title: "FerriteCore", reason: "Deutlich weniger RAM-Verbrauch", installed: false, enabled: false },
+      { slug: "entityculling", title: "EntityCulling", reason: "Unsichtbare Entities werden nicht gezeichnet", installed: false, enabled: false },
+      { slug: "immediatelyfast", title: "ImmediatelyFast", reason: "HUD, Text und GUI schneller", installed: false, enabled: false },
+      { slug: "krypton", title: "Krypton", reason: "Netzwerk schlanker – weniger RAM und Lag auf Servern", installed: false, enabled: false },
+      { slug: "c2me-fabric", title: "C2ME", reason: "Chunks laden parallel – schnellerer Start und Weltaufbau", installed: false, enabled: false },
+    ], hints: ["5 Performance-Mods fehlen oder sind aus – „Performance-Mods installieren“ holt sie von Modrinth."] };
   },
   async apply_fps_boost() {
     return ["FPS-Limit: unbegrenzt"];

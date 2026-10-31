@@ -16,6 +16,28 @@ pub struct HeavyMod {
     pub enabled: bool,
 }
 
+/// Empfohlene Performance-Mod (Modrinth) und ob sie im Profil liegt.
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PerfMod {
+    pub slug: String,
+    pub title: String,
+    pub reason: String,
+    pub installed: bool,
+    pub enabled: bool,
+}
+
+/// Performance-Mods, die der FPS-Boost in Fabric-/Quilt-Profilen erwartet: (Slug, Modrinth-ID, Titel, Grund).
+pub const PERF_MODS: &[(&str, &str, &str, &str)] = &[
+    ("sodium", "AANobbMI", "Sodium", "Rendering – der größte FPS-Gewinn"),
+    ("lithium", "gvQqBUqZ", "Lithium", "Spiellogik und Ticks schneller"),
+    ("ferrite-core", "uXXizFIs", "FerriteCore", "Deutlich weniger RAM-Verbrauch"),
+    ("entityculling", "NNAgCjsB", "EntityCulling", "Unsichtbare Entities werden nicht gezeichnet"),
+    ("immediatelyfast", "5ZwdcRci", "ImmediatelyFast", "HUD, Text und GUI schneller"),
+    ("krypton", "fQEb0iXm", "Krypton", "Netzwerk schlanker – weniger RAM und Lag auf Servern"),
+    ("c2me-fabric", "VSNURh3q", "C2ME", "Chunks laden parallel – schnellerer Start und Weltaufbau"),
+];
+
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct FpsReport {
@@ -34,6 +56,8 @@ pub struct FpsReport {
     pub render_distance: i32,
     pub fps_boost_enabled: bool,
     pub heavy_mods: Vec<HeavyMod>,
+    /// Empfohlene Performance-Mods (nur Fabric/Quilt) mit Installationsstatus
+    pub perf_mods: Vec<PerfMod>,
     pub hints: Vec<String>,
 }
 
@@ -199,8 +223,25 @@ pub fn report(instance_id: &str) -> Result<FpsReport, String> {
         render_distance: get("renderDistance").and_then(|v| v.parse().ok()).unwrap_or(12),
         fps_boost_enabled: settings.fps_boost,
         heavy_mods: Vec::new(),
+        perf_mods: Vec::new(),
         hints: Vec::new(),
     };
+    if matches!(inst.loader.as_str(), "fabric" | "quilt") {
+        for (slug, pid, title, reason) in PERF_MODS {
+            let key = slug.replace('-', "");
+            let found = inst.mods.iter().find(|m| {
+                let hay = format!("{} {}", m.file_name, m.title).to_lowercase().replace(['-', '_', ' '], "");
+                m.project_id == *pid || hay.contains(&key) || (*slug == "c2me-fabric" && hay.contains("c2me"))
+            });
+            r.perf_mods.push(PerfMod {
+                slug: slug.to_string(),
+                title: title.to_string(),
+                reason: reason.to_string(),
+                installed: found.is_some(),
+                enabled: found.map(|m| m.enabled).unwrap_or(false),
+            });
+        }
+    }
     for m in &inst.mods {
         let hay = format!("{} {}", m.file_name, m.title).to_lowercase();
         if let Some((_, reason)) = HEAVY.iter().find(|(k, _)| hay.contains(k)) {
@@ -248,6 +289,10 @@ pub fn report(instance_id: &str) -> Result<FpsReport, String> {
     }
     if r.max_fps < 260 {
         r.hints.push(format!("FPS-Limit steht auf {}.", r.max_fps));
+    }
+    let missing_perf = r.perf_mods.iter().filter(|m| !m.installed || !m.enabled).count();
+    if missing_perf > 0 {
+        r.hints.push(format!("{missing_perf} Performance-Mods fehlen oder sind aus – „Performance-Mods installieren“ holt sie von Modrinth."));
     }
     if r.heavy_mods.iter().any(|m| m.enabled) {
         r.hints.push("Schwere Mods aktiv (siehe unten) – sie kosten je nach PC deutlich FPS. Zum Testen deaktivieren.".to_string());
