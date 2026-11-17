@@ -1,0 +1,6 @@
+- FPS-Boost: Performance-Mods (Sodium, Lithium, FerriteCore, EntityCulling, ImmediatelyFast, Krypton, C2ME) automatisch prüfen und per Klick installieren
+- Optimierte Startflags nach RAM: Heap-Deckel, kleiner Start-Heap, automatische Speicherfreigabe an das OS und angepasste Regionengröße
+- Kompakte Objekt-Header ab JDK 25 für spürbar reduzierten Arbeitsspeicherverbrauch
+- Intelligente Crash-Analyse: Erkennt Fabric-Entrypoint- und Versionskonflikte bei Startabbrüchen mit direktem Crash-Dialog und 1-Klick-Deaktivierung der fehlerhaften Mod
+- Neue legendäre Wings „Voltage“: nachtschwarze Schwingen mit elektrisch-blauem Glühen und zuckenden Blitzen über 8 Frames (nur per Code freischaltbar)
+- Chaos Client 2.8.5: Server-Tänze (/dance Synchronisation via chaosclient:emote), Fix für Tanz-Abbrüche durch Sprünge

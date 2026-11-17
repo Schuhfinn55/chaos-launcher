@@ -1,0 +1,1 @@
+Server-Tänze: Tippt jemand auf einem Server mit ChaosDances /dance, siehst du mit Chaos Client die echte Emote-Animation des Spielers (Kanal chaosclient:emote), Spieler ohne Client sehen die Server-Version. Dein eigener Server-Tanz bricht nicht mehr durch die Sprünge des Tanzes ab. Neue legendäre Wings Voltage (Blitzschwingen, animiert).

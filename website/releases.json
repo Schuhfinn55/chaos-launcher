@@ -2,31 +2,36 @@
   "channels": {
     "stable": {
       "launcher": {
-        "version": "2.5.0",
-        "fileName": "ChaosLauncher-2.5.0-setup.exe",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/ChaosLauncher-2.5.0-setup.exe",
-        "sha256": "396742c0d2df7c8817a1c60535560e02732255f38f82479e654211f3ca33e6d5",
-        "size": 8365951,
-        "publishedAt": "2026-10-26",
-        "notes": "- Neue Navigation: alle Bereiche direkt sichtbar in gruppierter Seitenleiste (Spielen, Aussehen, Community, Mehr), Skins als eigener Eintrag, kein verstecktes Extras-Menü mehr\n- Globale Suche mit Strg+K: findet Seiten, Cosmetics-Tabs, jeden Hut, Wings, Effekt, Emote, Cape, Client-Module, Einstellungen und Aktionen\n- 5 neue legendäre Wings mit animierten Texturen (nur mit Code): Tempest, Phoenix Rebirth, Aurora Borealis, Void Reaper, Frostbite\n- Emotes überarbeitet (Client 2.8.3): Breakdance als komplette Choreografie (Footwork, Handstand-Freeze, Windmill), Griddy und Orange Justice nach Fortnite-Vorbild, Dab, Salut, Facepalm, Nachdenken und Weinen mit korrekter Armführung\n- Hintergrund-Videos und GIFs werden jetzt von der Platte gestreamt statt in den Speicher geladen – kein Hängen beim Start, kein RAM-Fresser mehr\n- Hintergrund-Video pausiert automatisch, während Minecraft läuft oder der Launcher minimiert ist (einstellbar unter Darstellung)\n- Kino: Hintergrund-Video läuft dort nicht mehr doppelt, nur noch ein Stummschalter",
-        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/ChaosLauncher-2.5.0.msi",
-        "msiSha256": "cca3a33c00ad3a8db3dc60f37d2c52edc152b0769f6e262f095509767adfd2ed",
-        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/ChaosLauncher-2.5.0-portable.zip",
-        "portableSha256": "833b089f83e7681d716c7e95309d08ae78c648f2e33f37731e4c60af3d77327c",
-        "portableSize": 10700003
+        "version": "2.6.0",
+        "fileName": "ChaosLauncher-2.6.0-setup.exe",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.6.0/ChaosLauncher-2.6.0-setup.exe",
+        "sha256": "936fcf4c8e2293255d9f78705935590051baa3b00bf1ba8d5253582492e7c70b",
+        "size": 8437612,
+        "publishedAt": "2026-11-17",
+        "notes": "- FPS-Boost: Performance-Mods (Sodium, Lithium, FerriteCore, EntityCulling, ImmediatelyFast, Krypton, C2ME) automatisch prüfen und per Klick installieren\n- Optimierte Startflags nach RAM: Heap-Deckel, kleiner Start-Heap, automatische Speicherfreigabe an das OS und angepasste Regionengröße\n- Kompakte Objekt-Header ab JDK 25 für spürbar reduzierten Arbeitsspeicherverbrauch\n- Intelligente Crash-Analyse: Erkennt Fabric-Entrypoint- und Versionskonflikte bei Startabbrüchen mit direktem Crash-Dialog und 1-Klick-Deaktivierung der fehlerhaften Mod\n- Neue legendäre Wings „Voltage“: nachtschwarze Schwingen mit elektrisch-blauem Glühen und zuckenden Blitzen über 8 Frames (nur per Code freischaltbar)\n- Chaos Client 2.8.5: Server-Tänze (/dance Synchronisation via chaosclient:emote), Fix für Tanz-Abbrüche durch Sprünge",
+        "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.6.0/ChaosLauncher-2.6.0.msi",
+        "msiSha256": "8ab566f87e9c7c15afd71148e843b6126305ec4346f8045aaf21ed96be2e6067",
+        "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.6.0/ChaosLauncher-2.6.0-portable.zip",
+        "portableSha256": "0a64e72e6f2a34998f79c973f97943e25a5f18e1431d7143c6bd5f6aef660963",
+        "portableSize": 10763897
       },
       "client": {
-        "version": "2.8.3",
-        "fileName": "chaos-client-2.8.3.jar",
-        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.5.0/chaos-client-2.8.3.jar",
-        "sha256": "47d40a13c5b2688e974aed519e6c67f9e936bf7b522a602872778e2de6a24017",
-        "size": 1613163,
-        "publishedAt": "2026-10-26",
-        "notes": "Emotes überarbeitet: Breakdance als komplette Choreografie (verschränkte Arme, Footwork, Handstand-Freeze, Windmill, zurück auf die Füße), Griddy und Orange Justice nach Fortnite-Vorbild, Dab, Salut, Facepalm, Nachdenken und Weinen mit korrekter Armführung. 5 neue legendäre Wings mit animierten Texturen und eigenen Partikeln: Tempest, Phoenix Rebirth, Aurora Borealis, Void Reaper, Frostbite (nur mit Code)."
+        "version": "2.8.5",
+        "fileName": "chaos-client-2.8.5.jar",
+        "url": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.6.0/chaos-client-2.8.5.jar",
+        "sha256": "8f39447b52a569661a469e66ec6ed6e2bdffb0835d77140e15e50d55ba1c86a5",
+        "size": 1654628,
+        "publishedAt": "2026-11-17",
+        "notes": "Server-Tänze: Tippt jemand auf einem Server mit ChaosDances /dance, siehst du mit Chaos Client die echte Emote-Animation des Spielers (Kanal chaosclient:emote), Spieler ohne Client sehen die Server-Version. Dein eigener Server-Tanz bricht nicht mehr durch die Sprünge des Tanzes ab. Neue legendäre Wings Voltage (Blitzschwingen, animiert)."
       }
     }
   },
   "history": [
+    {
+      "version": "2.6.0",
+      "date": "2026-11-17",
+      "notes": "- FPS-Boost: Performance-Mods (Sodium, Lithium, FerriteCore, EntityCulling, ImmediatelyFast, Krypton, C2ME) automatisch prüfen und per Klick installieren\n- Optimierte Startflags nach RAM: Heap-Deckel, kleiner Start-Heap, automatische Speicherfreigabe an das OS und angepasste Regionengröße\n- Kompakte Objekt-Header ab JDK 25 für spürbar reduzierten Arbeitsspeicherverbrauch\n- Intelligente Crash-Analyse: Erkennt Fabric-Entrypoint- und Versionskonflikte bei Startabbrüchen mit direktem Crash-Dialog und 1-Klick-Deaktivierung der fehlerhaften Mod\n- Neue legendäre Wings „Voltage“: nachtschwarze Schwingen mit elektrisch-blauem Glühen und zuckenden Blitzen über 8 Frames (nur per Code freischaltbar)\n- Chaos Client 2.8.5: Server-Tänze (/dance Synchronisation via chaosclient:emote), Fix für Tanz-Abbrüche durch Sprünge"
+    },
     {
       "version": "2.5.0",
       "date": "2026-10-26",
@@ -121,13 +126,8 @@
       "version": "2.1.2",
       "date": "2026-10-03",
       "notes": "- Discord Rich Presence funktioniert jetzt ohne Einrichtung: Chaos-Launcher-App ist Standard\n- Discord-Verbindungsstatus in den Einstellungen, Diagnose im Launcher-Log\n- Website chaoslauncher.duckdns.org mit Animationen und Community-Bereich"
-    },
-    {
-      "version": "2.1.1",
-      "date": "2026-10-03",
-      "notes": "- Updates und News kommen jetzt von chaoslauncher.duckdns.org\n- Cosmetics anderer Spieler: Community-Adresse fest eingebaut, Auto-Sync vor dem Spielstart\n- Extras-Menü als Ausklapp-Panel repariert\n- Echter Account-Skin, 16 HD-Capes, 12 Hüte, 14 Effekte\n- CurseForge-Status mit Hinweis, Discord-Presence erweitert"
     }
   ],
-  "updatedAt": "2026-10-26",
+  "updatedAt": "2026-11-17",
   "downloads": "github"
 }
