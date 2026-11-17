@@ -12,7 +12,7 @@
         "msiUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.6.0/ChaosLauncher-2.6.0.msi",
         "msiSha256": "8ab566f87e9c7c15afd71148e843b6126305ec4346f8045aaf21ed96be2e6067",
         "portableUrl": "https://github.com/Schuhfinn55/chaos-launcher/releases/download/v2.6.0/ChaosLauncher-2.6.0-portable.zip",
-        "portableSha256": "0a64e72e6f2a34998f79c973f97943e25a5f18e1431d7143c6bd5f6aef660963",
+        "portableSha256": "90339c813aba032b96ab140037a25eab517aef2be3da728b24d080f04408d959",
         "portableSize": 10763897
       },
       "client": {
