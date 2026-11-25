@@ -106,12 +106,14 @@ export default function ServersPage() {
         <div className="chaos-srv-hero-glow" />
         <div className="chaos-srv-hero-main">
           <div className="chaos-row" style={{ gap: 12 }}>
-            <StatusDot state={!chaos ? "pending" : chaos.online ? "online" : "offline"} />
+            <StatusDot state={!chaos ? "pending" : chaos.online ? "online" : "pending"} />
             <h2>{CHAOSCRAFT.name}</h2>
-            <span className={"chaos-srv-state " + (chaos?.online ? "on" : "off")}>{!chaos ? t("status.checking") : chaos.online ? t("status.online") : t("status.offline")}</span>
+            <span className={"chaos-srv-state " + (chaos?.online ? "on" : "wartung")}>
+              {!chaos ? t("status.checking") : chaos.online ? t("status.online") : "IN WARTUNG"}
+            </span>
           </div>
           <p className="chaos-muted chaos-truncate" style={{ fontSize: 13 }}>
-            {chaos?.motd || "Das offizielle Chaoscraft-SMP."}
+            {chaos?.motd || "Server derzeit in Wartung (Anbieter: MCServerHost)."}
           </p>
           <div className="chaos-srv-grid">
             <div>

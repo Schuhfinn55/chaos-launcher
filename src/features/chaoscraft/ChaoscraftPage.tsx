@@ -127,8 +127,8 @@ export default function ChaoscraftPage() {
             Chaoscraft SMP
           </h1>
           <div className="chaos-row chaos-wrap" style={{ gap: 10 }}>
-            <StatusDot state={!status ? "pending" : status.online ? "online" : "offline"} />
-            <span className={"chaos-cc-state " + (status?.online ? "on" : "off")}>{!status ? t("status.checking") : status.online ? `🟢 ${t("status.online")}` : `🔴 ${t("status.offline")}`}</span>
+            <StatusDot state={!status ? "pending" : status.online ? "online" : "pending"} />
+            <span className={"chaos-cc-state " + (status?.online ? "on" : "wartung")}>{!status ? t("status.checking") : status.online ? `🟢 ${t("status.online")}` : `🟡 IN WARTUNG`}</span>
             {status?.online && <span className="chaos-badge chaos-badge-accent">{status.playersOnline} / {status.playersMax} Spieler</span>}
             {status?.online && <span className="chaos-badge">{status.version}</span>}
             {status?.online && <span className="chaos-badge">{status.latencyMs} ms</span>}

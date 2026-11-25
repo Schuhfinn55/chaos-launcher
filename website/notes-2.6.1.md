@@ -1,0 +1,4 @@
+- Server-Migration: ChaoscraftSMP ist auf einen neuen Anbieter umgezogen – neue Standardadresse chaoscraftsmp.mcsh.gg mit automatischer Migration bestehender Profile
+- Wartungs-Statusanzeige: Bei Wartungsarbeiten zeigen Home, Serverliste und Chaoscraft-Bereich transparent „🟡 IN WARTUNG“ statt „OFFLINE“
+- Moderner Minecraft-Launcher: Text und UI angepasst – Chaos Launcher ist dein vielseitiger Minecraft-Launcher für jedes Profil, jeden Modpack-Loader und alle Server
+- Zuverlässige Update-Infrastruktur: Release-Feed und Website-Links priorisieren die hochverfügbare Cloudflare-Infrastruktur

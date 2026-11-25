@@ -251,12 +251,12 @@ export default function HomePage() {
             <span className="chaos-section-title" style={{ marginBottom: 0 }}>
               {t("home.serverStatus")}
             </span>
-            <StatusDot state={!server ? "pending" : server.online ? "online" : "offline"} />
+            <StatusDot state={!server ? "pending" : server.online ? "online" : "wartung"} />
           </div>
           <div className="chaos-home-server">
             <strong>{CHAOSCRAFT.name}</strong>
-            <span className={"chaos-home-server-state " + (server?.online ? "on" : "off")}>
-              {!server ? t("status.checking") : server.online ? `🟢 ${t("status.online")}` : `🔴 ${t("status.offline")}`}
+            <span className={"chaos-home-server-state " + (server?.online ? "on" : "wartung")}>
+              {!server ? t("status.checking") : server.online ? `🟢 ${t("status.online")}` : "🟡 IN WARTUNG"}
             </span>
           </div>
           {server?.online ? (

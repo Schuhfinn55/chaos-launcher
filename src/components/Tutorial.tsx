@@ -10,7 +10,7 @@ import "./Tutorial.css";
 const STORAGE_KEY = "chaos.tutorialDone";
 
 const STEPS = [
-  { icon: "🔥", title: "Willkommen beim Chaos Launcher!", text: "Dein Minecraft-Client-Launcher für ChaoscraftSMP: Profile, Mods, Cosmetics mit eigenen Capes, Serverstatus, News und Updates. Das Tutorial bleibt offen – du kannst nebenbei alles ausprobieren.", action: null },
+  { icon: "🔥", title: "Willkommen beim Chaos Launcher!", text: "Dein moderner Minecraft-Launcher: Profile, Mods, Cosmetics mit eigenen Capes, Serverstatus, News und Updates. Das Tutorial bleibt offen – du kannst nebenbei alles ausprobieren.", action: null },
   { icon: "🔐", title: "1. Account verbinden", text: "Unter „Minecraft-Account“ meldest du dich mit Microsoft an. Du bekommst einen Code, den du im Browser eingibst – der Launcher fragt nie nach deinem Passwort.", action: { label: "Account öffnen", route: "/accounts" } },
   { icon: "📦", title: "2. Profil erstellen", text: "Unter „Profile“ wählst du Minecraft-Version → Loader (Fabric, Forge, NeoForge) → Name & RAM. Oder du nimmst eine Vorlage wie PvP, SMP oder Chaoscraft.", action: { label: "Profile öffnen", route: "/profiles" } },
   { icon: "🧩", title: "3. Mods verwalten", text: "Im Mod-Manager durchsuchst du Modrinth und CurseForge, installierst passende Versionen inklusive Abhängigkeiten und prüfst auf Updates.", action: { label: "Mods öffnen", route: "/mods" } },

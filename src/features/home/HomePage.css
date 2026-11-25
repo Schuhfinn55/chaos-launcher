@@ -70,6 +70,7 @@
 .chaos-home-server-state { font-size: 12px; font-weight: 800; letter-spacing: 1px; }
 .chaos-home-server-state.on { color: var(--chaos-success); }
 .chaos-home-server-state.off { color: var(--chaos-danger); }
+.chaos-home-server-state.wartung { color: var(--chaos-warning); }
 .chaos-home-server-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .chaos-home-server-grid > div {
   display: flex; flex-direction: column; gap: 2px; padding: 8px 10px;

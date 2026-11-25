@@ -133,7 +133,7 @@ export default function UpdateDialog({ ready }: { ready: boolean }) {
           <button className="chaos-btn chaos-btn-ghost" disabled={!!installing} onClick={() => setDismissed(true)}>
             Später
           </button>
-          <button className="chaos-btn chaos-btn-ghost chaos-upd-link" onClick={() => openUrl(update?.releaseUrl || clientUpdate?.releaseUrl || "https://chaoslauncher.duckdns.org")}>
+          <button className="chaos-btn chaos-btn-ghost chaos-upd-link" onClick={() => openUrl(update?.releaseUrl || clientUpdate?.releaseUrl || "https://chaos-launcher.chaoscraft.workers.dev")}>
             Website ↗
           </button>
         </div>

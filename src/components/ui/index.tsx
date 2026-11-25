@@ -180,7 +180,7 @@ export function Tabs<T extends string>({
 }
 
 /* ---------- Statuspunkt ---------- */
-export function StatusDot({ state }: { state: "online" | "offline" | "pending" }) {
+export function StatusDot({ state }: { state: "online" | "offline" | "pending" | "wartung" }) {
   return <span className={"chaos-dot " + state} />;
 }
 

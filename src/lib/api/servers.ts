@@ -34,7 +34,10 @@ export function saveSavedServers(list: SavedServer[]) {
 export function chaoscraftAddress(): string {
   const s = useSettingsStore.getState().settings;
   const custom = s?.chaoscraftServer?.trim();
-  return custom && custom.length > 0 ? custom : CHAOSCRAFT.defaultAddress;
+  if (!custom || custom === "chaoscraftsmp.duckdns.org") {
+    return CHAOSCRAFT.defaultAddress;
+  }
+  return custom;
 }
 
 export async function pingServer(address: string): Promise<ServerStatus> {

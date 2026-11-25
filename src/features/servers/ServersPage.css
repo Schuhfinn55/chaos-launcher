@@ -5,6 +5,7 @@
 .chaos-srv-state { font-size: 12px; font-weight: 900; letter-spacing: 2px; padding: 3px 10px; border-radius: 999px; }
 .chaos-srv-state.on { color: var(--chaos-success); background: rgba(74, 222, 128, 0.12); }
 .chaos-srv-state.off { color: var(--chaos-danger); background: rgba(248, 113, 113, 0.12); }
+.chaos-srv-state.wartung { color: var(--chaos-warning); background: rgba(245, 158, 11, 0.14); }
 .chaos-srv-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 900px) { .chaos-srv-grid { grid-template-columns: repeat(2, 1fr); } }
 .chaos-srv-grid > div { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--chaos-bg-0); border: 1px solid var(--chaos-border); border-radius: var(--chaos-radius-sm); min-width: 0; }
