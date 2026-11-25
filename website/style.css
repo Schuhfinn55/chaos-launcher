@@ -52,6 +52,7 @@ main { position: relative; z-index: 1; }
 .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); box-shadow: 0 0 8px currentColor; }
 .pill.online .dot { background: var(--success); color: var(--success); }
 .pill.offline .dot { background: var(--accent); color: var(--accent); }
+.pill.wartung .dot { background: #f59e0b; color: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 18px; }
 .hero-meta { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--faint); font-size: 13px; }
 .hero-meta li::before { content: "✓ "; color: var(--accent-light); font-weight: 700; }

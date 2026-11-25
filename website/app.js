@@ -85,19 +85,24 @@
 
   /* ---------- Serverstatus (Minecraft) ---------- */
   try {
-    const st = await fetch("https://api.mcsrvstat.us/3/chaoscraftsmp.duckdns.org", { cache: "no-store" }).then((r) => r.json());
+    const st = await fetch("https://api.mcsrvstat.us/3/chaoscraftsmp.mcsh.gg", { cache: "no-store" }).then((r) => r.json());
     const pill = $("status-pill");
     if (st.online) {
+      pill.classList.remove("offline", "wartung");
       pill.classList.add("online");
       $("status-text").textContent = `ChaoscraftSMP online · ${st.players?.online ?? 0} / ${st.players?.max ?? "?"} Spieler`;
       $("stat-online").textContent = `${st.players?.online ?? 0}`;
     } else {
-      pill.classList.add("offline");
-      $("status-text").textContent = "ChaoscraftSMP derzeit offline";
-      $("stat-online").textContent = "0";
+      pill.classList.remove("online", "offline");
+      pill.classList.add("wartung");
+      $("status-text").textContent = "ChaoscraftSMP derzeit in Wartung";
+      $("stat-online").textContent = "Wartung";
     }
   } catch (e) {
-    $("status-text").textContent = "ChaoscraftSMP · play: chaoscraftsmp.duckdns.org";
+    const pill = $("status-pill");
+    if (pill) { pill.classList.remove("online", "offline"); pill.classList.add("wartung"); }
+    $("status-text").textContent = "ChaoscraftSMP (in Wartung) · play: chaoscraftsmp.mcsh.gg";
+    $("stat-online").textContent = "Wartung";
   }
 
   function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
